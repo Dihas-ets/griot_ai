@@ -4,19 +4,14 @@ import { Sparkles, Globe, MessageSquare, Mail, User } from "lucide-react";
 
 export default function Footer() {
   return (
-    <footer className="pt-16 sm:pt-24 pb-12 bg-black border-t border-white/10">
+    <footer className="pt-16 sm:pt-10 pb-12 bg-black border-t border-white/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8 sm:gap-12 mb-16">
           {/* Logo */}
           <div className="col-span-2">
             <div className="flex items-center gap-2 mb-4 sm:mb-6">
-              <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center text-white">
-                <Sparkles size={16} />
-              </div>
+           <img src="/logo.png" width={100} height={100} alt="Logo" />
 
-              <span className="font-bold text-lg sm:text-xl text-white">
-                Diha's AI
-              </span>
             </div>
 
             <p className="text-xs sm:text-sm text-gray-400 max-w-xs mb-6 sm:mb-8 font-medium leading-relaxed">

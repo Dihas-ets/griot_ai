@@ -12,14 +12,8 @@ export default function Navbar() {
 
         {/* Logo */}
         <a href="/" className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center shadow-lg">
-            <Sparkles className="w-5 h-5 text-white" />
-          </div>
-
           <div>
-            <h1 className="font-bold text-xl text-white">
-              Diha's AI
-            </h1>
+           <img src="/logo.png" width={100} height={100} alt="Logo" />
           </div>
         </a>
 

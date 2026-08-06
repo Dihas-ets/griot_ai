@@ -33,22 +33,22 @@ import {
 // --- HELPER COMPONENTS ---
 const faqData = [
   {
-    question: "Comment fonctionne l'IA de Diha's pour la génération de contenu ?",
-    answer: "Notre IA utilise des modèles de langage avancés entraînés sur les meilleures pratiques du marketing digital. Elle analyse votre brief, votre ton de marque et les tendances actuelles pour générer des contenus uniques, engageants et optimisés pour chaque plateforme."
+    question: "Comment Diha's transforme-t-il une idée ou une image en script ?",
+    answer: "Notre IA analyse votre brief textuel ou les éléments visuels de votre image pour comprendre le contexte. Elle génère ensuite un script structuré avec une accroche percutante et un appel à l'action, adapté aux codes spécifiques de chaque réseau social."
   },
   {
-    question: "Mes comptes de réseaux sociaux sont-ils sécurisés ?",
-    answer: "Absolument. Nous utilisons l'authentification officielle (OAuth) pour chaque plateforme. Nous ne stockons jamais vos mots de passe et respectons scrupuleusement les protocoles de sécurité de grade bancaire pour protéger vos accès."
+    question: "Puis-je choisir sur quels comptes publier un même contenu ?",
+    answer: "Absolument. Une fois votre script généré, Diha's vous permet de sélectionner précisément les comptes (Instagram, LinkedIn, TikTok, etc.) sur lesquels vous souhaitez diffuser. Vous gardez un contrôle total sur votre multi-diffusion."
   },
   {
-    question: "L'IA peut-elle vraiment copier mon ton de voix unique ?",
-    answer: "Oui ! Grâce à notre moteur d'apprentissage, vous pouvez soumettre vos posts précédents pour que l'IA apprenne votre style, votre vocabulaire et vos habitudes d'écriture. Plus vous l'utilisez, plus elle devient indissociable de votre plume."
-  }, { question: "Quels sont les réseaux sociaux supportés actuellement ?",
-    answer: "Nous supportons actuellement Instagram (Posts, Reels, Stories), LinkedIn, TikTok, X (Twitter), Facebook et Pinterest. Nous ajoutons régulièrement de nouvelles plateformes en fonction des besoins de nos utilisateurs."
+    question: "L'IA peut-elle vraiment capter mon ton de voix ?",
+    answer: "Oui ! En analysant vos publications précédentes ou en suivant vos instructions de briefing, l'IA apprend votre style. Plus vous l'utilisez, plus elle devient précise dans la rédaction de vos scripts personnalisés."
+  }, { question: "Quels sont les réseaux sociaux supportés pour la publication ?",
+    answer: "Nous supportons actuellement la publication automatique sur Instagram (Posts, Reels, Stories), LinkedIn, TikTok, X (Twitter), Facebook et Pinterest. Nous centralisons tous vos accès sécurisés au même endroit."
   },
   {
-    question: "Puis-je annuler mon abonnement à tout moment ?",
-    answer: "Bien sûr. Nos abonnements sont sans engagement de longue durée. Vous pouvez annuler votre plan en un clic depuis votre espace de gestion, et vous conserverez vos accès jusqu'à la fin de la période de facturation en cours."
+    question: "Mes données et accès sociaux sont-ils sécurisés ?",
+    answer: "La sécurité est notre priorité. Nous utilisons les connexions officielles (OAuth) de chaque plateforme. Nous ne stockons jamais vos mots de passe et vos contenus restent votre propriété exclusive."
   }
 ];
 const FAQItem = ({ question, answer, isOpen, onClick }: any) => (
@@ -79,6 +79,19 @@ const FAQItem = ({ question, answer, isOpen, onClick }: any) => (
   </div>
 );
 
+// --- logos marques ---
+const logos = [
+  "/presta.png",
+  "/islam_pilier.png",
+  "/spacesboost.jpg",
+  "/tranoo.png",
+  "/livro.png",
+  "/aif.png",
+  "/dihas.jpg",
+  "/fofana.png",
+];
+
+
 // --- TYPES & DATA ---
 
 interface Feature {
@@ -89,66 +102,67 @@ interface Feature {
 }
 
 const features: Feature[] = [
-  { icon: Layout, title: "Multi-projets & Espaces", desc: "Pilotez toutes vos marques et vos clients depuis un tableau de bord unifié sans rupture de flux.", color: "purple" },
-  { icon: Share2, title: "Multi-diffusion instantanée", desc: "Connectez vos comptes Instagram, LinkedIn, TikTok et X en un clic pour une synchronisation optimale.", color: "blue" },
-  { icon: Sparkles, title: "Moteur IA prédictif", desc: "Générez des accroches virales, des scripts engageants et des visuels captivants en quelques secondes.", color: "fuchsia" },
-  { icon: Calendar, title: "Planning éditorial intelligent", desc: "Organisez vos publications avec un glisser-déposer fluide et des recommandations d'heures de pointe.", color: "orange" },
-  { icon: BarChart3, title: "Analyses de performance", desc: "Suivez votre taux d'engagement et visualisez votre croissance grâce à des rapports automatisés.", color: "emerald" },
-  { icon: Users, title: "Espace collaboratif", desc: "Invitez vos équipes et vos clients, attribuez des rôles et validez vos contenus en temps réel.", color: "pink" },
+  { icon: Wand2, title: "Génération de Scripts IA", desc: "Transformez une simple idée ou une photo en un script captivant, optimisé pour la viralité sur chaque réseau.", color: "purple" },
+  { icon: Share2, title: "Sélection Multi-comptes", desc: "Connectez vos profils et choisissez dynamiquement sur quels comptes publier vos contenus en un clic.", color: "blue" },
+  { icon: Rocket, title: "Auto-publication Directe", desc: "Détendez-vous pendant que Diha's publie vos posts automatiquement aux heures de forte audience.", color: "fuchsia" },
+  { icon: Calendar, title: "Planning Intelligent", desc: "Organisez vos publications avec un calendrier visuel fluide et suivez votre stratégie de contenu globale.", color: "orange" },
+  { icon: BarChart3, title: "Analyses & Performance", desc: "Suivez l'impact de vos scripts générés par IA et ajustez votre stratégie grâce à des rapports détaillés.", color: "emerald" },
+  { icon: Users, title: "Espaces Collaboratifs", desc: "Gérez plusieurs marques ou clients, attribuez des rôles et validez vos scripts avant la mise en ligne.", color: "pink" },
 ];
 
 const steps = [
-  { n: "01", title: "Espace de travail", desc: "Configurez votre marque et vos objectifs en 2 minutes." },
-  { n: "02", title: "Connexion sociale", desc: "Liez vos plateformes sociales en toute sécurité." },
-  { n: "03", title: "Briefing rapide", desc: "Définissez vos thématiques et la tonalité souhaitée." },
-  { n: "04", title: "Génération IA", desc: "L'IA crée plusieurs déclinaisons de visuels et de textes." },
-  { n: "05", title: "Ajustements", desc: "Personnalisez et affinez le rendu selon vos préférences." },
-  { n: "06", title: "Publication auto", desc: "Programmez la diffusion au moment le plus impactant." },
+  { n: "01", title: "Le Briefing", desc: "Saisissez votre idée ou importez une image source pour inspirer l'IA." },
+  { n: "02", title: "Analyse Visuelle", desc: "L'IA analyse votre image ou votre texte pour en extraire le meilleur contexte." },
+  { n: "03", title: "Génération Script", desc: "Recevez instantanément un script structuré et prêt à être publié." },
+  { n: "04", title: "Choix des Comptes", desc: "Sélectionnez les réseaux et les comptes spécifiques pour la diffusion." },
+  { n: "05", title: "Ajustements", desc: "Personnalisez le rendu final pour qu'il colle parfaitement à votre vision." },
+  { n: "06", title: "Post Automatique", desc: "L'IA s'occupe de la publication au moment le plus impactant." },
 ];
 
 const testimonials = [
   { 
     name: "Sophie Marchand", 
-    role: "Head of Social Media", 
-    text: "Diha's Content AI a transformé notre production média. Nous avons triplé notre rythme de publication sans compromettre la qualité.",
+    role: "Social Media Manager", 
+    text: "Diha's a transformé ma production. Passer d'une photo à un script complet sur 5 comptes différents est un gain de temps incroyable.",
     avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"
   },
   { 
     name: "Thomas Rousseau", 
-    role: "Fondateur & CEO Agence", 
-    text: "La finesse de génération de l'IA est remarquable. Mes clients constatent une hausse immédiate de leur taux d'engagement.",
+    role: "Fondateur Agence", 
+    text: "La finesse de génération de l'IA est remarquable. Mes clients voient une hausse immédiate de leur engagement sur tous leurs réseaux.",
     avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80"
   },
   { 
     name: "Aïcha Koné", 
-    role: "Consultante Strategy", 
-    text: "Une interface élégante et performante. La gestion multi-projets me fait gagner plus de 15 heures par semaine.",
+    role: "Content Strategist", 
+    text: "Une interface élégante. La sélection multi-comptes me permet de gérer 10 clients sans jamais me tromper lors de la publication.",
     avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80"
   },
 ];
 
 const showcaseCards = [
   {
-    image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80",
+    image: "/visuel-marketing.jpg",
     title: "Direction Artistique IA",
-    category: "Visuel Marketing"
+    category: "Visuel Marketing",
   },
   {
-    image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&auto=format&fit=crop&q=80",
+    image: "/reseaux-sociaux.jpeg",
     title: "Post Immobilier Moderne",
-    category: "Réseaux Sociaux"
+    category: "Réseaux Sociaux",
   },
   {
-    image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600&auto=format&fit=crop&q=80",
+    image: "/branding.jpeg",
     title: "Campagne Corporate",
-    category: "Branding"
+    category: "Branding",
   },
   {
-    image: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=600&auto=format&fit=crop&q=80",
+    image: "/engagement.jpg",
     title: "Story Interactive",
-    category: "Engagement"
-  }
+    category: "Engagement",
+  },
 ];
+
 
 // --- HELPER COMPONENTS ---
 
@@ -272,26 +286,25 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
     <div id="Accueil" className="relative min-h-screen w-full max-w-full text-slate-900 selection:bg-purple-500/20 overflow-x-hidden bg-slate-50">
       <Navbar /> 
 
-      {/* --- HERO SECTION - SPLIT LAYOUT (SIDE-BY-SIDE) --- */}
    {/* --- HERO SECTION --- */}
 <section className="relative pt-24 sm:pt-48 pb-20 px-6 overflow-hidden bg-white">
   <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-12 lg:gap-24">
     
     {/* TEXTES (Gauche) */}
     <div className="flex-1 text-center lg:text-left z-10">
-      <Badge>Le futur du contenu est arrivé</Badge>
+      <Badge>Le futur de vos réseaux sociaux est ici</Badge>
       <motion.h1 
         initial={{ opacity: 0, x: -50 }}
         animate={{ opacity: 1, x: 0 }}
         className="text-4xl sm:text-6xl lg:text-7xl xl:text-8xl font-black tracking-tighter leading-tight mb-6"
       >
-        Dominez les <br />
+        Une Idée. <br />
         <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-purple-500 to-indigo-600">
-          Algorithmes.
+          Un Post Viral.
         </span>
       </motion.h1>
       <p className="text-slate-600 text-base sm:text-lg mb-10 max-w-2xl mx-auto lg:mx-0 font-medium">
-        Diha's utilise l'IA générative pour créer des posts captivants et les publier au moment exact où votre audience est connectée.
+        Diha's AI transforme vos briefs ou vos images en scripts parfaits. Choisissez vos comptes cibles et laissez l'IA publier pour vous au meilleur moment.
       </p>
       <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
         <button className="w-full sm:w-auto px-8 py-4 bg-purple-600 text-white rounded-full font-bold shadow-lg hover:scale-105 transition-transform">
@@ -330,19 +343,28 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
 </section>
 
       {/* --- LOGO MARQUEE --- */}
-      <section className="relative py-12 sm:py-20 border-y border-slate-200 overflow-hidden bg-slate-100/60">
-        <div className="max-w-7xl mx-auto px-6 mb-8 text-center">
-           <p className="text-slate-400 text-[10px] sm:text-xs font-black uppercase tracking-[0.25em]">Ils propulsent leur croissance avec Diha's AI</p>
-        </div>
-        <div className="flex gap-12 sm:gap-20 items-center whitespace-nowrap animate-marquee opacity-60 hover:opacity-100 transition-all duration-700 max-w-full">
-           {['GOOGLE', 'META', 'TIKTOK', 'LINKEDIN', 'PINTEREST', 'TWITTER', 'INSTAGRAM', 'ADOBE'].map(l => (
-             <span key={l} className="text-2xl sm:text-4xl md:text-5xl font-black text-slate-400">{l}</span>
-           ))}
-           {['GOOGLE', 'META', 'TIKTOK', 'LINKEDIN', 'PINTEREST', 'TWITTER', 'INSTAGRAM', 'ADOBE'].map(l => (
-             <span key={l+"2"} className="text-2xl sm:text-4xl md:text-5xl font-black text-slate-400">{l}</span>
-           ))}
-        </div>
-      </section>
+     <section className="relative py-12 sm:py-20 border-y border-slate-200 overflow-hidden bg-slate-100/60">
+  <div className="max-w-7xl mx-auto px-6 mb-8 text-center">
+    <p className="text-slate-400 text-[10px] sm:text-xs font-black uppercase tracking-[0.25em]">
+      Ils propulsent leur croissance avec Diha's AI
+    </p>
+  </div>
+
+  <div className="flex gap-16 items-center whitespace-nowrap animate-marquee">
+    {[...logos, ...logos].map((logo, index) => (
+      <div
+        key={index}
+        className="flex-shrink-0 w-24 sm:w-32 h-12 sm:h-16 flex items-center justify-center"
+      >
+        <img
+          src={logo}
+          alt={`Logo ${index}`}
+          className="max-h-full max-w-full object-contain opacity-60 hover:opacity-100 transition-all duration-300 grayscale hover:grayscale-0"
+        />
+      </div>
+    ))}
+  </div>
+</section>
 
       {/* --- FEATURES GRID --- */}
       <section id="how" className="py-20 sm:py-32 bg-slate-50 relative">
@@ -364,7 +386,7 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
            <SectionHeader 
             badge="Méthodologie"
             title="Un processus fluide en 6 étapes"
-            desc="Passez de l'idée initiale à la diffusion multi-canal en un temps record."
+            desc="Passez de l'idée initiale ou d'une photo à la diffusion multi-canal en un temps record."
           />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 sm:gap-6">
             {steps.map((step, i) => (
@@ -398,13 +420,13 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
             <div className="inline-flex items-center gap-2 text-purple-600 font-bold mb-4 sm:mb-6 text-xs sm:text-sm uppercase tracking-widest">
               <Sparkles size={16} /> Création Augmentée
             </div>
-            <h2 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-tighter mb-6 leading-tight text-slate-900">L'Intelligence Artificielle au service de votre image de marque</h2>
+            <h2 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-tighter mb-6 leading-tight text-slate-900">L'Intelligence Artificielle qui comprend vos images</h2>
             <div className="space-y-4 mb-8">
               {[
-                'Accroches captivantes adaptées aux codes de chaque réseau',
-                'Génération de visuels haute définition uniques',
-                'Respect strict de votre charte et de votre ton de marque',
-                'Traduction & adaptation culturelle en plus de 20 langues'
+                'Analyse de vos photos pour générer des scripts contextuels',
+                'Adaptation du ton selon les comptes sociaux sélectionnés',
+                'Génération de scripts percutants basés sur de simples briefs',
+                'Publication automatique programmée sur tous vos réseaux'
               ].map((f, i) => (
                 <div key={i} className="flex gap-3.5 items-start">
                   <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-purple-100 flex items-center justify-center shrink-0 mt-0.5">
@@ -446,29 +468,29 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
           <SectionHeader 
             badge="Plans & Tarifs"
             title="Des offres adaptées à chaque étape de votre croissance"
-            desc="Commencez sans engagement et faites évoluer vos accès selon vos besoins."
+            desc="Commencez gratuitement et faites évoluer vos accès selon vos besoins."
           />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 max-w-6xl mx-auto items-stretch">
             <PricingCard plan={{
-              name: "Starter",
+              name: "Solo",
               price: "29",
-              tagline: "Idéal pour créateurs indépendants et freelances",
+              tagline: "Idéal pour les créateurs et freelances",
               features: [
-                "1 projet & espace de travail",
+                "1 espace de travail dédié",
                 "Jusqu'à 5 comptes sociaux",
-                "200 générations IA / mois",
-                "Calendrier éditorial complet",
-                "Support réactif par email"
+                "Briefing texte & image par IA",
+                "Sélection multi-comptes",
+                "Publication automatique"
               ]
             }} />
             <PricingCard featured={true} plan={{
               name: "Professional",
               price: "59",
-              tagline: "Le choix incontournable pour les marques exigeantes",
+              tagline: "Le choix incontournable pour les marques",
               features: [
-                "Projets illimités",
+                "Espaces de travail illimités",
                 "Comptes sociaux illimités",
-                "Générations IA illimitées",
+                "IA Prioritaire pour vos scripts",
                 "Module d'analytics avancé",
                 "Support prioritaire 7j/7"
               ]
@@ -480,9 +502,9 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
               features: [
                 "Toutes les options Pro incluses",
                 "Accès équipe (10 collaborateurs)",
-                "Options Marque Blanche",
-                "Gestion fine des accès & validations",
-                "Accompagnement & onboarding dédié"
+                "Workflow de validation client",
+                "Gestion fine des comptes",
+                "Accompagnement dédié"
               ]
             }} />
           </div>
@@ -495,7 +517,7 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
           <SectionHeader 
             badge="Témoignages"
             title="Fait confiance par des milliers de créateurs"
-            desc="Découvrez les retours de nos utilisateurs à travers le monde."
+            desc="Découvrez comment Diha's automatise la présence sociale à travers le monde."
           />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
             {testimonials.map((t, i) => (
@@ -549,7 +571,7 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
           <SectionHeader 
             badge="Contact" 
             title="Une question ? On est là pour vous." 
-            desc="Besoin d'une démo personnalisée ou d'une assistance technique ? Notre équipe vous répond en moins de 24h." 
+            desc="Besoin d'aide pour lier vos comptes ou configurer vos scripts ? Notre équipe vous répond rapidement." 
           />
 
           <div className="grid lg:grid-cols-2 gap-12 sm:gap-20 mt-12 items-start">
@@ -573,8 +595,8 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
                 </div>
                 <div>
                   <h4 className="text-lg sm:text-xl font-black mb-2 tracking-tight text-slate-900">Support Live</h4>
-                  <p className="text-sm sm:text-base text-slate-600 font-medium">Disponible du lundi au vendredi</p>
-                  <p className="text-sm sm:text-base text-slate-600 font-medium">de 9h00 à 18h00.</p>
+                  <p className="text-sm sm:text-base text-slate-600 font-medium">Disponible pour vous accompagner</p>
+                  <p className="text-sm sm:text-base text-slate-600 font-medium">dans votre automatisation.</p>
                 </div>
               </div>
 
@@ -610,15 +632,15 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
                   <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Sujet</label>
                   <select className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-200 text-slate-900 focus:border-purple-600 transition-all outline-none text-sm font-medium appearance-none">
                     <option className="bg-white text-slate-900">Demande de démo</option>
-                    <option className="bg-white text-slate-900">Support technique</option>
-                    <option className="bg-white text-slate-900">Partenariat</option>
+                    <option className="bg-white text-slate-900">Question sur l'IA</option>
+                    <option className="bg-white text-slate-900">Liaison de comptes</option>
                     <option className="bg-white text-slate-900">Autre</option>
                   </select>
                 </div>
 
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Message</label>
-                  <textarea rows={4} placeholder="Comment pouvons-nous vous aider ?" className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-200 text-slate-900 focus:border-purple-600 transition-all outline-none text-sm font-medium resize-none" />
+                  <textarea rows={4} placeholder="Comment l'IA de Diha's peut vous aider ?" className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-200 text-slate-900 focus:border-purple-600 transition-all outline-none text-sm font-medium resize-none" />
                 </div>
 
                 <button className="w-full py-5 bg-purple-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs sm:text-sm hover:bg-purple-700 hover:shadow-xl hover:shadow-purple-600/20 transition-all active:scale-[0.98]">
