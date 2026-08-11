@@ -11,7 +11,6 @@ import { motion, AnimatePresence } from "framer-motion";
 
 import {
   Sparkles,
-  Layout,
   Share2,
   Calendar,
   BarChart3,
@@ -20,11 +19,9 @@ import {
   ArrowRight,
   Play,
   Star,
-  Settings,
   Mail,
   Zap,
   Wand2,
-  ChevronRight,
   ChevronDown,
   Rocket,
   MessageSquare ,
@@ -170,7 +167,7 @@ const Badge = ({ children }: { children: React.ReactNode }) => (
   <motion.div 
     initial={{ opacity: 0, y: -10 }}
     animate={{ opacity: 1, y: 0 }}
-    className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-100 border border-purple-200 text-purple-700 text-[10px] sm:text-xs font-black uppercase tracking-widest mb-6"
+    className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-100 border border-red-200 text-red-700 text-[10px] sm:text-xs font-black uppercase tracking-widest mb-6"
   >
     <Sparkles size={14} className="animate-pulse" /> {children}
   </motion.div>
@@ -182,7 +179,7 @@ const SectionHeader = ({ badge, title, desc }: any) => (
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-100 text-purple-700 border border-purple-200 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-4 sm:mb-6"
+      className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-100 text-red-700 border border-red-200 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-4 sm:mb-6"
     >
       <Zap size={14} /> {badge}
     </motion.div>
@@ -214,9 +211,9 @@ const FeatureCard = ({ feature, index }: { feature: Feature, index: number }) =>
     viewport={{ once: true }}
     transition={{ delay: index * 0.1 }}
     whileHover={{ y: -8 }}
-    className="p-6 sm:p-8 md:p-10 rounded-3xl sm:rounded-[2.5rem] bg-white border border-slate-200 shadow-sm hover:shadow-xl hover:shadow-purple-500/10 transition-all group"
+    className="p-6 sm:p-8 md:p-10 rounded-3xl sm:rounded-[2.5rem] bg-white border border-slate-200 shadow-sm hover:shadow-xl hover:shadow-red-500/10 transition-all group"
   >
-    <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center mb-6 sm:mb-8 bg-purple-100 text-purple-600 group-hover:scale-110 transition-transform`}>
+    <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center mb-6 sm:mb-8 bg-red-100 text-red-600 group-hover:scale-110 transition-transform`}>
       <feature.icon size={26} />
     </div>
     <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-3 sm:mb-4">{feature.title}</h3>
@@ -231,12 +228,12 @@ const PricingCard = ({ plan, featured = false }: any) => (
     viewport={{ once: true }}
     className={`p-6 sm:p-8 md:p-10 rounded-3xl sm:rounded-[3rem] border transition-all flex flex-col h-full ${
       featured 
-      ? 'bg-white border-purple-600 shadow-2xl shadow-purple-600/15 lg:-translate-y-4 z-10' 
+      ? 'bg-white border-red-600 shadow-2xl shadow-red-600/15 lg:-translate-y-4 z-10' 
       : 'bg-white border-slate-200 shadow-sm'
     }`}
   >
     {featured && (
-      <div className="bg-purple-600 text-white text-[10px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-full w-fit mx-auto -mt-10 sm:-mt-14 mb-6 sm:mb-8 shadow-md">
+      <div className="bg-red-600 text-white text-[10px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-full w-fit mx-auto -mt-10 sm:-mt-14 mb-6 sm:mb-8 shadow-md">
         Plus Populaire
       </div>
     )}
@@ -249,7 +246,7 @@ const PricingCard = ({ plan, featured = false }: any) => (
     <div className="space-y-3 sm:space-y-4 mb-8 sm:mb-12 flex-grow">
       {plan.features.map((f: string, i: number) => (
         <div key={i} className="flex items-center gap-3 text-xs sm:text-sm font-semibold text-slate-700">
-          <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center shrink-0 ${featured ? 'bg-purple-600 text-white' : 'bg-purple-100 text-purple-600'}`}>
+          <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center shrink-0 ${featured ? 'bg-red-600 text-white' : 'bg-red-100 text-red -600'}`}>
             <Check size={12} />
           </div>
           <span>{f}</span>
@@ -258,7 +255,7 @@ const PricingCard = ({ plan, featured = false }: any) => (
     </div>
     <button className={`w-full py-3.5 sm:py-4 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-bold transition-all active:scale-95 ${
       featured 
-      ? 'bg-purple-600 text-white hover:bg-purple-700 shadow-lg shadow-purple-600/20' 
+      ? 'bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-600/20' 
       : 'bg-slate-100 text-slate-900 hover:bg-slate-200'
     }`}>
       Choisir ce plan
@@ -283,7 +280,7 @@ const nodes = [
 
 const [openFAQ, setOpenFAQ] = useState<number | null>(null);
   return (
-    <div id="Accueil" className="relative min-h-screen w-full max-w-full text-slate-900 selection:bg-purple-500/20 overflow-x-hidden bg-slate-50">
+    <div id="Accueil" className="relative min-h-screen w-full max-w-full text-slate-900 selection:bg-red-500/20 overflow-x-hidden bg-slate-50">
       <Navbar /> 
 
    {/* --- HERO SECTION --- */}
@@ -299,7 +296,7 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
         className="text-4xl sm:text-6xl lg:text-7xl xl:text-8xl font-black tracking-tighter leading-tight mb-6"
       >
         Une Idée. <br />
-        <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-purple-500 to-indigo-600">
+        <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-black">
           Un Post Viral.
         </span>
       </motion.h1>
@@ -307,10 +304,10 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
         Diha's AI transforme vos briefs ou vos images en scripts parfaits. Choisissez vos comptes cibles et laissez l'IA publier pour vous au meilleur moment.
       </p>
       <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
-        <button className="w-full sm:w-auto px-8 py-4 bg-purple-600 text-white rounded-full font-bold shadow-lg hover:scale-105 transition-transform">
+        <button className="w-full sm:w-auto px-8 py-4 bg-red-600 text-white rounded-full font-bold shadow-lg hover:scale-105 transition-transform">
           Essayer Gratuitement →
         </button>
-        <button className="w-full sm:w-auto px-8 py-4 text-slate-800 bg-slate-100 rounded-full font-bold flex items-center justify-center gap-2">
+        <button className="w-full sm:w-auto px-18 py-4 bg-slate-100 rounded-full font-bold flex items-center justify-center gap-2 hover:scale-105 transition-transform text-red-600 hover:bg-red-100 hover:text-red-700">
           <Play size={20} fill="currentColor" /> Voir l'IA
         </button>
       </div>
@@ -321,7 +318,7 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
     <div className="relative w-full max-w-[600px] aspect-square flex items-center justify-center scale-[0.6] sm:scale-90 lg:scale-100 transition-transform duration-500">
       
       {/* Halos et Cercles de fond */}
-      <div className="absolute w-[60%] h-[60%] bg-purple-500/10 blur-[100px] rounded-full" />
+      <div className="absolute w-[60%] h-[60%] bg-red-500/10 blur-[100px] rounded-full" />
       <div className="absolute w-[80%] h-[80%] border border-slate-200/60 rounded-full" />
       <div className="absolute w-[50%] h-[50%] border border-slate-200/40 rounded-full" />
 
@@ -334,8 +331,8 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
       ))}
 
       {/* Logo Central */}
-      <div className="absolute z-30 p-4 bg-white rounded-3xl border border-violet-100 shadow-2xl">
-        <img src="/logo.png" alt="Logo" className="w-12 h-12 sm:w-16 sm:h-16 object-contain" />
+      <div className="absolute z-30 p-4 bg-white rounded-3xl border border-red-100 shadow-2xl">
+        <img src="/logo.png" alt="Logo" className="w-20 h-20 sm:w-16 sm:h-16 object-contain" />
       </div>
     </div>
 
@@ -398,7 +395,7 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
                 transition={{ delay: i * 0.08 }}
                 className="p-6 sm:p-8 rounded-2xl sm:rounded-3xl bg-slate-50 border border-slate-200 text-center flex flex-col items-center hover:border-purple-300 transition-all shadow-sm"
               >
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-600 text-white rounded-full flex items-center justify-center font-black text-base sm:text-xl mb-4 sm:mb-6 shadow-md shadow-purple-600/20">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-red-600 text-white rounded-full flex items-center justify-center font-black text-base sm:text-xl mb-4 sm:mb-6 shadow-md shadow-purple-600/20">
                   {step.n}
                 </div>
                 <h4 className="text-slate-900 font-bold text-sm sm:text-base mb-2">{step.title}</h4>
@@ -417,7 +414,7 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
              whileInView={{ opacity: 1, x: 0 }}
              viewport={{ once: true }}
           >
-            <div className="inline-flex items-center gap-2 text-purple-600 font-bold mb-4 sm:mb-6 text-xs sm:text-sm uppercase tracking-widest">
+            <div className="inline-flex items-center gap-2 text-red-600 font-bold mb-4 sm:mb-6 text-xs sm:text-sm uppercase tracking-widest">
               <Sparkles size={16} /> Création Augmentée
             </div>
             <h2 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-tighter mb-6 leading-tight text-slate-900">L'Intelligence Artificielle qui comprend vos images</h2>
@@ -429,20 +426,20 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
                 'Publication automatique programmée sur tous vos réseaux'
               ].map((f, i) => (
                 <div key={i} className="flex gap-3.5 items-start">
-                  <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-purple-100 flex items-center justify-center shrink-0 mt-0.5">
-                    <Check size={14} className="text-purple-600" />
+                  <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-red-100 flex items-center justify-center shrink-0 mt-0.5">
+                    <Check size={14} className="text-red-600" />
                   </div>
                   <p className="text-xs sm:text-base text-slate-700 font-semibold">{f}</p>
                 </div>
               ))}
             </div>
-            <button className="text-purple-600 font-black text-sm sm:text-base flex items-center gap-2 hover:gap-4 transition-all group">
+            <button className="text-red-600 font-black text-sm sm:text-base flex items-center gap-2 hover:gap-4 transition-all group">
               Exploration des capacités de l'IA <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
             </button>
           </motion.div>
           
           <div className="relative">
-             <div className="absolute -inset-6 sm:-inset-10 bg-purple-200/50 rounded-full blur-[80px] -z-10 pointer-events-none" />
+             <div className="absolute -inset-6 sm:-inset-10 bg-red-200/50 rounded-full blur-[80px] -z-10 pointer-events-none" />
              <div className="grid grid-cols-2 gap-3 sm:gap-4">
                {showcaseCards.map((card, i) => (
                  <motion.div 
@@ -453,7 +450,7 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
                    <div className="aspect-square rounded-xl sm:rounded-2xl mb-3 overflow-hidden bg-slate-100">
                      <img src={card.image} alt={card.title} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
                    </div>
-                   <p className="text-[10px] sm:text-xs font-bold text-purple-600 uppercase tracking-wider">{card.category}</p>
+                   <p className="text-[10px] sm:text-xs font-bold text-red-600 uppercase tracking-wider">{card.category}</p>
                    <p className="text-xs sm:text-sm font-bold text-slate-900 truncate">{card.title}</p>
                  </motion.div>
                ))}
@@ -534,7 +531,7 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
                   </div>
                   <div>
                     <h5 className="font-bold text-xs sm:text-sm text-slate-900">{t.name}</h5>
-                    <p className="text-[10px] sm:text-xs text-purple-600 font-bold uppercase">{t.role}</p>
+                    <p className="text-[10px] sm:text-xs text-red-600 font-bold uppercase">{t.role}</p>
                   </div>
                 </div>
               </motion.div>
@@ -579,7 +576,7 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
             {/* Infos de contact (Gauche) */}
             <div className="space-y-8 sm:space-y-12">
               <div className="flex gap-6 items-start">
-                <div className="w-12 h-12 sm:w-14 sm:h-14 bg-purple-100 border border-purple-200 rounded-2xl flex items-center justify-center text-purple-600 shrink-0">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 bg-red-100 border border-red-200 rounded-2xl flex items-center justify-center text-red-600 shrink-0">
                   <Mail size={24} />
                 </div>
                 <div>
@@ -590,7 +587,7 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
               </div>
 
               <div className="flex gap-6 items-start">
-                <div className="w-12 h-12 sm:w-14 sm:h-14 bg-blue-100 border border-blue-200 rounded-2xl flex items-center justify-center text-blue-600 shrink-0">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 bg-red-100 border border-red-200 rounded-2xl flex items-center justify-center text-red-600 shrink-0">
                   <MessageSquare size={24} />
                 </div>
                 <div>
@@ -603,7 +600,7 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
               <div className="p-8 bg-white rounded-[2rem] border border-slate-200 shadow-sm">
                 <p className="text-slate-700 font-bold mb-4 italic">"Le support est d'une réactivité incroyable. On sent que l'équipe derrière Diha's est passionnée."</p>
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-purple-600" />
+                  <div className="w-8 h-8 rounded-full bg-red-600" />
                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Marc-Antoine, Agence Bloom</p>
                 </div>
               </div>
@@ -643,7 +640,7 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
                   <textarea rows={4} placeholder="Comment l'IA de Diha's peut vous aider ?" className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-200 text-slate-900 focus:border-purple-600 transition-all outline-none text-sm font-medium resize-none" />
                 </div>
 
-                <button className="w-full py-5 bg-purple-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs sm:text-sm hover:bg-purple-700 hover:shadow-xl hover:shadow-purple-600/20 transition-all active:scale-[0.98]">
+                <button className="w-full py-5 bg-red-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs sm:text-sm hover:bg-red-700 hover:shadow-xl hover:shadow-red-600/20 transition-all active:scale-[0.98]">
                   Envoyer le message
                 </button>
               </form>
