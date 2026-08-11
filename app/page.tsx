@@ -30,17 +30,18 @@ import {
 // --- HELPER COMPONENTS ---
 const faqData = [
   {
-    question: "Comment Diha's transforme-t-il une idée ou une image en script ?",
+    question: "Comment Griot AI transforme-t-il une idée ou une image en script ?",
     answer: "Notre IA analyse votre brief textuel ou les éléments visuels de votre image pour comprendre le contexte. Elle génère ensuite un script structuré avec une accroche percutante et un appel à l'action, adapté aux codes spécifiques de chaque réseau social."
   },
   {
     question: "Puis-je choisir sur quels comptes publier un même contenu ?",
-    answer: "Absolument. Une fois votre script généré, Diha's vous permet de sélectionner précisément les comptes (Instagram, LinkedIn, TikTok, etc.) sur lesquels vous souhaitez diffuser. Vous gardez un contrôle total sur votre multi-diffusion."
+    answer: "Absolument. Une fois votre script généré, Griot AI vous permet de sélectionner précisément les comptes (Instagram, LinkedIn, TikTok, etc.) sur lesquels vous souhaitez diffuser. Vous gardez un contrôle total sur votre multi-diffusion."
   },
   {
     question: "L'IA peut-elle vraiment capter mon ton de voix ?",
     answer: "Oui ! En analysant vos publications précédentes ou en suivant vos instructions de briefing, l'IA apprend votre style. Plus vous l'utilisez, plus elle devient précise dans la rédaction de vos scripts personnalisés."
-  }, { question: "Quels sont les réseaux sociaux supportés pour la publication ?",
+  },
+ { question: "Quels sont les réseaux sociaux supportés pour la publication ?",
     answer: "Nous supportons actuellement la publication automatique sur Instagram (Posts, Reels, Stories), LinkedIn, TikTok, X (Twitter), Facebook et Pinterest. Nous centralisons tous vos accès sécurisés au même endroit."
   },
   {
@@ -52,11 +53,11 @@ const FAQItem = ({ question, answer, isOpen, onClick }: any) => (
   <div className="border-b border-slate-200 overflow-hidden">
     <button 
       onClick={onClick}
-      className="w-full py-6 flex items-center justify-between text-left group hover:text-purple-600 transition-colors"
+      className="w-full py-6 flex items-center justify-between text-left group hover:text-red-light transition-colors"
     >
       <span className="text-base sm:text-lg font-bold text-slate-900">{question}</span>
       <div className={`shrink-0 ml-4 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
-        <ChevronDown size={20} className={isOpen ? 'text-purple-600' : 'text-slate-400'} />
+        <ChevronDown size={20} className={isOpen ? 'text-red-light' : 'text-slate-400'} />
       </div>
     </button>
     <AnimatePresence>
@@ -101,7 +102,7 @@ interface Feature {
 const features: Feature[] = [
   { icon: Wand2, title: "Génération de Scripts IA", desc: "Transformez une simple idée ou une photo en un script captivant, optimisé pour la viralité sur chaque réseau.", color: "purple" },
   { icon: Share2, title: "Sélection Multi-comptes", desc: "Connectez vos profils et choisissez dynamiquement sur quels comptes publier vos contenus en un clic.", color: "blue" },
-  { icon: Rocket, title: "Auto-publication Directe", desc: "Détendez-vous pendant que Diha's publie vos posts automatiquement aux heures de forte audience.", color: "fuchsia" },
+  { icon: Rocket, title: "Auto-publication Directe", desc: "Détendez-vous pendant que Griot AI publie vos posts automatiquement aux heures de forte audience.", color: "fuchsia" },
   { icon: Calendar, title: "Planning Intelligent", desc: "Organisez vos publications avec un calendrier visuel fluide et suivez votre stratégie de contenu globale.", color: "orange" },
   { icon: BarChart3, title: "Analyses & Performance", desc: "Suivez l'impact de vos scripts générés par IA et ajustez votre stratégie grâce à des rapports détaillés.", color: "emerald" },
   { icon: Users, title: "Espaces Collaboratifs", desc: "Gérez plusieurs marques ou clients, attribuez des rôles et validez vos scripts avant la mise en ligne.", color: "pink" },
@@ -120,7 +121,7 @@ const testimonials = [
   { 
     name: "Sophie Marchand", 
     role: "Social Media Manager", 
-    text: "Diha's a transformé ma production. Passer d'une photo à un script complet sur 5 comptes différents est un gain de temps incroyable.",
+    text: "Griot AI a transformé ma production. Passer d'une photo à un script complet sur 5 comptes différents est un gain de temps incroyable.",
     avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"
   },
   { 
@@ -167,7 +168,7 @@ const Badge = ({ children }: { children: React.ReactNode }) => (
   <motion.div 
     initial={{ opacity: 0, y: -10 }}
     animate={{ opacity: 1, y: 0 }}
-    className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-100 border border-red-200 text-red-700 text-[10px] sm:text-xs font-black uppercase tracking-widest mb-6"
+    className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-100 border border-red-200 text-red-dark text-[10px] sm:text-xs font-black uppercase tracking-widest mb-6"
   >
     <Sparkles size={14} className="animate-pulse" /> {children}
   </motion.div>
@@ -179,7 +180,7 @@ const SectionHeader = ({ badge, title, desc }: any) => (
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-100 text-red-700 border border-red-200 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-4 sm:mb-6"
+      className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-100 text-red-dark border border-red-200 text-[10px] sm:text-xs font-black uppercase tracking-widest mb-4 sm:mb-6"
     >
       <Zap size={14} /> {badge}
     </motion.div>
@@ -213,7 +214,7 @@ const FeatureCard = ({ feature, index }: { feature: Feature, index: number }) =>
     whileHover={{ y: -8 }}
     className="p-6 sm:p-8 md:p-10 rounded-3xl sm:rounded-[2.5rem] bg-white border border-slate-200 shadow-sm hover:shadow-xl hover:shadow-red-500/10 transition-all group"
   >
-    <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center mb-6 sm:mb-8 bg-red-100 text-red-600 group-hover:scale-110 transition-transform`}>
+    <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center mb-6 sm:mb-8 bg-red-100 text-red-light group-hover:scale-110 transition-transform`}>
       <feature.icon size={26} />
     </div>
     <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-3 sm:mb-4">{feature.title}</h3>
@@ -228,12 +229,12 @@ const PricingCard = ({ plan, featured = false }: any) => (
     viewport={{ once: true }}
     className={`p-6 sm:p-8 md:p-10 rounded-3xl sm:rounded-[3rem] border transition-all flex flex-col h-full ${
       featured 
-      ? 'bg-white border-red-600 shadow-2xl shadow-red-600/15 lg:-translate-y-4 z-10' 
+      ? 'bg-white border-red-light shadow-2xl shadow-red-light/15 lg:-translate-y-4 z-10' 
       : 'bg-white border-slate-200 shadow-sm'
     }`}
   >
     {featured && (
-      <div className="bg-red-600 text-white text-[10px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-full w-fit mx-auto -mt-10 sm:-mt-14 mb-6 sm:mb-8 shadow-md">
+      <div className="bg-red-light text-white text-[10px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-full w-fit mx-auto -mt-10 sm:-mt-14 mb-6 sm:mb-8 shadow-md">
         Plus Populaire
       </div>
     )}
@@ -246,7 +247,7 @@ const PricingCard = ({ plan, featured = false }: any) => (
     <div className="space-y-3 sm:space-y-4 mb-8 sm:mb-12 flex-grow">
       {plan.features.map((f: string, i: number) => (
         <div key={i} className="flex items-center gap-3 text-xs sm:text-sm font-semibold text-slate-700">
-          <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center shrink-0 ${featured ? 'bg-red-600 text-white' : 'bg-red-100 text-red -600'}`}>
+          <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center shrink-0 ${featured ? 'bg-red-light text-white' : 'bg-red-100 text-red-light'}`}>
             <Check size={12} />
           </div>
           <span>{f}</span>
@@ -255,7 +256,7 @@ const PricingCard = ({ plan, featured = false }: any) => (
     </div>
     <button className={`w-full py-3.5 sm:py-4 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-bold transition-all active:scale-95 ${
       featured 
-      ? 'bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-600/20' 
+      ? 'bg-red-light text-white hover:bg-red-light shadow-lg shadow-red-light/20' 
       : 'bg-slate-100 text-slate-900 hover:bg-slate-200'
     }`}>
       Choisir ce plan
@@ -280,7 +281,7 @@ const nodes = [
 
 const [openFAQ, setOpenFAQ] = useState<number | null>(null);
   return (
-    <div id="Accueil" className="relative min-h-screen w-full max-w-full text-slate-900 selection:bg-red-500/20 overflow-x-hidden bg-slate-50">
+    <div id="Accueil" className="relative min-h-screen w-full max-w-full text-slate-900 selection:bg-red-light/20 overflow-x-hidden bg-slate-50">
       <Navbar /> 
 
    {/* --- HERO SECTION --- */}
@@ -289,25 +290,21 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
     
     {/* TEXTES (Gauche) */}
     <div className="flex-1 text-center lg:text-left z-10">
-      <Badge>Le futur de vos réseaux sociaux est ici</Badge>
       <motion.h1 
         initial={{ opacity: 0, x: -50 }}
         animate={{ opacity: 1, x: 0 }}
-        className="text-4xl sm:text-6xl lg:text-7xl xl:text-8xl font-black tracking-tighter leading-tight mb-6"
+        className="text-4xl sm:text-6xl lg:text-7xl xl:text-7xl font-black tracking-tighter leading-tight mb-6"
       >
-        Une Idée. <br />
-        <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-black">
-          Un Post Viral.
-        </span>
+      <span className="text-red-light">  Crée</span> plus. <span className="text-red-light"> Publie</span> plus. <span className="text-red-light"> Domine</span> les réseaux.
       </motion.h1>
       <p className="text-slate-600 text-base sm:text-lg mb-10 max-w-2xl mx-auto lg:mx-0 font-medium">
-        Diha's AI transforme vos briefs ou vos images en scripts parfaits. Choisissez vos comptes cibles et laissez l'IA publier pour vous au meilleur moment.
+        Griot AI transforme vos briefs ou vos images en scripts parfaits. Choisissez vos comptes cibles et laissez l'IA publier pour vous au meilleur moment.
       </p>
       <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
-        <button className="w-full sm:w-auto px-8 py-4 bg-red-600 text-white rounded-full font-bold shadow-lg hover:scale-105 transition-transform">
+        <button className="w-full sm:w-auto px-8 py-4 bg-red-light text-white rounded-full font-bold shadow-lg hover:scale-105 transition-transform">
           Essayer Gratuitement →
         </button>
-        <button className="w-full sm:w-auto px-18 py-4 bg-slate-100 rounded-full font-bold flex items-center justify-center gap-2 hover:scale-105 transition-transform text-red-600 hover:bg-red-100 hover:text-red-700">
+        <button className="w-full sm:w-auto px-18 py-4 border border-red-light text-red-light rounded-full font-bold flex items-center justify-center gap-2 hover:scale-105 transition-transform">
           <Play size={20} fill="currentColor" /> Voir l'IA
         </button>
       </div>
@@ -318,7 +315,7 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
     <div className="relative w-full max-w-[600px] aspect-square flex items-center justify-center scale-[0.6] sm:scale-90 lg:scale-100 transition-transform duration-500">
       
       {/* Halos et Cercles de fond */}
-      <div className="absolute w-[60%] h-[60%] bg-red-500/10 blur-[100px] rounded-full" />
+      <div className="absolute w-[60%] h-[60%] bg-red-light/10 blur-[100px] rounded-full" />
       <div className="absolute w-[80%] h-[80%] border border-slate-200/60 rounded-full" />
       <div className="absolute w-[50%] h-[50%] border border-slate-200/40 rounded-full" />
 
@@ -332,7 +329,7 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
 
       {/* Logo Central */}
       <div className="absolute z-30 p-4 bg-white rounded-3xl border border-red-100 shadow-2xl">
-        <img src="/logo.png" alt="Logo" className="w-20 h-20 sm:w-16 sm:h-16 object-contain" />
+        <img src="/logo_rouge.png" alt="Logo" className="w-20 h-20 sm:w-16 sm:h-16 object-contain" />
       </div>
     </div>
 
@@ -340,10 +337,10 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
 </section>
 
       {/* --- LOGO MARQUEE --- */}
-     <section className="relative py-12 sm:py-20 border-y border-slate-200 overflow-hidden bg-slate-100/60">
+     <section className="relative py-10 sm:py-20 overflow-hidden bg-white">
   <div className="max-w-7xl mx-auto px-6 mb-8 text-center">
-    <p className="text-slate-400 text-[10px] sm:text-xs font-black uppercase tracking-[0.25em]">
-      Ils propulsent leur croissance avec Diha's AI
+    <p className="text-[10px] sm:text-xs font-black uppercase tracking-[0.25em]">
+      Ils propulsent leur croissance avec Griot AI
     </p>
   </div>
 
@@ -356,7 +353,7 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
         <img
           src={logo}
           alt={`Logo ${index}`}
-          className="max-h-full max-w-full object-contain opacity-60 hover:opacity-100 transition-all duration-300 grayscale hover:grayscale-0"
+          className="max-h-full max-w-full object-contain transition-all duration-300 grayscale-0"
         />
       </div>
     ))}
@@ -368,8 +365,8 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
         <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
           <SectionHeader 
             badge="Plateforme All-in-One"
-            title="Tout votre écosystème créatif centralisé"
-            desc="Dites adieu au jonglage entre dix applications. Diha's rassemble l'ensemble de votre chaîne de production de contenus."
+            title="Votre univers au même endroit"
+            desc="Dites adieu au jonglage entre dix applications. Griot AI rassemble l'ensemble de votre chaîne de production de contenus."
           />
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             {features.map((f, i) => <FeatureCard key={i} feature={f} index={i} />)}
@@ -382,10 +379,10 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
         <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
            <SectionHeader 
             badge="Méthodologie"
-            title="Un processus fluide en 6 étapes"
+            title="De l'idée à la publication en 6 étapes"
             desc="Passez de l'idée initiale ou d'une photo à la diffusion multi-canal en un temps record."
           />
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 sm:gap-6 ">
             {steps.map((step, i) => (
               <motion.div 
                 key={i} 
@@ -393,9 +390,9 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.08 }}
-                className="p-6 sm:p-8 rounded-2xl sm:rounded-3xl bg-slate-50 border border-slate-200 text-center flex flex-col items-center hover:border-purple-300 transition-all shadow-sm"
+                className="p-6 hover:scale-105 transition-transform duration-500 sm:p-8 rounded-2xl sm:rounded-3xl bg-slate-50 border border-slate-200 text-center flex flex-col items-center hover:border-red-light transition-all shadow-sm"
               >
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-red-600 text-white rounded-full flex items-center justify-center font-black text-base sm:text-xl mb-4 sm:mb-6 shadow-md shadow-purple-600/20">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-red-light text-white rounded-full flex items-center justify-center font-black text-base sm:text-xl mb-4 sm:mb-6 shadow-md shadow-red-light/20">
                   {step.n}
                 </div>
                 <h4 className="text-slate-900 font-bold text-sm sm:text-base mb-2">{step.title}</h4>
@@ -414,7 +411,7 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
              whileInView={{ opacity: 1, x: 0 }}
              viewport={{ once: true }}
           >
-            <div className="inline-flex items-center gap-2 text-red-600 font-bold mb-4 sm:mb-6 text-xs sm:text-sm uppercase tracking-widest">
+            <div className="inline-flex items-center gap-2 text-red-light font-bold mb-4 sm:mb-6 text-xs sm:text-sm uppercase tracking-widest">
               <Sparkles size={16} /> Création Augmentée
             </div>
             <h2 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-tighter mb-6 leading-tight text-slate-900">L'Intelligence Artificielle qui comprend vos images</h2>
@@ -427,13 +424,13 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
               ].map((f, i) => (
                 <div key={i} className="flex gap-3.5 items-start">
                   <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-red-100 flex items-center justify-center shrink-0 mt-0.5">
-                    <Check size={14} className="text-red-600" />
+                    <Check size={14} className="text-red-light" />
                   </div>
                   <p className="text-xs sm:text-base text-slate-700 font-semibold">{f}</p>
                 </div>
               ))}
             </div>
-            <button className="text-red-600 font-black text-sm sm:text-base flex items-center gap-2 hover:gap-4 transition-all group">
+            <button className="text-red-light font-black text-sm sm:text-base flex items-center gap-2 hover:gap-4 transition-all group">
               Exploration des capacités de l'IA <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
             </button>
           </motion.div>
@@ -450,7 +447,7 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
                    <div className="aspect-square rounded-xl sm:rounded-2xl mb-3 overflow-hidden bg-slate-100">
                      <img src={card.image} alt={card.title} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
                    </div>
-                   <p className="text-[10px] sm:text-xs font-bold text-red-600 uppercase tracking-wider">{card.category}</p>
+                   <p className="text-[10px] sm:text-xs font-bold text-red-light uppercase tracking-wider">{card.category}</p>
                    <p className="text-xs sm:text-sm font-bold text-slate-900 truncate">{card.title}</p>
                  </motion.div>
                ))}
@@ -514,7 +511,7 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
           <SectionHeader 
             badge="Témoignages"
             title="Fait confiance par des milliers de créateurs"
-            desc="Découvrez comment Diha's automatise la présence sociale à travers le monde."
+            desc="Découvrez comment Griot AI automatise la présence sociale à travers le monde."
           />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
             {testimonials.map((t, i) => (
@@ -531,7 +528,7 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
                   </div>
                   <div>
                     <h5 className="font-bold text-xs sm:text-sm text-slate-900">{t.name}</h5>
-                    <p className="text-[10px] sm:text-xs text-red-600 font-bold uppercase">{t.role}</p>
+                    <p className="text-[10px] sm:text-xs text-red-light font-bold uppercase">{t.role}</p>
                   </div>
                 </div>
               </motion.div>
@@ -546,7 +543,7 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
           <SectionHeader 
             badge="FAQ" 
             title="Des questions ? Nous avons les réponses" 
-            desc="Tout ce que vous devez savoir sur Diha's Content AI." 
+            desc="Tout ce que vous devez savoir sur Griot AI." 
           />
           <div className="bg-slate-50 rounded-[2.5rem] p-6 sm:p-10 shadow-sm border border-slate-200">
             {faqData.map((faq, index) => (
@@ -576,7 +573,7 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
             {/* Infos de contact (Gauche) */}
             <div className="space-y-8 sm:space-y-12">
               <div className="flex gap-6 items-start">
-                <div className="w-12 h-12 sm:w-14 sm:h-14 bg-red-100 border border-red-200 rounded-2xl flex items-center justify-center text-red-600 shrink-0">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 bg-red-100 border border-red-200 rounded-2xl flex items-center justify-center text-red-light shrink-0">
                   <Mail size={24} />
                 </div>
                 <div>
@@ -587,7 +584,7 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
               </div>
 
               <div className="flex gap-6 items-start">
-                <div className="w-12 h-12 sm:w-14 sm:h-14 bg-red-100 border border-red-200 rounded-2xl flex items-center justify-center text-red-600 shrink-0">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 bg-red-100 border border-red-200 rounded-2xl flex items-center justify-center text-red-light shrink-0">
                   <MessageSquare size={24} />
                 </div>
                 <div>
@@ -598,9 +595,9 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
               </div>
 
               <div className="p-8 bg-white rounded-[2rem] border border-slate-200 shadow-sm">
-                <p className="text-slate-700 font-bold mb-4 italic">"Le support est d'une réactivité incroyable. On sent que l'équipe derrière Diha's est passionnée."</p>
+                <p className="text-slate-700 font-bold mb-4 italic">"Le support est d'une réactivité incroyable. On sent que l'équipe derrière Griot AI est passionnée."</p>
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-red-600" />
+                  <div className="w-8 h-8 rounded-full bg-red-light" />
                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Marc-Antoine, Agence Bloom</p>
                 </div>
               </div>
@@ -637,10 +634,10 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
 
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Message</label>
-                  <textarea rows={4} placeholder="Comment l'IA de Diha's peut vous aider ?" className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-200 text-slate-900 focus:border-purple-600 transition-all outline-none text-sm font-medium resize-none" />
+                  <textarea rows={4} placeholder="Comment l'IA de Griot AI peut vous aider ?" className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-200 text-slate-900 focus:border-purple-600 transition-all outline-none text-sm font-medium resize-none" />
                 </div>
 
-                <button className="w-full py-5 bg-red-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs sm:text-sm hover:bg-red-700 hover:shadow-xl hover:shadow-red-600/20 transition-all active:scale-[0.98]">
+                <button className="w-full py-5 bg-red-light text-white rounded-2xl font-black uppercase tracking-widest text-xs sm:text-sm hover:bg-red-700 hover:shadow-xl hover:shadow-red-600/20 transition-all active:scale-[0.98]">
                   Envoyer le message
                 </button>
               </form>

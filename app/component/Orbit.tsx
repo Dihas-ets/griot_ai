@@ -53,12 +53,12 @@ export default function Orbit({
             scale: [1, 1.18, 1],
             boxShadow: [
               "0 0 0 rgba(139,92,246,0)",
-              "0 0 30px rgba(139,92,246,.6)",
+              "0 0 30px rgba(255, 0, 0, 0.6)",
               "0 0 0 rgba(139,92,246,0)",
             ],
             borderColor: [
               "#E2E8F0",
-              "#A855F7",
+              "#ff0000",
               "#E2E8F0",
             ],
           }}

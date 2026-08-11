@@ -28,11 +28,11 @@ export default function Connection({ x, y }: ConnectionProps) {
       {particles.map((_, index) => (
         <motion.div
           key={index}
-          className="absolute top-1/2 -translate-y-1/2 rounded-full bg-violet-500"
+          className="absolute top-1/2 -translate-y-1/2 rounded-full bg-red-light"
           style={{
             width: 6,
             height: 6,
-            boxShadow: "0 0 12px #8B5CF6",
+            boxShadow: "0 0 12px #ff0000",
           }}
           animate={{
             x: [-10, distance],

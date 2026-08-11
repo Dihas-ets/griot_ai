@@ -9,7 +9,7 @@ import {
 
 export default function Footer() {
   return (
-    <footer className="bg-red-900/30 border-t border-slate-200">
+    <footer className="bg-red-600 border-t border-slate-200">
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10">
 
         {/* FOOTER MAIN CONTENT */}
@@ -28,9 +28,18 @@ export default function Footer() {
 
             {/* LOGO + DESCRIPTION */}
             <div className="flex flex-col items-start">
-           
+           <a href="/" className="flex items-center gap-3">
+                <div>
+                  <img
+                    src="/logo_blanc.png"
+                    width={150}
+                    height={130}
+                    alt="Logo"
+                  />
+                </div>
+              </a>
 
-              <p className="mt-5 text-sm leading-6 max-w-sm">
+              <p className="mt-5 text-white text-sm leading-6 max-w-sm">
                 Créez, planifiez et gérez vos contenus plus facilement
                 grâce à l'intelligence artificielle.
               </p>
@@ -48,9 +57,10 @@ export default function Footer() {
                       border border-slate-200
                       flex items-center justify-center
                       transition-all duration-200
-                      hover:bg-red-600
+                      hover:bg-red-400
                       hover:text-white
-                      hover:border-red-600
+                      hover:border-red-400
+                      text-white 
                     "
                   >
                     <Icon size={15} />
@@ -61,27 +71,27 @@ export default function Footer() {
 
             {/* PRODUIT */}
             <div>
-              <h6 className="text-xs font-bold uppercase tracking-widest text-white mb-6">
+              <h6 className="text-xs text-white underline font-bold uppercase tracking-widest mb-6">
                 Produit
               </h6>
               <ul className="space-y-4 text-sm">
                 <li>
-                  <a href="#features" className="hover:text-red-600 transition-colors">
+                  <a href="#features" className="text-white  hover:text-black transition-colors">
                     Génération IA
                   </a>
                 </li>
                 <li>
-                  <a href="#features" className="hover:text-red-600 transition-colors">
+                  <a href="#features" className="text-white  hover:text-black transition-colors">
                     Fonctionnalités
                   </a>
                 </li>
                 <li>
-                  <a href="#how" className="hover:text-red-600 transition-colors">
+                  <a href="#how" className="text-white  hover:text-black transition-colors">
                     Comment ça marche
                   </a>
                 </li>
                 <li>
-                  <a href="#pricing" className="hover:text-red-600 transition-colors">
+                  <a href="#pricing" className="text-white  hover:text-black transition-colors">
                     Tarifs
                   </a>
                 </li>
@@ -90,32 +100,32 @@ export default function Footer() {
 
             {/* NAVIGATION */}
             <div>
-              <h6 className="text-xs font-bold uppercase tracking-widest text-white mb-6">
+              <h6 className="text-xs text-white underline font-bold uppercase tracking-widest mb-6">
                 Navigation
               </h6>
               <ul className="space-y-4 text-sm">
                 <li>
-                  <a href="#accueil" className="hover:text-red-600 transition-colors">
+                  <a href="#accueil" className="text-white  hover:text-black transition-colors">
                     Accueil
                   </a>
                 </li>
                 <li>
-                  <a href="#features" className="hover:text-red-600 transition-colors">
+                  <a href="#features" className="text-white  hover:text-black transition-colors">
                     Fonctionnalités
                   </a>
                 </li>
                 <li>
-                  <a href="#pricing" className="hover:text-red-600 transition-colors">
+                  <a href="#pricing" className="text-white  hover:text-black  transition-colors">
                     Tarifs
                   </a>
                 </li>
                 <li>
-                  <a href="#faq" className="hover:text-red-600 transition-colors">
+                  <a href="#faq" className="text-white  hover:text-black transition-colors">
                     FAQ
                   </a>
                 </li>
                 <li>
-                  <a href="#contact" className="hover:text-red-600 transition-colors">
+                  <a href="#contact" className="text-white hover:text-black transition-colors">
                     Contact
                   </a>
                 </li>
@@ -124,27 +134,27 @@ export default function Footer() {
 
             {/* LÉGAL */}
             <div>
-              <h6 className="text-xs font-bold uppercase tracking-widest text-white mb-6">
+              <h6 className="text-xs text-white underline font-bold uppercase tracking-widest mb-6">
                 Légal
               </h6>
               <ul className="space-y-4 text-sm">
                 <li>
-                  <a href="#" className="hover:text-red-600 transition-colors">
+                  <a href="#" className="text-white  hover:text-black transition-colors">
                     À propos
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-red-600 transition-colors">
+                  <a href="#" className="text-white  hover:text-black transition-colors">
                     Confidentialité
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-red-600 transition-colors">
+                  <a href="#" className="text-white  hover:text-black transition-colors">
                     Conditions
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-red-600 transition-colors">
+                  <a href="#" className="text-white  hover:text-black transition-colors">
                     Cookies
                   </a>
                 </li>
@@ -168,11 +178,11 @@ export default function Footer() {
             gap-4
           "
         >
-          <p className="text-xs">
+          <p className="text-xs text-white ">
             © 2026 Griot AI. Tous droits réservés.
           </p>
 
-          <div className="flex items-center gap-2 text-xs">
+          <div className="flex items-center text-white gap-2 text-xs">
             <Globe size={14} />
             <span>Français (FR)</span>
           </div>
