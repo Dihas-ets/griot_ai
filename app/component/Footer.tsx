@@ -57,9 +57,9 @@ export default function Footer() {
                       border border-slate-200
                       flex items-center justify-center
                       transition-all duration-200
-                      hover:bg-red-400
+                      hover:bg-red-dark
                       hover:text-white
-                      hover:border-red-400
+                      hover:border-red-light
                       text-white 
                     "
                   >
@@ -85,11 +85,7 @@ export default function Footer() {
                     Fonctionnalités
                   </a>
                 </li>
-                <li>
-                  <a href="#how" className="text-white  hover:text-black transition-colors">
-                    Comment ça marche
-                  </a>
-                </li>
+               
                 <li>
                   <a href="#pricing" className="text-white  hover:text-black transition-colors">
                     Tarifs
@@ -107,6 +103,11 @@ export default function Footer() {
                 <li>
                   <a href="#accueil" className="text-white  hover:text-black transition-colors">
                     Accueil
+                  </a>
+                </li>
+                 <li>
+                  <a href="#how" className="text-white  hover:text-black transition-colors">
+                    Comment ça marche
                   </a>
                 </li>
                 <li>
@@ -161,30 +162,6 @@ export default function Footer() {
               </ul>
             </div>
 
-          </div>
-        </div>
-
-        {/* BAS DU FOOTER */}
-        <div
-          className="
-            border-t
-            border-slate-200
-            py-6
-            flex
-            flex-col
-            sm:flex-row
-            items-center
-            justify-between
-            gap-4
-          "
-        >
-          <p className="text-xs text-white ">
-            © 2026 Griot AI. Tous droits réservés.
-          </p>
-
-          <div className="flex items-center text-white gap-2 text-xs">
-            <Globe size={14} />
-            <span>Français (FR)</span>
           </div>
         </div>
 

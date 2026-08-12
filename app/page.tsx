@@ -466,7 +466,7 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
           />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 max-w-6xl mx-auto items-stretch">
             <PricingCard plan={{
-              name: "Solo",
+              name: "particulier",
               price: "29",
               tagline: "Idéal pour les créateurs et freelances",
               features: [
@@ -478,7 +478,7 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
               ]
             }} />
             <PricingCard featured={true} plan={{
-              name: "Professional",
+              name: "Professionel",
               price: "59",
               tagline: "Le choix incontournable pour les marques",
               features: [
@@ -490,7 +490,7 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
               ]
             }} />
             <PricingCard plan={{
-              name: "Agency",
+              name: "Agence",
               price: "149",
               tagline: "Conçu pour les équipes et agences marketing",
               features: [
@@ -578,8 +578,8 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
                 </div>
                 <div>
                   <h4 className="text-lg sm:text-xl font-black mb-2 tracking-tight text-slate-900">Envoyez-nous un message</h4>
-                  <p className="text-sm sm:text-base text-slate-600 font-medium">contact@diha.ai</p>
-                  <p className="text-sm sm:text-base text-slate-600 font-medium">support@diha.ai</p>
+                  <p className="text-sm sm:text-base text-slate-600 font-medium">contact@griot.ai</p>
+                  <p className="text-sm sm:text-base text-slate-600 font-medium">support@griot.ai</p>
                 </div>
               </div>
 
