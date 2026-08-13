@@ -40,7 +40,7 @@ const menuItems = [
   {
     icon: FileText,
     label: "Publications",
-    href: "/dashboard/publications",
+    href: "/dashboard/mes_publications",
   },
   {
     icon: FolderOpen,
@@ -50,7 +50,7 @@ const menuItems = [
   {
     icon: Share2,
     label: "Réseaux sociaux",
-    href: "/dashboard/reseaux-sociaux",
+    href: "/dashboard/reseaux_sociaux",
   },
   {
     icon: Layout,

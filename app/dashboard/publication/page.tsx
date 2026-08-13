@@ -199,149 +199,125 @@ export default function CreatePublicationPage() {
       {/* =====================================================
           HEADER
       ===================================================== */}
+<header className="sticky top-0 border-b border-slate-200/80 bg-white/95 backdrop-blur">
+  <div className="mx-auto flex min-h-[72px] w-full max-w-[1800px] items-center px-3 sm:px-5 lg:px-8">
 
-      <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/95 backdrop-blur">
-        <div className="mx-auto flex h-[72px] max-w-[1800px] items-center justify-between px-4 sm:px-6 lg:px-8">
+    {/* =====================================================
+        GAUCHE — TITRE 
+        (flex-1 pour occuper l'espace et permettre le centrage du milieu)
+    ===================================================== */}
+    <div className="flex-1 min-w-0">
+      {/* pl-14 pour ne pas être sous le burger menu noir sur mobile */}
+      <div className="pl-14 md:pl-12 lg:pl-0 xl:pl-0 min-w-0">
+        <p className="mb-0.5 hidden text-[9px] font-bold uppercase tracking-[0.16em] text-slate-400 md:block">
+          Création de contenu
+        </p>
+        <h1 className="truncate text-[14px] font-extrabold tracking-tight text-slate-900 sm:text-[16px] lg:text-[19px]">
+          Créer une publication
+        </h1>
+      </div>
+    </div>
 
-          {/* GAUCHE */}
+    {/* =====================================================
+        CENTRE — SÉLECTEUR DE PROJET 
+        (Centré parfaitement à partir de md)
+    ===================================================== */}
+    <div className="flex-none md:flex-1 flex md:justify-center items-center">
+      <div className="relative">
+        <button
+          onClick={() => setShowProjectMenu(!showProjectMenu)}
+          className="
+            flex items-center gap-2
+            rounded-xl border border-slate-200 bg-white
+            px-2.5 py-2 shadow-sm transition hover:border-slate-300 hover:bg-slate-50
+            w-[110px]      
+            sm:w-[130px]
+            md:w-[180px]
+            lg:w-[210px]
+          "
+        >
+          {/* ICÔNE */}
+          <div className="flex h-6 w-6 sm:h-7 sm:w-7 shrink-0 items-center justify-center rounded-lg bg-red-100 text-red-600">
+            ✦
+          </div>
 
-          <div className="flex min-w-0 items-center">
+          {/* TEXTE PROJET */}
+          <div className="min-w-0 flex-1 text-left">
+            <p className="hidden text-[8px] font-semibold text-slate-400 md:block leading-tight">
+              Projet actif
+            </p>
+            <p className="truncate text-[10px] font-bold text-slate-800 sm:text-xs">
+              Presta
+            </p>
+          </div>
 
-            <div className="min-w-0">
+          <ChevronDown
+            size={14}
+            className={`shrink-0 text-slate-400 transition-transform duration-300 ${
+              showProjectMenu ? "rotate-180" : ""
+            }`}
+          />
+        </button>
 
-              <p className="mb-1 hidden text-[9px] font-bold uppercase tracking-[0.16em] text-slate-400 sm:block">
-                Création de contenu
+        {/* MENU DÉROULANT */}
+        {showProjectMenu && (
+          <div className="absolute left-1/2 -translate-x-1/2 md:left-0 md:translate-x-0 top-[52px] z-[100] w-[260px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+            <div className="border-b border-slate-100 px-4 py-3">
+              <p className="text-[9px] font-black uppercase tracking-[0.15em] text-slate-400">
+                Mes projets
               </p>
-
-              <h1 className="truncate text-[17px] font-extrabold tracking-tight text-slate-900 sm:text-[19px]">
-                Créer une publication
-              </h1>
-
             </div>
-
-          </div>
-
-          {/* PROJET */}
-
-          <div className="relative">
-
-            <button
-              onClick={() => setShowProjectMenu(!showProjectMenu)}
-              className="flex min-w-[150px] items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 sm:min-w-[210px]"
-            >
-
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-red-light text-red-light">
-                ✦
-              </div>
-
-              <div className="hidden min-w-0 flex-1 text-left sm:block">
-
-                <p className="text-[8px] font-semibold text-slate-400">
-                  Projet actif
-                </p>
-
-                <p className="truncate text-xs font-bold text-slate-800">
-                  Presta
-                </p>
-
-              </div>
-
-              <ChevronDown
-                size={15}
-                className={`shrink-0 text-slate-400 transition ${
-                  showProjectMenu ? "rotate-180" : ""
+            {["Presta", "Diha's Agency", "Fofana Voyage", "Clinico"].map((project, index) => (
+              <button
+                key={project}
+                onClick={() => setShowProjectMenu(false)}
+                className={`flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-slate-50 ${
+                  index === 0 ? "bg-red-50/50" : ""
                 }`}
-              />
-
+              >
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-sm">
+                  {index === 0 ? "✦" : "👤"}
+                </span>
+                <span className="min-w-0 flex-1 truncate text-xs font-semibold text-slate-700">
+                  {project}
+                </span>
+                {index === 0 && <Check size={15} className="shrink-0 text-red-600" />}
+              </button>
+            ))}
+            <button className="flex w-full items-center gap-2 border-t border-slate-100 px-4 py-3 text-xs font-bold text-red-600 transition hover:bg-red-50">
+              <Plus size={15} />
+              Créer un projet
             </button>
-
-            {showProjectMenu && (
-              <div className="absolute right-0 top-[52px] z-[100] w-[280px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.15)]">
-
-                <div className="border-b border-slate-100 px-4 py-3">
-
-                  <p className="text-[9px] font-black uppercase tracking-[0.15em] text-slate-400">
-                    Mes projets
-                  </p>
-
-                </div>
-
-                {[
-                  "Presta",
-                  "Diha's Agency",
-                  "Fofana Voyage",
-                  "Clinico",
-                ].map((project, index) => (
-
-                  <button
-                    key={project}
-                    onClick={() => setShowProjectMenu(false)}
-                    className={`flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-slate-50 ${
-                      index === 0 ? "bg-red-light/10" : ""
-                    }`}
-                  >
-
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-sm">
-                      {index === 0 ? "✦" : "👤"}
-                    </span>
-
-                    <span className="flex-1 text-xs font-semibold text-slate-700">
-                      {project}
-                    </span>
-
-                    {index === 0 && (
-                      <Check
-                        size={15}
-                        className="text-red-dark"
-                      />
-                    )}
-
-                  </button>
-
-                ))}
-
-                <button className="flex w-full items-center gap-2 border-t border-slate-100 px-4 py-3 text-xs font-bold text-red-dark transition hover:bg-red-light/10">
-                  <Plus size={15} />
-                  Créer un projet
-                </button>
-
-              </div>
-            )}
-
           </div>
+        )}
+      </div>
+    </div>
 
-          {/* DROITE */}
+    {/* =====================================================
+        DROITE — ICONES / PROFIL
+        (Masqué sur mobile, visible sur md+)
+    ===================================================== */}
+    <div className="hidden md:flex md:flex-1 items-center justify-end gap-2 lg:gap-3">
+      {/* AIDE */}
+      <button className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-50 hover:text-slate-700 transition-colors">
+        <HelpCircle size={18} />
+      </button>
 
-          <div className="flex items-center gap-2 sm:gap-3">
+      {/* NOTIFICATIONS */}
+      <button className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-50 hover:text-slate-700 transition-colors">
+        <Bell size={18} />
+<span className="absolute right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[8px] font-black text-white">
+          3
+        </span>      </button>
 
-            <button
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-transparent text-slate-400 transition hover:border-slate-200 hover:bg-slate-50 hover:text-slate-700"
-              aria-label="Aide"
-            >
-              <HelpCircle size={18} />
-            </button>
-
-            <button
-              className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-transparent text-slate-400 transition hover:border-slate-200 hover:bg-slate-50 hover:text-slate-700"
-              aria-label="Notifications"
-            >
-
-              <Bell size={18} />
-
-              <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[8px] font-black text-white">
-                3
-              </span>
-
-            </button>
-
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 text-xs font-black text-white shadow-sm">
+      {/* PROFIL */}
+      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-red-600 text-xs font-black text-white">
               Y
             </div>
+    </div>
 
-          </div>
-
-        </div>
-      </header>
+  </div>
+</header>
 
       {/* =====================================================
           CONTENU
@@ -389,7 +365,7 @@ export default function CreatePublicationPage() {
                   <span className="text-red-500"> *</span>
                 </label>
 
-                <div className="relative">
+                <div>
 
                   <textarea
                     value={idea}
@@ -418,7 +394,7 @@ focus:ring-red-dark/10"
                   Ton souhaité
                 </label>
 
-                <div className="relative">
+                <div>
 
                   <select className="w-full appearance-none rounded-xl border border-slate-200 bg-[#fafbfc] px-3 py-3 text-[11px] font-semibold text-slate-700 outline-none transition focus:border-[#8b75e8] focus:bg-white focus:ring-4 focus:ring-red-light/5">
                     <option>Professionnel & motivant</option>
@@ -445,7 +421,7 @@ focus:ring-red-dark/10"
                   Langue
                 </label>
 
-                <div className="relative">
+                <div>
 
                   <select className="w-full appearance-none rounded-xl border border-slate-200 bg-[#fafbfc] px-3 py-3 text-[11px] font-semibold text-slate-700 outline-none transition focus:border-[#8b75e8] focus:bg-white focus:ring-4 focus:ring-red-light/5">
                     <option>Français</option>
