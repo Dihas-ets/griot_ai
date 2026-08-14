@@ -25,6 +25,7 @@ import {
   ChevronDown,
   Rocket,
   MessageSquare ,
+  CheckCircle2 ,
 } from "lucide-react";
 
 // --- HELPER COMPONENTS ---
@@ -85,28 +86,507 @@ const logos = [
   "/tranoo.png",
   "/livro.png",
   "/aif.png",
-  "/dihas.jpg",
+  "/dihas.png",
   "/fofana.png",
 ];
 
 
 // --- TYPES & DATA ---
 
-interface Feature {
-  icon: any;
+type Feature = {
+  icon: React.ElementType;
   title: string;
   desc: string;
   color: string;
-}
+  visual: "ai" | "accounts" | "publish" | "calendar" | "analytics" | "control";
+};
 
 const features: Feature[] = [
-  { icon: Wand2, title: "Génération de Scripts IA", desc: "Transformez une simple idée ou une photo en un script captivant, optimisé pour la viralité sur chaque réseau.", color: "purple" },
-  { icon: Share2, title: "Sélection Multi-comptes", desc: "Connectez vos profils et choisissez dynamiquement sur quels comptes publier vos contenus en un clic.", color: "blue" },
-  { icon: Rocket, title: "Auto-publication Directe", desc: "Détendez-vous pendant que Griot AI publie vos posts automatiquement aux heures de forte audience.", color: "fuchsia" },
-  { icon: Calendar, title: "Planning Intelligent", desc: "Organisez vos publications avec un calendrier visuel fluide et suivez votre stratégie de contenu globale.", color: "orange" },
-  { icon: BarChart3, title: "Analyses & Performance", desc: "Suivez l'impact de vos scripts générés par IA et ajustez votre stratégie grâce à des rapports détaillés.", color: "emerald" },
-  { icon: Users, title: "Espaces Collaboratifs", desc: "Gérez plusieurs marques ou clients, attribuez des rôles et validez vos scripts avant la mise en ligne.", color: "pink" },
+  {
+    icon: Wand2,
+    title: "Génération de contenu par IA",
+    desc: "Transformez une simple idée, un brief ou une image en contenu captivant, adapté à chaque réseau social.",
+    color: "purple",
+    visual: "ai",
+  },
+  {
+    icon: Share2,
+    title: "Sélection multi-comptes",
+    desc: "Connectez vos réseaux sociaux et choisissez précisément les comptes sur lesquels vous souhaitez diffuser votre contenu.",
+    color: "blue",
+    visual: "accounts",
+  },
+  {
+    icon: Rocket,
+    title: "Publication & planification",
+    desc: "Publiez immédiatement ou programmez vos contenus à la date et à l'heure que vous choisissez.",
+    color: "fuchsia",
+    visual: "publish",
+  },
+  {
+    icon: Calendar,
+    title: "Calendrier éditorial",
+    desc: "Visualisez, organisez et planifiez l'ensemble de vos contenus depuis un calendrier éditorial simple et intuitif.",
+    color: "orange",
+    visual: "calendar",
+  },
+  {
+    icon: BarChart3,
+    title: "Analyses & performances",
+    desc: "Suivez vos performances, comprenez ce qui fonctionne et ajustez votre stratégie grâce à des données claires.",
+    color: "emerald",
+    visual: "analytics",
+  },
+  {
+    icon: Users,
+    title: "Gardez le contrôle",
+    desc: "L'IA vous accompagne dans la création, mais vous gardez la main pour publier ou planifier vos contenus quand vous le souhaitez.",
+    color: "pink",
+    visual: "control",
+  },
 ];
+const FeatureVisual = ({
+  type,
+}: {
+  type: Feature["visual"];
+}) => {
+  switch (type) {
+    /* =====================================================
+       1 — IA
+    ===================================================== */
+
+    case "ai":
+      return (
+        <div className="absolute inset-0 flex items-center justify-center p-5">
+          <motion.div
+            animate={{
+              y: [0, -4, 0],
+            }}
+            transition={{
+              duration: 3,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-4 shadow-lg"
+          >
+            <div className="mb-4 flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-100 text-red-600">
+                <Wand2 size={15} />
+              </div>
+
+              <div>
+                <p className="text-[9px] font-black text-slate-800">
+                  Griot AI
+                </p>
+
+                <p className="text-[7px] text-slate-400">
+                  Génération en cours...
+                </p>
+              </div>
+
+              <motion.span
+                animate={{ opacity: [1, 0.3, 1] }}
+                transition={{ duration: 1, repeat: Infinity }}
+                className="ml-auto rounded-full bg-red-50 px-2 py-1 text-[7px] font-bold text-red-600"
+              >
+                ✨ IA
+              </motion.span>
+            </div>
+
+            <div className="rounded-xl bg-slate-50 p-3">
+              <p className="text-[8px] font-semibold text-slate-400">
+                Votre idée
+              </p>
+
+              <p className="mt-1 text-[10px] font-bold text-slate-700">
+                Lancement de notre nouvelle collection...
+              </p>
+            </div>
+
+            <div className="mt-3 rounded-xl border border-red-100 bg-red-50/50 p-3">
+              <p className="text-[8px] font-semibold text-red-400">
+                Script généré
+              </p>
+
+              <motion.p
+                animate={{ opacity: [0.4, 1, 0.4] }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                }}
+                className="mt-1 text-[10px] font-semibold leading-relaxed text-slate-700"
+              >
+                Découvrez notre nouvelle collection ✨
+                Des pièces pensées pour vous...
+              </motion.p>
+            </div>
+          </motion.div>
+        </div>
+      );
+
+    /* =====================================================
+       2 — COMPTES
+    ===================================================== */
+
+    case "accounts":
+      return (
+        <div className="flex h-full items-center justify-center p-5">
+          <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-4 shadow-lg">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-black text-slate-800">
+                  Choisir vos comptes
+                </p>
+
+                <p className="mt-0.5 text-[7px] text-slate-400">
+                  Où souhaitez-vous publier ?
+                </p>
+              </div>
+
+              <Share2 size={16} className="text-red-500" />
+            </div>
+
+            <div className="space-y-2">
+              {[
+                ["Instagram", "IG"],
+                ["Facebook", "FB"],
+                ["LinkedIn", "in"],
+                ["TikTok", "TK"],
+              ].map(([name, short], i) => (
+                <motion.div
+                  key={name}
+                  initial={{ opacity: 0.5, x: -5 }}
+                  animate={{
+                    opacity: [0.5, 1, 1, 0.5],
+                    x: [0, 0, 0, 0],
+                  }}
+                  transition={{
+                    duration: 4,
+                    repeat: Infinity,
+                    delay: i * 0.5,
+                  }}
+                  className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 p-2"
+                >
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-[8px] font-black text-slate-700 shadow-sm">
+                    {short}
+                  </div>
+
+                  <span className="flex-1 text-[9px] font-bold text-slate-700">
+                    {name}
+                  </span>
+
+                  <motion.div
+                    animate={{
+                      scale: [1, 1.15, 1],
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      delay: i * 0.5,
+                    }}
+                    className="flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[8px] font-black text-white"
+                  >
+                    ✓
+                  </motion.div>
+                </motion.div>
+              ))}
+            </div>
+
+            <div className="mt-3 rounded-lg bg-red-600 py-2 text-center text-[8px] font-black text-white">
+              4 comptes sélectionnés
+            </div>
+          </div>
+        </div>
+      );
+
+    /* =====================================================
+       3 — PUBLICATION
+    ===================================================== */
+
+    case "publish":
+      return (
+        <div className="flex h-full items-center justify-center p-5">
+          <motion.div
+            animate={{ y: [0, -3, 0] }}
+            transition={{
+              duration: 3,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-4 shadow-lg"
+          >
+            <div className="mb-3 flex items-center gap-2">
+              <div className="h-8 w-8 rounded-lg bg-slate-100" />
+
+              <div>
+                <div className="h-2 w-20 rounded-full bg-slate-200" />
+                <div className="mt-1 h-1.5 w-12 rounded-full bg-slate-100" />
+              </div>
+            </div>
+
+            <div className="h-20 rounded-xl bg-gradient-to-br from-red-100 to-red-200" />
+
+            <div className="mt-3 h-2 w-4/5 rounded-full bg-slate-200" />
+            <div className="mt-2 h-2 w-3/5 rounded-full bg-slate-100" />
+
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <motion.div
+                animate={{
+                  scale: [1, 0.96, 1],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                }}
+                className="rounded-xl border border-slate-200 py-2 text-center text-[8px] font-bold text-slate-600"
+              >
+                Publier maintenant
+              </motion.div>
+
+              <motion.div
+                animate={{
+                  scale: [1, 1.04, 1],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  delay: 1,
+                }}
+                className="rounded-xl bg-red-600 py-2 text-center text-[8px] font-bold text-white shadow-md shadow-red-500/20"
+              >
+                Planifier
+              </motion.div>
+            </div>
+          </motion.div>
+        </div>
+      );
+
+    /* =====================================================
+       4 — CALENDRIER
+    ===================================================== */
+
+    case "calendar":
+      return (
+        <div className="flex h-full items-center justify-center p-5">
+          <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-4 shadow-lg">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-black text-slate-800">
+                  Calendrier éditorial
+                </p>
+
+                <p className="text-[7px] text-slate-400">
+                  Août 2026
+                </p>
+              </div>
+
+              <Calendar size={16} className="text-red-500" />
+            </div>
+
+            <div className="grid grid-cols-7 gap-1 text-center">
+              {["L", "M", "M", "J", "V", "S", "D"].map((day) => (
+                <span
+                  key={day}
+                  className="pb-1 text-[7px] font-bold text-slate-400"
+                >
+                  {day}
+                </span>
+              ))}
+
+              {Array.from({ length: 28 }, (_, i) => (
+                <motion.div
+                  key={i}
+                  animate={
+                    i % 4 === 0
+                      ? {
+                          scale: [1, 1.15, 1],
+                        }
+                      : {}
+                  }
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    delay: (i % 4) * 0.3,
+                  }}
+                  className={`flex h-7 items-center justify-center rounded-lg text-[7px] font-bold ${
+                    i % 4 === 0
+                      ? "bg-red-600 text-white"
+                      : "bg-slate-50 text-slate-500"
+                  }`}
+                >
+                  {i + 1}
+                </motion.div>
+              ))}
+            </div>
+
+            <div className="mt-3 flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-red-600" />
+
+              <span className="text-[7px] font-semibold text-slate-500">
+                Publications planifiées
+              </span>
+            </div>
+          </div>
+        </div>
+      );
+
+    /* =====================================================
+       5 — ANALYTICS
+    ===================================================== */
+
+    case "analytics":
+      return (
+        <div className="flex h-full items-center justify-center p-5">
+          <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-4 shadow-lg">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-black text-slate-800">
+                  Performances
+                </p>
+
+                <p className="text-[7px] text-slate-400">
+                  Vue globale
+                </p>
+              </div>
+
+              <BarChart3 size={17} className="text-red-500" />
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                ["Portée", "24.8K"],
+                ["Engagement", "8.4%"],
+                ["Posts", "128"],
+              ].map(([label, value], i) => (
+                <motion.div
+                  key={label}
+                  animate={{
+                    y: [0, -2, 0],
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    delay: i * 0.3,
+                  }}
+                  className="rounded-xl bg-slate-50 p-2"
+                >
+                  <p className="text-[6px] font-bold text-slate-400">
+                    {label}
+                  </p>
+
+                  <p className="mt-1 text-[11px] font-black text-slate-800">
+                    {value}
+                  </p>
+                </motion.div>
+              ))}
+            </div>
+
+            <div className="mt-4 flex h-20 items-end gap-1">
+              {[30, 42, 35, 55, 48, 65, 58, 78, 70, 90].map(
+                (height, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ height: 0 }}
+                    whileInView={{ height: `${height}%` }}
+                    viewport={{ once: true }}
+                    transition={{
+                      duration: 0.8,
+                      delay: i * 0.08,
+                    }}
+                    className="flex-1 rounded-t-md bg-red-500/80"
+                  />
+                )
+              )}
+            </div>
+
+            <div className="mt-2 flex items-center gap-1 text-[7px] font-bold text-emerald-600">
+              ↗ +24.8% cette semaine
+            </div>
+          </div>
+        </div>
+      );
+
+    /* =====================================================
+       6 — CONTRÔLE HUMAIN
+    ===================================================== */
+
+    case "control":
+      return (
+        <div className="flex h-full items-center justify-center p-5">
+          <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-4 shadow-lg">
+            <div className="mb-4 flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-100 text-red-600">
+                <Users size={17} />
+              </div>
+
+              <div>
+                <p className="text-[10px] font-black text-slate-800">
+                  Votre contenu est prêt
+                </p>
+
+                <p className="text-[7px] text-slate-400">
+                  Vous gardez toujours le contrôle
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-xl bg-slate-50 p-3">
+              <div className="h-2 w-4/5 rounded-full bg-slate-200" />
+              <div className="mt-2 h-2 w-full rounded-full bg-slate-100" />
+              <div className="mt-2 h-2 w-3/5 rounded-full bg-slate-100" />
+            </div>
+
+            <p className="mt-4 text-center text-[8px] font-bold text-slate-500">
+              Que souhaitez-vous faire ?
+            </p>
+
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                className="rounded-xl border border-slate-200 py-2 text-[8px] font-bold text-slate-600"
+              >
+                Publier
+              </motion.button>
+
+              <motion.button
+                animate={{
+                  boxShadow: [
+                    "0 0 0 rgba(239,68,68,0)",
+                    "0 0 18px rgba(239,68,68,0.18)",
+                    "0 0 0 rgba(239,68,68,0)",
+                  ],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                }}
+                className="rounded-xl bg-red-600 py-2 text-[8px] font-bold text-white"
+              >
+                Planifier
+              </motion.button>
+            </div>
+
+            <motion.div
+              animate={{
+                opacity: [0.4, 1, 0.4],
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+              }}
+              className="mt-3 flex items-center justify-center gap-1.5 text-[7px] font-bold text-emerald-600"
+            >
+              <CheckCircle2 size={10} />
+              Vous décidez du moment
+            </motion.div>
+          </div>
+        </div>
+      );
+
+    default:
+      return null;
+  }
+};
 
 const steps = [
   { n: "01", title: "Le Briefing", desc: "Saisissez votre idée ou importez une image source pour inspirer l'IA." },
@@ -298,14 +778,14 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
       <span className="text-red-light">  Crée</span> plus. <span className="text-red-light"> Publie</span> plus. <span className="text-red-light"> Domine</span> les réseaux.
       </motion.h1>
       <p className="text-slate-600 text-base sm:text-lg mb-10 max-w-2xl mx-auto lg:mx-0 font-medium">
-        Griot AI transforme vos briefs ou vos images en scripts parfaits. Choisissez vos comptes cibles et laissez l'IA publier pour vous au meilleur moment.
+Griot AI transforme vos briefs ou vos prompts en scripts parfaits. Choisissez vos comptes cibles et laissez l’IA adapter le script à vos différents réseaux.
       </p>
       <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
         <button className="w-full sm:w-auto px-8 py-4 bg-red-light text-white rounded-full font-bold shadow-lg hover:scale-105 transition-transform">
           Essayer Gratuitement →
         </button>
         <button className="w-full sm:w-auto px-18 py-4 border border-red-light text-red-light rounded-full font-bold flex items-center justify-center gap-2 hover:scale-105 transition-transform">
-          <Play size={20} fill="currentColor" /> Voir l'IA
+          <Play size={20} fill="currentColor" /> Voir Démo
         </button>
       </div>
     </div>
@@ -353,7 +833,7 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
         <img
           src={logo}
           alt={`Logo ${index}`}
-          className="max-h-full max-w-full object-contain transition-all duration-300 grayscale-0"
+          className="max-h-full max-w-full object-contain transition-all duration-300 sm:duration-700 grayscale-0"
         />
       </div>
     ))}
@@ -366,8 +846,7 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
           <SectionHeader 
             badge="Plateforme All-in-One"
             title="Votre univers au même endroit"
-            desc="Dites adieu au jonglage entre dix applications. Griot AI rassemble l'ensemble de votre chaîne de production de contenus."
-          />
+desc="Dites adieu au jonglage entre vos plateformes de réseaux sociaux. Griot AI centralise la création, la publication et la planification de vos contenus au même endroit."          />
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             {features.map((f, i) => <FeatureCard key={i} feature={f} index={i} />)}
           </div>
@@ -403,58 +882,109 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
         </div>
       </section>
 
-      {/* --- PRODUCT SHOWCASE 1 --- */}
-      <section className="py-20 sm:py-32 bg-slate-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 grid lg:grid-cols-2 gap-12 sm:gap-20 items-center">
-          <motion.div 
-             initial={{ opacity: 0, x: -30 }}
-             whileInView={{ opacity: 1, x: 0 }}
-             viewport={{ once: true }}
-          >
-            <div className="inline-flex items-center gap-2 text-red-light font-bold mb-4 sm:mb-6 text-xs sm:text-sm uppercase tracking-widest">
-              <Sparkles size={16} /> Création Augmentée
-            </div>
-            <h2 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-tighter mb-6 leading-tight text-slate-900">L'Intelligence Artificielle qui comprend vos images</h2>
-            <div className="space-y-4 mb-8">
-              {[
-                'Analyse de vos photos pour générer des scripts contextuels',
-                'Adaptation du ton selon les comptes sociaux sélectionnés',
-                'Génération de scripts percutants basés sur de simples briefs',
-                'Publication automatique programmée sur tous vos réseaux'
-              ].map((f, i) => (
-                <div key={i} className="flex gap-3.5 items-start">
-                  <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-red-100 flex items-center justify-center shrink-0 mt-0.5">
-                    <Check size={14} className="text-red-light" />
-                  </div>
-                  <p className="text-xs sm:text-base text-slate-700 font-semibold">{f}</p>
-                </div>
-              ))}
-            </div>
-            <button className="text-red-light font-black text-sm sm:text-base flex items-center gap-2 hover:gap-4 transition-all group">
-              Exploration des capacités de l'IA <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-            </button>
-          </motion.div>
-          
-          <div className="relative">
-             <div className="absolute -inset-6 sm:-inset-10 bg-red-200/50 rounded-full blur-[80px] -z-10 pointer-events-none" />
-             <div className="grid grid-cols-2 gap-3 sm:gap-4">
-               {showcaseCards.map((card, i) => (
-                 <motion.div 
-                   key={i} 
-                   whileHover={{ y: -6 }}
-                   className="bg-white border border-slate-200 p-3 sm:p-4 rounded-2xl sm:rounded-3xl shadow-sm hover:shadow-md transition-all overflow-hidden"
-                 >
-                   <div className="aspect-square rounded-xl sm:rounded-2xl mb-3 overflow-hidden bg-slate-100">
-                     <img src={card.image} alt={card.title} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
-                   </div>
-                   <p className="text-[10px] sm:text-xs font-bold text-red-light uppercase tracking-wider">{card.category}</p>
-                   <p className="text-xs sm:text-sm font-bold text-slate-900 truncate">{card.title}</p>
-                 </motion.div>
-               ))}
-             </div>
-          </div>
-        </div>
-      </section>
+     {/* =========================================================
+   CTA — CRÉEZ, PLANIFIEZ, PUBLIEZ
+========================================================= */}
+<section className="relative overflow-hidden bg-slate-50 py-20 sm:py-28">
+  {/* Background */}
+  <div className="absolute inset-0 pointer-events-none">
+    <div className="absolute -top-32 -left-32 w-72 h-72 sm:w-96 sm:h-96 rounded-full bg-red-200/40 blur-[100px]" />
+    <div className="absolute -bottom-32 -right-32 w-72 h-72 sm:w-96 sm:h-96 rounded-full bg-red-100/50 blur-[100px]" />
+  </div>
+
+  <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 text-center">
+
+    {/* Badge */}
+    <motion.div
+      initial={{ opacity: 0, y: 15 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full bg-red-100 border border-red-200 text-red-light text-[10px] sm:text-xs font-black uppercase tracking-widest mb-6"
+    >
+      <Sparkles size={14} />
+      Passez à l'action
+    </motion.div>
+
+    {/* Title */}
+    <motion.h2
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ delay: 0.1 }}
+      className="max-w-4xl mx-auto text-3xl sm:text-5xl md:text-6xl font-black tracking-tighter leading-[1.05] text-slate-900"
+    >
+      Transformez vos idées en
+      <span className="text-red-light"> publications qui comptent.</span>
+    </motion.h2>
+
+    {/* Description */}
+    <motion.p
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ delay: 0.2 }}
+      className="max-w-2xl mx-auto mt-6 text-sm sm:text-lg text-slate-500 leading-relaxed"
+    >
+      Avec Griot AI, créez votre contenu, adaptez-le à vos réseaux,
+      planifiez vos publications et analysez vos performances depuis
+      un seul espace.
+    </motion.p>
+
+    {/* CTA buttons */}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ delay: 0.3 }}
+      className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mt-8"
+    >
+     <button
+  className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-red-light text-white text-sm sm:text-base font-black shadow-lg shadow-red-light/20 hover:scale-[1.02] hover:shadow-xl hover:shadow-red-light/25 transition-all`}
+>
+  Commencer gratuitement
+  <ArrowRight
+    size={18}
+    className="transition-transform group-hover:translate-x-1"
+  />
+</button>
+
+   <button
+  className={`w-full sm:w-auto inline-flex items-center justify-center px-7 py-3.5 rounded-xl bg-white border border-slate-200 text-slate-700 text-sm sm:text-base font-bold hover:border-red-200 hover:text-red-light transition-all`}
+>
+  Découvrir Griot AI
+</button>
+    </motion.div>
+
+    {/* Trust */}
+    <motion.div
+      initial={{ opacity: 0 }}
+      whileInView={{ opacity: 1 }}
+      viewport={{ once: true }}
+      transition={{ delay: 0.5 }}
+      className="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[10px] sm:text-xs font-semibold text-slate-400"
+    >
+      <span className="flex items-center gap-1.5">
+        <Check size={13} className="text-red-light" />
+        Création assistée par IA
+      </span>
+
+      <span className="hidden sm:block text-slate-300">•</span>
+
+      <span className="flex items-center gap-1.5">
+        <Check size={13} className="text-red-light" />
+        Publication multi-réseaux
+      </span>
+
+      <span className="hidden sm:block text-slate-300">•</span>
+
+      <span className="flex items-center gap-1.5">
+        <Check size={13} className="text-red-light" />
+        Calendrier intégré
+      </span>
+    </motion.div>
+
+  </div>
+</section>
 
       {/* --- PRICING SECTION --- */}
       <section id="pricing" className="py-20 sm:py-32 bg-white border-t border-slate-200">
@@ -651,18 +1181,33 @@ const [openFAQ, setOpenFAQ] = useState<number | null>(null);
       <Footer />
 
       <style jsx global>{`
-        @keyframes marquee {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
-        }
-        .animate-marquee {
-          animation: marquee 30s linear infinite;
-        }
-        /* Anti-scroll horizontal global */
-        body {
-          overflow-x: hidden;
-        }
-      `}</style>
+  @keyframes marquee {
+    0% {
+      transform: translateX(0);
+    }
+
+    100% {
+      transform: translateX(-50%);
+    }
+  }
+
+  /* Mobile : 5 secondes */
+  .animate-marquee {
+    animation: marquee 5s linear infinite;
+  }
+
+  /* Tablette + grands écrans : 30 secondes */
+  @media (min-width: 640px) {
+    .animate-marquee {
+      animation: marquee 30s linear infinite;
+    }
+  }
+
+  /* Anti-scroll horizontal global */
+  body {
+    overflow-x: hidden;
+  }
+`}</style>
     </div>
   );
 }

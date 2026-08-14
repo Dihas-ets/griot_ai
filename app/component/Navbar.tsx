@@ -23,7 +23,7 @@ export default function Navbar() {
         </a>
 
         {/* Desktop */}
-        <div className="hidden lg:flex items-center gap-8 text-sm font-medium">
+        <div className="hidden lg:flex items-center gap-8 text-md font-medium">
 
           <a
             href="#Accueil"
@@ -71,16 +71,16 @@ export default function Navbar() {
 
         {/* Desktop Buttons */}
         <div className="hidden lg:flex items-center gap-3">
-<a href="../auth/register">
+
           <button className="px-5 py-2.5 rounded-full font-medium text-white hover:text-red-300 transition">
             Connexion
           </button>
-</a>
+<a href="../auth/register">
           <button className="px-6 py-3 rounded-full bg-slate-100 text-red-600 hover:bg-red-300 hover:text-white font-semibold shadow-lg transition flex items-center gap-2">
             Commencer
             <ArrowRight className="w-4 h-4" />
           </button>
-
+</a>
         </div>
 
         {/* Mobile Button */}
@@ -160,15 +160,12 @@ export default function Navbar() {
             </a>
 
             <div className="my-4 border-t border-slate-200" />
+
 <a href="../auth/register">
-            <button className="w-full py-3 rounded-xl border border-slate-300 text-slate-800 font-medium hover:bg-slate-50 transition">
-              Connexion
-            </button>
-</a>
             <button className="w-full py-3 rounded-xl bg-red-light hover:bg-red-dark text-white font-semibold transition mt-2">
               Commencer gratuitement
             </button>
-
+</a>
           </div>
         </div>
       )}
