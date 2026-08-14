@@ -241,7 +241,7 @@ export default function MesPublicationsPage() {
             </p>
 
             <h1 className="text-lg font-black sm:text-xl">
-              Publications
+              Mes publications
             </h1>
 
           </div>

@@ -139,7 +139,7 @@ const networks: SocialNetwork[] = [
     name: "Google Business Profile",
     username: "Presta",
     icon: (
-      <span className="text-sm font-black text-blue-500">
+      <span className="text-sm font-black text-red-dark">
         G
       </span>
     ),
@@ -370,7 +370,7 @@ export default function CreatePublicationPage() {
                   <textarea
                     value={idea}
                     onChange={(e) => setIdea(e.target.value)}
-                    maxLength={500}
+                    maxLength={10000}
                     rows={5}
                     className="w-full resize-none rounded-xl border border-slate-200 bg-[#fafbfc] p-3.5 pb-7 text-[11px] font-medium leading-[1.6] text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-red-dark
 focus:bg-white
@@ -378,8 +378,8 @@ focus:ring-4
 focus:ring-red-dark/10"
                   />
 
-                  <span className="absolute bottom-2.5 right-3 text-[9px] font-medium text-slate-400">
-                    {idea.length}/500
+                  <span className="absolute bottom-2.5 right-3 text-[9px] font-medium text-slate-500">
+                    {idea.length}/10000
                   </span>
 
                 </div>

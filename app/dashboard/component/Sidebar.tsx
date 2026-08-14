@@ -335,7 +335,7 @@ export default function Sidebar() {
           >
             {/* AVATAR */}
             <img
-              src="https://ui-avatars.com/api/?name=Idrissou+M&background=ef4444&color=fff"
+              src="https://ui-avatars.com/api/?name=YEKINI+K&background=ef4444&color=fff"
               alt="Utilisateur"
               className="h-9 w-9 shrink-0 rounded-full"
             />

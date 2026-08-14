@@ -522,7 +522,7 @@ export default function DashboardPage() {
             </div>
 
             <Link
-              href="/dashboard/reseaux-sociaux"
+              href="/dashboard/reseaux_sociaux"
               className="text-[10px] font-bold text-red-600 hover:text-red-700"
             >
               Gérer les réseaux
@@ -590,7 +590,7 @@ export default function DashboardPage() {
               </div>
 
               <Link
-                href="/dashboard/publications"
+                href="/dashboard/mes_publications"
                 className="flex items-center gap-1 text-[10px] font-bold text-red-600"
               >
                 Voir tout
@@ -737,7 +737,7 @@ export default function DashboardPage() {
               </div>
 
               <Link
-                href="/dashboard/reseaux-sociaux"
+                href="/dashboard/reseaux_sociaux"
                 className="text-[10px] font-bold text-red-600"
               >
                 Gérer
