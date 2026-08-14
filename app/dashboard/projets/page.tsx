@@ -21,6 +21,8 @@ import {
   Archive,
   LayoutGrid,
   List,
+  ArchiveRestore,
+  ExternalLink,
 } from "lucide-react";
 
 /* =========================================================
@@ -43,10 +45,10 @@ type Project = {
 };
 
 /* =========================================================
-   DONNÉES DES PROJETS
+   DONNÉES
 ========================================================= */
 
-const projects: Project[] = [
+const initialProjects: Project[] = [
   {
     id: 1,
     name: "Presta",
@@ -71,7 +73,7 @@ const projects: Project[] = [
     media: 26,
     members: 3,
     createdAt: "18 juin 2026",
-    image: "/dihas.jpg",
+    image: "/dihas.png",
   },
   {
     id: 3,
@@ -88,7 +90,7 @@ const projects: Project[] = [
   },
   {
     id: 4,
-    name: "islam pilier",
+    name: "Islam Pilier",
     description:
       "Communication digitale et contenus informatifs de Clinico.",
     status: "En pause",
@@ -132,19 +134,29 @@ const projects: Project[] = [
 ========================================================= */
 
 export default function ProjetsPage() {
+  const [projects, setProjects] =
+    useState<Project[]>(initialProjects);
+
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("Tous");
   const [view, setView] = useState<"grid" | "list">("grid");
 
+  const [openMenu, setOpenMenu] =
+    useState<number | null>(null);
+
+  /* =======================================================
+     FILTRAGE
+  ======================================================= */
+
   const filteredProjects = useMemo(() => {
     return projects.filter((project) => {
+      const searchValue = search.toLowerCase();
+
       const matchesSearch =
-        project.name
-          .toLowerCase()
-          .includes(search.toLowerCase()) ||
+        project.name.toLowerCase().includes(searchValue) ||
         project.description
           .toLowerCase()
-          .includes(search.toLowerCase());
+          .includes(searchValue);
 
       const matchesStatus =
         statusFilter === "Tous" ||
@@ -152,23 +164,99 @@ export default function ProjetsPage() {
 
       return matchesSearch && matchesStatus;
     });
-  }, [search, statusFilter]);
+  }, [projects, search, statusFilter]);
+
+  /* =======================================================
+     STATISTIQUES
+  ======================================================= */
+
+  const totalProjects = projects.length;
+
+  const activeProjects = projects.filter(
+    (project) => project.status === "Actif"
+  ).length;
+
+  const totalPublications = projects.reduce(
+    (total, project) => total + project.publications,
+    0
+  );
+
+  const totalMedia = projects.reduce(
+    (total, project) => total + project.media,
+    0
+  );
+
+  /* =======================================================
+     SUPPRIMER
+  ======================================================= */
+
+  const deleteProject = (id: number) => {
+    const project = projects.find(
+      (item) => item.id === id
+    );
+
+    if (!project) return;
+
+    const confirmed = window.confirm(
+      `Voulez-vous vraiment supprimer le projet "${project.name}" ?`
+    );
+
+    if (!confirmed) return;
+
+    setProjects((current) =>
+      current.filter((item) => item.id !== id)
+    );
+
+    setOpenMenu(null);
+  };
+
+  /* =======================================================
+     ARCHIVER
+  ======================================================= */
+
+  const toggleArchive = (id: number) => {
+    setProjects((current) =>
+      current.map((project) => {
+        if (project.id !== id) return project;
+
+        return {
+          ...project,
+          status:
+            project.status === "Archivé"
+              ? "Actif"
+              : "Archivé",
+        };
+      })
+    );
+
+    setOpenMenu(null);
+  };
+
+  /* =======================================================
+     RENDU
+  ======================================================= */
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900">
-
+    <div
+      className="min-h-screen bg-[#f8fafc] text-slate-900"
+      onClick={() => setOpenMenu(null)}
+    >
       {/* =====================================================
           HEADER
       ===================================================== */}
 
       <header className="sticky top-0 z-30 border-b border-slate-200 bg-white">
-
-        <div className="flex min-h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-
+        <div
+          className="
+            flex min-h-16
+            items-center justify-between
+            gap-4
+            px-4 sm:px-6 lg:px-8
+          "
+        >
           {/* GAUCHE */}
 
-          <div className="min-w-0 pl-14 md:pl-12 lg:pl-0 xl:pl-0">
-
+          <div className="min-w-0 pl-14 md:pl-12 lg:pl-0">
             <p className="hidden text-[9px] font-black uppercase tracking-[0.18em] text-slate-400 sm:block">
               Organisation
             </p>
@@ -176,18 +264,22 @@ export default function ProjetsPage() {
             <h1 className="text-lg font-black sm:text-xl">
               Projets
             </h1>
-
           </div>
 
           {/* DROITE */}
 
-          <button
+          <Link
+            href="/dashboard/projets/nouveau_projet"
+            onClick={(e) => e.stopPropagation()}
             className="
               flex shrink-0 items-center gap-2
-              rounded-xl bg-red-600 px-4 py-2.5
+              rounded-xl bg-red-600
+              px-4 py-2.5
               text-[10px] font-black uppercase tracking-wide
-              text-white shadow-lg shadow-red-600/20
-              transition hover:bg-red-700
+              text-white
+              shadow-lg shadow-red-600/20
+              transition
+              hover:bg-red-700
             "
           >
             <Plus size={15} />
@@ -199,10 +291,8 @@ export default function ProjetsPage() {
             <span className="sm:hidden">
               Nouveau
             </span>
-          </button>
-
+          </Link>
         </div>
-
       </header>
 
       {/* =====================================================
@@ -210,23 +300,18 @@ export default function ProjetsPage() {
       ===================================================== */}
 
       <main className="mx-auto max-w-[1700px] p-4 sm:p-6 lg:p-8">
-
-        {/* ===================================================
-            INTRODUCTION
-        =================================================== */}
+        {/* INTRO */}
 
         <div className="mb-6">
-
           <h2 className="text-xl font-black sm:text-2xl">
             Mes projets
           </h2>
 
           <p className="mt-1 max-w-2xl text-xs leading-relaxed text-slate-400">
-            Organisez vos contenus, publications, médias et réseaux
-            sociaux par projet pour garder une communication claire
-            et bien structurée.
+            Organisez vos contenus, publications, médias et
+            réseaux sociaux par projet pour garder une
+            communication claire et bien structurée.
           </p>
-
         </div>
 
         {/* ===================================================
@@ -234,57 +319,55 @@ export default function ProjetsPage() {
         =================================================== */}
 
         <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-
           <StatCard
             icon={<FolderOpen size={17} />}
             label="Projets"
-            value="6"
+            value={totalProjects.toString()}
           />
 
           <StatCard
             icon={<CheckCircle2 size={17} />}
             label="Projets actifs"
-            value="4"
+            value={activeProjects.toString()}
           />
 
           <StatCard
             icon={<FileText size={17} />}
             label="Publications"
-            value="108"
+            value={totalPublications.toString()}
           />
 
           <StatCard
             icon={<ImageIcon size={17} />}
             label="Médias"
-            value="173"
+            value={totalMedia.toString()}
           />
-
         </div>
 
         {/* ===================================================
-            BARRE DE RECHERCHE + FILTRES
+            RECHERCHE + FILTRES
         =================================================== */}
 
         <section className="mb-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-
           <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-
             {/* RECHERCHE */}
 
             <div className="relative w-full xl:max-w-md">
-
               <Search
                 size={16}
                 className="
                   absolute left-3 top-1/2
-                  -translate-y-1/2 text-slate-400
+                  -translate-y-1/2
+                  text-slate-400
                 "
               />
 
               <input
                 type="text"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) =>
+                  setSearch(e.target.value)
+                }
                 placeholder="Rechercher un projet..."
                 className="
                   w-full rounded-xl
@@ -299,15 +382,14 @@ export default function ProjetsPage() {
                   focus:ring-red-500/5
                 "
               />
-
             </div>
 
             {/* FILTRES */}
 
             <div className="flex flex-wrap gap-2">
+              {/* STATUS */}
 
               <div className="relative">
-
                 <select
                   value={statusFilter}
                   onChange={(e) =>
@@ -341,14 +423,13 @@ export default function ProjetsPage() {
                     text-slate-400
                   "
                 />
-
               </div>
 
               {/* VUE */}
 
               <div className="flex rounded-xl border border-slate-200 bg-white p-1">
-
                 <button
+                  type="button"
                   onClick={() => setView("grid")}
                   className={`
                     flex h-8 w-8
@@ -365,6 +446,7 @@ export default function ProjetsPage() {
                 </button>
 
                 <button
+                  type="button"
                   onClick={() => setView("list")}
                   className={`
                     flex h-8 w-8
@@ -379,21 +461,16 @@ export default function ProjetsPage() {
                 >
                   <List size={15} />
                 </button>
-
               </div>
-
             </div>
-
           </div>
-
         </section>
 
         {/* ===================================================
-            TITRE RÉSULTATS
+            RÉSULTATS
         =================================================== */}
 
         <div className="mb-4 flex items-center justify-between">
-
           <p className="text-xs font-bold text-slate-500">
             {filteredProjects.length} projet
             {filteredProjects.length > 1 ? "s" : ""}
@@ -402,40 +479,43 @@ export default function ProjetsPage() {
           <p className="text-[10px] text-slate-400">
             Dernière mise à jour : aujourd'hui
           </p>
-
         </div>
 
         {/* ===================================================
-            AFFICHAGE GRID
+            GRID
         =================================================== */}
 
         {view === "grid" && (
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-
             {filteredProjects.map((project) => (
               <ProjectCard
                 key={project.id}
                 project={project}
+                openMenu={openMenu}
+                setOpenMenu={setOpenMenu}
+                onDelete={deleteProject}
+                onArchive={toggleArchive}
               />
             ))}
-
           </div>
         )}
 
         {/* ===================================================
-            AFFICHAGE LISTE
+            LISTE
         =================================================== */}
 
         {view === "list" && (
           <div className="space-y-3">
-
             {filteredProjects.map((project) => (
               <ProjectListItem
                 key={project.id}
                 project={project}
+                openMenu={openMenu}
+                setOpenMenu={setOpenMenu}
+                onDelete={deleteProject}
+                onArchive={toggleArchive}
               />
             ))}
-
           </div>
         )}
 
@@ -444,19 +524,22 @@ export default function ProjetsPage() {
         =================================================== */}
 
         {filteredProjects.length === 0 && (
-          <div className="
-            rounded-2xl
-            border border-dashed border-slate-300
-            bg-white
-            px-5 py-16
-            text-center
-          ">
-
-            <div className="
-              mx-auto flex h-12 w-12
-              items-center justify-center
-              rounded-2xl bg-slate-100
-            ">
+          <div
+            className="
+              rounded-2xl
+              border border-dashed border-slate-300
+              bg-white
+              px-5 py-16
+              text-center
+            "
+          >
+            <div
+              className="
+                mx-auto flex h-12 w-12
+                items-center justify-center
+                rounded-2xl bg-slate-100
+              "
+            >
               <FolderOpen
                 size={24}
                 className="text-slate-400"
@@ -473,6 +556,7 @@ export default function ProjetsPage() {
             </p>
 
             <button
+              type="button"
               onClick={() => {
                 setSearch("");
                 setStatusFilter("Tous");
@@ -488,7 +572,6 @@ export default function ProjetsPage() {
             >
               Réinitialiser les filtres
             </button>
-
           </div>
         )}
 
@@ -496,59 +579,56 @@ export default function ProjetsPage() {
             CONSEIL
         =================================================== */}
 
-        <div className="
-          mt-6 flex flex-col gap-4
-          rounded-2xl border border-red-100
-          bg-red-50 p-5
-          sm:flex-row sm:items-center
-          sm:justify-between
-        ">
-
+        <div
+          className="
+            mt-6 flex flex-col gap-4
+            rounded-2xl
+            border border-red-100
+            bg-red-50 p-5
+            sm:flex-row sm:items-center
+            sm:justify-between
+          "
+        >
           <div className="flex items-start gap-3">
-
-            <div className="
-              flex h-9 w-9 shrink-0
-              items-center justify-center
-              rounded-xl bg-white
-              text-red-600
-            ">
+            <div
+              className="
+                flex h-9 w-9 shrink-0
+                items-center justify-center
+                rounded-xl bg-white
+                text-red-600
+              "
+            >
               <FolderOpen size={17} />
             </div>
 
             <div>
-
               <h3 className="text-xs font-black text-slate-800">
                 Gardez vos contenus bien organisés
               </h3>
 
-              <p className="
-                mt-1 max-w-xl
-                text-[10px] leading-relaxed
-                text-slate-500
-              ">
-                Créez un projet pour chaque activité, marque ou
-                client afin de gérer facilement vos publications,
-                médias et campagnes.
+              <p className="mt-1 max-w-xl text-[10px] leading-relaxed text-slate-500">
+                Créez un projet pour chaque activité, marque
+                ou client afin de gérer facilement vos
+                publications, médias et campagnes.
               </p>
-
             </div>
-
           </div>
 
-          <button className="
-            shrink-0 rounded-xl
-            bg-red-600 px-4 py-2.5
-            text-[10px] font-black
-            text-white
-            transition hover:bg-red-700
-          ">
+          <Link
+            href="/dashboard/projets/nouveau"
+            className="
+              shrink-0 rounded-xl
+              bg-red-600 px-4 py-2.5
+              text-center text-[10px]
+              font-black text-white
+              transition
+              hover:bg-red-700
+            "
+          >
             Créer un projet
-          </button>
-
+          </Link>
         </div>
-
       </main>
-
     </div>
   );
 }
@@ -567,39 +647,41 @@ function StatCard({
   value: string;
 }) {
   return (
-    <div className="
-      rounded-2xl
-      border border-slate-200
-      bg-white p-4
-      shadow-sm
-    ">
-
+    <div
+      className="
+        rounded-2xl
+        border border-slate-200
+        bg-white p-4
+        shadow-sm
+      "
+    >
       <div className="flex items-center justify-between">
-
-        <div className="
-          flex h-9 w-9
-          items-center justify-center
-          rounded-xl bg-red-50
-          text-red-600
-        ">
+        <div
+          className="
+            flex h-9 w-9
+            items-center justify-center
+            rounded-xl bg-red-50
+            text-red-600
+          "
+        >
           {icon}
         </div>
 
         <span className="text-xl font-black text-slate-800">
           {value}
         </span>
-
       </div>
 
-      <p className="
-        mt-3
-        text-[10px] font-bold
-        uppercase tracking-wider
-        text-slate-400
-      ">
+      <p
+        className="
+          mt-3
+          text-[10px] font-bold
+          uppercase tracking-wider
+          text-slate-400
+        "
+      >
         {label}
       </p>
-
     </div>
   );
 }
@@ -610,9 +692,21 @@ function StatCard({
 
 function ProjectCard({
   project,
+  openMenu,
+  setOpenMenu,
+  onDelete,
+  onArchive,
 }: {
   project: Project;
+  openMenu: number | null;
+  setOpenMenu: React.Dispatch<
+    React.SetStateAction<number | null>
+  >;
+  onDelete: (id: number) => void;
+  onArchive: (id: number) => void;
 }) {
+  const isMenuOpen = openMenu === project.id;
+
   return (
     <article
       className="
@@ -625,54 +719,175 @@ function ProjectCard({
         hover:-translate-y-0.5
         hover:shadow-md
       "
+      onClick={(e) => e.stopPropagation()}
     >
       {/* =====================================================
-          COUVERTURE IMAGE
+          IMAGE
       ===================================================== */}
 
-      <div className="relative h-40 overflow-hidden">
+      <div
+        className="
+          relative
+          h-40
+          w-full
+          overflow-hidden
+          bg-slate-100
+        "
+      >
         <Image
           src={project.image}
           alt={`Image du projet ${project.name}`}
           fill
-          sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
-          className="object-cover transition duration-500 hover:scale-105"
+          sizes="
+            (max-width: 768px) 100vw,
+            (max-width: 1280px) 50vw,
+            33vw
+          "
+          className="
+            object-contain
+            object-center
+            p-0
+            transition
+            duration-500
+            hover:scale-[1.03]
+          "
         />
 
-        {/* Overlay */}
+        {/* Dégradé léger en bas */}
 
         <div
           className="
-            absolute inset-0
+            pointer-events-none
+            absolute inset-x-0 bottom-0
+            h-20
             bg-gradient-to-t
-            from-black/45
-            via-black/10
+            from-black/50
             to-transparent
           "
         />
 
-        {/* Menu */}
+        {/* ===================================================
+            BOUTON ACTIONS
+        =================================================== */}
 
-        <button
-          type="button"
-          aria-label={`Options du projet ${project.name}`}
-          className="
-            absolute right-4 top-4
-            flex h-8 w-8
-            items-center justify-center
-            rounded-lg
-            bg-white/90
-            text-slate-700
-            shadow-sm
-            backdrop-blur-sm
-            transition
-            hover:bg-white
-          "
-        >
-          <MoreHorizontal size={17} />
-        </button>
+        <div className="absolute right-3 top-3">
+          <button
+            type="button"
+            aria-label={`Actions du projet ${project.name}`}
+            onClick={() =>
+              setOpenMenu(
+                isMenuOpen ? null : project.id
+              )
+            }
+            className="
+              flex h-9 w-9
+              items-center justify-center
+              rounded-xl
+              bg-white
+              text-slate-700
+              shadow-md
+              transition
+              hover:bg-slate-50
+            "
+          >
+            <MoreHorizontal size={18} />
+          </button>
 
-        {/* Nom du projet */}
+          {/* MENU */}
+
+          {isMenuOpen && (
+            <div
+              className="
+                absolute right-0 top-11
+                z-50 w-44
+                overflow-hidden
+                rounded-xl
+                border border-slate-200
+                bg-white
+                p-1.5
+                shadow-xl
+              "
+            >
+              <Link
+                href="/dashboard/publications"
+                onClick={() => setOpenMenu(null)}
+                className="
+                  flex items-center gap-2
+                  rounded-lg px-3 py-2.5
+                  text-[10px] font-bold
+                  text-slate-600
+                  hover:bg-slate-50
+                "
+              >
+                <Eye size={14} />
+                Voir le projet
+              </Link>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setOpenMenu(null);
+                  alert(
+                    `Modification du projet "${project.name}"`
+                  );
+                }}
+                className="
+                  flex w-full items-center gap-2
+                  rounded-lg px-3 py-2.5
+                  text-[10px] font-bold
+                  text-slate-600
+                  hover:bg-slate-50
+                "
+              >
+                <Edit3 size={14} />
+                Modifier
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onArchive(project.id)}
+                className="
+                  flex w-full items-center gap-2
+                  rounded-lg px-3 py-2.5
+                  text-[10px] font-bold
+                  text-slate-600
+                  hover:bg-slate-50
+                "
+              >
+                {project.status === "Archivé" ? (
+                  <>
+                    <ArchiveRestore size={14} />
+                    Restaurer
+                  </>
+                ) : (
+                  <>
+                    <Archive size={14} />
+                    Archiver
+                  </>
+                )}
+              </button>
+
+              <div className="my-1 border-t border-slate-100" />
+
+              <button
+                type="button"
+                onClick={() => onDelete(project.id)}
+                className="
+                  flex w-full items-center gap-2
+                  rounded-lg px-3 py-2.5
+                  text-[10px] font-bold
+                  text-red-600
+                  hover:bg-red-50
+                "
+              >
+                <Trash2 size={14} />
+                Supprimer
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* NOM */}
 
         <div className="absolute bottom-4 left-4 right-4">
           <h3 className="truncate text-base font-black text-white">
@@ -680,7 +895,7 @@ function ProjectCard({
           </h3>
         </div>
 
-        {/* Statut */}
+        {/* STATUT */}
 
         <div className="absolute bottom-4 right-4">
           <StatusBadge status={project.status} />
@@ -704,16 +919,13 @@ function ProjectCard({
           {project.description}
         </p>
 
-        {/* ===================================================
-            STATISTIQUES
-        =================================================== */}
+        {/* STATS */}
 
         <div
           className="
             mt-5
             grid grid-cols-3
-            divide-x
-            divide-slate-100
+            divide-x divide-slate-100
             rounded-xl
             bg-slate-50
             py-3
@@ -735,15 +947,11 @@ function ProjectCard({
           />
         </div>
 
-        {/* ===================================================
-            INFOS
-        =================================================== */}
+        {/* INFOS */}
 
         <div
           className="
-            mt-4
-            flex
-            items-center
+            mt-4 flex items-center
             justify-between
             text-[9px]
             text-slate-400
@@ -760,17 +968,12 @@ function ProjectCard({
           </span>
         </div>
 
-        {/* ===================================================
-            ACTIONS
-        =================================================== */}
+        {/* ACTIONS BAS */}
 
         <div
           className="
-            mt-4
-            flex
-            gap-2
-            border-t
-            border-slate-100
+            mt-4 flex gap-2
+            border-t border-slate-100
             pt-4
           "
         >
@@ -798,10 +1001,14 @@ function ProjectCard({
           <button
             type="button"
             aria-label={`Modifier ${project.name}`}
+            onClick={() =>
+              alert(
+                `Modification du projet "${project.name}"`
+              )
+            }
             className="
               flex h-9 w-9
-              items-center
-              justify-center
+              items-center justify-center
               rounded-xl
               border border-slate-200
               text-slate-400
@@ -817,10 +1024,10 @@ function ProjectCard({
           <button
             type="button"
             aria-label={`Supprimer ${project.name}`}
+            onClick={() => onDelete(project.id)}
             className="
               flex h-9 w-9
-              items-center
-              justify-center
+              items-center justify-center
               rounded-xl
               border border-slate-200
               text-slate-400
@@ -839,73 +1046,79 @@ function ProjectCard({
 }
 
 /* =========================================================
-   PROJECT LIST ITEM
+   PROJECT LIST
 ========================================================= */
 
 function ProjectListItem({
   project,
+  openMenu,
+  setOpenMenu,
+  onDelete,
+  onArchive,
 }: {
   project: Project;
+  openMenu: number | null;
+  setOpenMenu: React.Dispatch<
+    React.SetStateAction<number | null>
+  >;
+  onDelete: (id: number) => void;
+  onArchive: (id: number) => void;
 }) {
-  return (
-    <div className="
-      flex flex-col gap-4
-      rounded-2xl
-      border border-slate-200
-      bg-white p-4
-      shadow-sm
-      lg:flex-row
-      lg:items-center
-    ">
+  const isMenuOpen = openMenu === project.id;
 
+  return (
+    <div
+      className="
+        flex flex-col gap-4
+        rounded-2xl
+        border border-slate-200
+        bg-white p-4
+        shadow-sm
+        lg:flex-row
+        lg:items-center
+      "
+      onClick={(e) => e.stopPropagation()}
+    >
       {/* IDENTITÉ */}
 
       <div className="flex min-w-0 flex-1 items-center gap-3">
-
-      <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl">
-  <Image
-    src={project.image}
-    alt={`Image du projet ${project.name}`}
-    fill
-    sizes="48px"
-    className="object-cover"
-  />
-</div>
+        <div
+          className="
+            relative
+            h-14 w-14
+            shrink-0
+            overflow-hidden
+            rounded-xl
+            bg-slate-100
+          "
+        >
+          <Image
+            src={project.image}
+            alt={`Image du projet ${project.name}`}
+            fill
+            sizes="56px"
+            className="object-contain"
+          />
+        </div>
 
         <div className="min-w-0">
-
           <div className="flex flex-wrap items-center gap-2">
-
             <h3 className="truncate text-sm font-black">
               {project.name}
             </h3>
 
             <StatusBadge status={project.status} />
-
           </div>
 
-          <p className="
-            mt-1
-            truncate
-            text-[10px]
-            text-slate-400
-          ">
+          <p className="mt-1 truncate text-[10px] text-slate-400">
             {project.description}
           </p>
-
         </div>
-
       </div>
 
       {/* POSTS */}
 
-      <div className="
-        flex items-center
-        gap-2
-        text-[10px]
-        text-slate-500
-      ">
-
+      <div className="flex items-center gap-2 text-[10px] text-slate-500">
         <FileText size={14} />
 
         <span>
@@ -914,18 +1127,11 @@ function ProjectListItem({
           </strong>{" "}
           publications
         </span>
-
       </div>
 
-      {/* MÉDIAS */}
+      {/* MEDIA */}
 
-      <div className="
-        flex items-center
-        gap-2
-        text-[10px]
-        text-slate-500
-      ">
-
+      <div className="flex items-center gap-2 text-[10px] text-slate-500">
         <ImageIcon size={14} />
 
         <span>
@@ -934,66 +1140,120 @@ function ProjectListItem({
           </strong>{" "}
           médias
         </span>
-
       </div>
 
       {/* MEMBRES */}
 
-      <div className="
-        flex items-center
-        gap-2
-        text-[10px]
-        text-slate-500
-      ">
-
+      <div className="flex items-center gap-2 text-[10px] text-slate-500">
         <Users size={14} />
 
         <span>
           {project.members} membre
           {project.members > 1 ? "s" : ""}
         </span>
-
       </div>
 
       {/* ACTIONS */}
 
-      <div className="flex gap-1">
-
-        <button className="
-          flex h-8 w-8
-          items-center justify-center
-          rounded-lg
-          text-slate-400
-          hover:bg-slate-50
-          hover:text-slate-800
-        ">
-          <Eye size={14} />
+      <div className="relative flex gap-1">
+        <button
+          type="button"
+          onClick={() =>
+            setOpenMenu(
+              isMenuOpen ? null : project.id
+            )
+          }
+          className="
+            flex h-8 w-8
+            items-center justify-center
+            rounded-lg
+            text-slate-400
+            hover:bg-slate-50
+            hover:text-slate-800
+          "
+        >
+          <MoreHorizontal size={17} />
         </button>
 
-        <button className="
-          flex h-8 w-8
-          items-center justify-center
-          rounded-lg
-          text-slate-400
-          hover:bg-red-50
-          hover:text-red-600
-        ">
-          <Edit3 size={14} />
-        </button>
+        {isMenuOpen && (
+          <div
+            className="
+              absolute right-0 top-10
+              z-50 w-40
+              overflow-hidden
+              rounded-xl
+              border border-slate-200
+              bg-white p-1.5
+              shadow-xl
+            "
+          >
+            <Link
+              href="/dashboard/publications"
+              onClick={() => setOpenMenu(null)}
+              className="
+                flex items-center gap-2
+                rounded-lg px-3 py-2
+                text-[10px] font-bold
+                text-slate-600
+                hover:bg-slate-50
+              "
+            >
+              <Eye size={13} />
+              Voir
+            </Link>
 
-        <button className="
-          flex h-8 w-8
-          items-center justify-center
-          rounded-lg
-          text-slate-400
-          hover:bg-red-50
-          hover:text-red-600
-        ">
-          <Trash2 size={14} />
-        </button>
+            <button
+              type="button"
+              onClick={() => {
+                setOpenMenu(null);
+                alert(
+                  `Modification du projet "${project.name}"`
+                );
+              }}
+              className="
+                flex w-full items-center gap-2
+                rounded-lg px-3 py-2
+                text-[10px] font-bold
+                text-slate-600
+                hover:bg-slate-50
+              "
+            >
+              <Edit3 size={13} />
+              Modifier
+            </button>
 
+            <button
+              type="button"
+              onClick={() => onArchive(project.id)}
+              className="
+                flex w-full items-center gap-2
+                rounded-lg px-3 py-2
+                text-[10px] font-bold
+                text-slate-600
+                hover:bg-slate-50
+              "
+            >
+              <Archive size={13} />
+              Archiver
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onDelete(project.id)}
+              className="
+                flex w-full items-center gap-2
+                rounded-lg px-3 py-2
+                text-[10px] font-bold
+                text-red-600
+                hover:bg-red-50
+              "
+            >
+              <Trash2 size={13} />
+              Supprimer
+            </button>
+          </div>
+        )}
       </div>
-
     </div>
   );
 }
@@ -1011,7 +1271,6 @@ function ProjectStat({
 }) {
   return (
     <div className="text-center">
-
       <p className="text-sm font-black text-slate-800">
         {value}
       </p>
@@ -1019,7 +1278,6 @@ function ProjectStat({
       <p className="mt-0.5 text-[8px] font-medium text-slate-400">
         {label}
       </p>
-
     </div>
   );
 }
@@ -1036,15 +1294,20 @@ function StatusBadge({
   const config = {
     Actif: {
       icon: <CheckCircle2 size={11} />,
-      className: "bg-emerald-50 text-emerald-600",
+      className:
+        "bg-emerald-50 text-emerald-600",
     },
+
     "En pause": {
       icon: <Clock3 size={11} />,
-      className: "bg-orange-50 text-orange-600",
+      className:
+        "bg-orange-50 text-orange-600",
     },
+
     Archivé: {
       icon: <Archive size={11} />,
-      className: "bg-slate-100 text-slate-500",
+      className:
+        "bg-slate-100 text-slate-500",
     },
   };
 
@@ -1068,23 +1331,4 @@ function StatusBadge({
       {status}
     </span>
   );
-}
-
-/* =========================================================
-   INITIALS
-========================================================= */
-
-function getProjectInitials(name: string) {
-  const words = name
-    .trim()
-    .split(" ")
-    .filter(Boolean);
-
-  if (words.length === 1) {
-    return words[0].slice(0, 2).toUpperCase();
-  }
-
-  return (
-    words[0][0] + words[1][0]
-  ).toUpperCase();
 }

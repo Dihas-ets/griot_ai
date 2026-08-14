@@ -49,66 +49,113 @@ type Publication = {
    ICÔNES RÉSEAUX
 ========================================================= */
 
-const FacebookIcon = () => (
+const FacebookIcon = ({ size = 16 }: { size?: number }) => (
   <svg
     viewBox="0 0 24 24"
-    className="h-4 w-4"
-    fill="currentColor"
+    width={size}
+    height={size}
+    fill="none"
   >
-    <path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073c0 6.019 4.388 11.006 10.125 11.927v-8.432H7.078v-3.495h3.047V9.413c0-3.022 1.791-4.693 4.533-4.693 1.312 0 2.686.236 2.686.236v2.973h-1.514c-1.491 0-1.956.931-1.956 1.887v2.257h3.328l-.532 3.495h-2.796V24C19.612 23.079 24 18.092 24 12.073z" />
+    <circle cx="12" cy="12" r="12" fill="#1877F2" />
+    <path
+      d="M13.5 21v-8h2.7l.4-3h-3.1V8.1c0-.9.3-1.5 1.5-1.5h1.7V4c-.3 0-1.2-.1-2.2-.1-2.2 0-3.7 1.3-3.7 3.8V10H8.3v3h2.5v8h2.7Z"
+      fill="white"
+    />
   </svg>
 );
 
-const InstagramIcon = () => (
+const InstagramIcon = ({ size = 16 }: { size?: number }) => (
   <svg
     viewBox="0 0 24 24"
-    className="h-4 w-4"
+    width={size}
+    height={size}
     fill="none"
   >
+    <defs>
+      <linearGradient
+        id="instagramGradient"
+        x1="3"
+        y1="21"
+        x2="21"
+        y2="3"
+        gradientUnits="userSpaceOnUse"
+      >
+        <stop stopColor="#FFDC80" />
+        <stop offset="0.25" stopColor="#FCB045" />
+        <stop offset="0.5" stopColor="#FD1D1D" />
+        <stop offset="0.75" stopColor="#E1306C" />
+        <stop offset="1" stopColor="#833AB4" />
+      </linearGradient>
+    </defs>
+
     <rect
-      x="3"
-      y="3"
-      width="18"
-      height="18"
-      rx="5"
-      stroke="currentColor"
-      strokeWidth="2"
+      x="2.5"
+      y="2.5"
+      width="19"
+      height="19"
+      rx="5.5"
+      fill="url(#instagramGradient)"
+    />
+
+    <rect
+      x="7"
+      y="7"
+      width="10"
+      height="10"
+      rx="3"
+      stroke="white"
+      strokeWidth="1.8"
     />
 
     <circle
       cx="12"
       cy="12"
-      r="4"
-      stroke="currentColor"
-      strokeWidth="2"
+      r="2.5"
+      stroke="white"
+      strokeWidth="1.8"
     />
 
     <circle
-      cx="17.5"
-      cy="6.5"
+      cx="17"
+      cy="7"
       r="1"
-      fill="currentColor"
+      fill="white"
     />
   </svg>
 );
 
-const LinkedinIcon = () => (
+const LinkedinIcon = ({ size = 16 }: { size?: number }) => (
   <svg
     viewBox="0 0 24 24"
-    className="h-4 w-4"
-    fill="currentColor"
+    width={size}
+    height={size}
+    fill="none"
   >
-    <path d="M20.45 20.45h-3.56v-5.57c0-1.33-.03-3.04-1.85-3.04-1.85 0-2.13 1.44-2.13 2.94v5.67H9.35V8.99h3.41v1.56h.05c.47-.9 1.63-1.85 3.35-1.85 3.59 0 4.25 2.36 4.25 5.43v6.32zM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14zM3.56 8.99h3.56v11.46H3.56V8.99z" />
+    <rect
+      width="24"
+      height="24"
+      rx="4"
+      fill="#0A66C2"
+    />
+
+    <path
+      d="M7.2 9.1H4.5V19h2.7V9.1ZM5.85 5A1.6 1.6 0 1 0 5.85 8.2 1.6 1.6 0 0 0 5.85 5ZM19.5 13.3c0-2.98-1.59-4.37-3.71-4.37-1.7 0-2.46.94-2.88 1.6V9.1h-2.7V19h2.7v-4.9c0-1.29.24-2.54 1.84-2.54 1.58 0 1.6 1.48 1.6 2.63V19h2.7l.45-5.7Z"
+      fill="white"
+    />
   </svg>
 );
 
-const XIcon = () => (
+const XIcon = ({ size = 16 }: { size?: number }) => (
   <svg
     viewBox="0 0 24 24"
-    className="h-4 w-4"
-    fill="currentColor"
+    width={size}
+    height={size}
+    fill="none"
   >
-    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817-5.963 6.817H1.684l7.73-8.835L1.254 2.25H8.08l4.713 6.231 5.45-6.231z" />
+    <path
+      d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817-5.963 6.817H1.684l7.73-8.835L1.254 2.25H8.08l4.713 6.231 5.45-6.231Z"
+      fill="#000000"
+    />
   </svg>
 );
 
@@ -772,20 +819,23 @@ function NetworkBadge({
 }) {
   const data = {
     Facebook: {
-      icon: <FacebookIcon />,
-      style: "bg-blue-50 text-blue-600",
+      icon: <FacebookIcon size={15} />,
+      style: "bg-[#1877F2]/10 text-[#1877F2]",
     },
+
     Instagram: {
-      icon: <InstagramIcon />,
-      style: "bg-pink-50 text-pink-600",
+      icon: <InstagramIcon size={15} />,
+      style: "bg-pink-50 text-[#E1306C]",
     },
+
     LinkedIn: {
-      icon: <LinkedinIcon />,
-      style: "bg-sky-50 text-sky-600",
+      icon: <LinkedinIcon size={15} />,
+      style: "bg-[#0A66C2]/10 text-[#0A66C2]",
     },
+
     X: {
-      icon: <XIcon />,
-      style: "bg-slate-100 text-slate-700",
+      icon: <XIcon size={15} />,
+      style: "bg-slate-100 text-black",
     },
   };
 

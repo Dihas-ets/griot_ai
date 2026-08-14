@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   Bell,
   ChevronDown,
@@ -17,6 +17,19 @@ import {
   MoreHorizontal,
   HelpCircle,
   X,
+  Pencil,
+  Trash2,
+  Upload,
+  Heart,
+  MessageCircle,
+  Share2,
+  Repeat2,
+  Bookmark,
+  ThumbsUp,
+  MapPin,
+  Play,
+  Eye,
+  CheckCircle2
 } from "lucide-react";
 
 /* =========================================================
@@ -30,17 +43,26 @@ type SocialNetwork = {
   icon: React.ReactNode;
 };
 
+type PostContent = {
+  text: string;
+  image: string | null;
+};
+
 /* =========================================================
    ICÔNES RÉSEAUX SOCIAUX
+   COULEURS OFFICIELLES
 ========================================================= */
 
 const FacebookIcon = () => (
   <svg
     viewBox="0 0 24 24"
     className="h-5 w-5"
-    fill="currentColor"
+    aria-hidden="true"
   >
-    <path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073c0 6.019 4.388 11.006 10.125 11.927v-8.432H7.078v-3.495h3.047V9.413c0-3.022 1.791-4.693 4.533-4.693 1.312 0 2.686.236 2.686.236v2.973h-1.514c-1.491 0-1.956.931-1.956 1.887v2.257h3.328l-.532 3.495h-2.796V24C19.612 23.079 24 18.092 24 12.073z" />
+    <path
+      fill="#1877F2"
+      d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073c0 6.019 4.388 11.006 10.125 11.927v-8.432H7.078v-3.495h3.047V9.413c0-3.022 1.791-4.693 4.533-4.693 1.312 0 2.686.236 2.686.236v2.973h-1.514c-1.491 0-1.956.931-1.956 1.887v2.257h3.328l-.532 3.495h-2.796V24C19.612 23.079 24 18.092 24 12.073z"
+    />
   </svg>
 );
 
@@ -48,29 +70,49 @@ const InstagramIcon = () => (
   <svg
     viewBox="0 0 24 24"
     className="h-5 w-5"
-    fill="none"
+    aria-hidden="true"
   >
+    <defs>
+      <linearGradient
+        id="instagramGradient"
+        x1="0%"
+        y1="100%"
+        x2="100%"
+        y2="0%"
+      >
+        <stop offset="0%" stopColor="#FFDC80" />
+        <stop offset="25%" stopColor="#FCAF45" />
+        <stop offset="50%" stopColor="#F77737" />
+        <stop offset="75%" stopColor="#E1306C" />
+        <stop offset="100%" stopColor="#833AB4" />
+      </linearGradient>
+    </defs>
+
     <rect
       x="3"
       y="3"
       width="18"
       height="18"
       rx="5"
-      stroke="currentColor"
+      fill="none"
+      stroke="url(#instagramGradient)"
       strokeWidth="2"
     />
+
     <circle
       cx="12"
       cy="12"
       r="4"
-      stroke="currentColor"
+      fill="none"
+      stroke="url(#instagramGradient)"
       strokeWidth="2"
     />
+
     <circle
       cx="17.5"
       cy="6.5"
-      r="1"
-      fill="currentColor"
+      r="1.2"
+      fill="#E1306C"
     />
   </svg>
 );
@@ -79,24 +121,58 @@ const LinkedinIcon = () => (
   <svg
     viewBox="0 0 24 24"
     className="h-5 w-5"
-    fill="currentColor"
+    aria-hidden="true"
   >
-    <path d="M20.45 20.45h-3.56v-5.57c0-1.33-.03-3.04-1.85-3.04-1.85 0-2.13 1.44-2.13 2.94v5.67H9.35V8.99h3.41v1.56h.05c.47-.9 1.63-1.85 3.35-1.85 3.59 0 4.25 2.36 4.25 5.43v6.32zM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14zM3.56 8.99h3.56v11.46H3.56V8.99z" />
+    <path
+      fill="#0A66C2"
+      d="M20.45 20.45h-3.56v-5.57c0-1.33-.03-3.04-1.85-3.04-1.85 0-2.13 1.44-2.13 2.94v5.67H9.35V8.99h3.41v1.56h.05c.47-.9 1.63-1.85 3.35-1.85 3.59 0 4.25 2.36 4.25 5.43v6.32zM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14zM3.56 8.99h3.56v11.46H3.56V8.99z"
+    />
   </svg>
 );
 
-const TwitterIcon = () => (
+const TikTokIcon = () => (
   <svg
     viewBox="0 0 24 24"
     className="h-5 w-5"
-    fill="currentColor"
+    aria-hidden="true"
   >
-    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817-5.963 6.817H1.684l7.73-8.835L1.254 2.25H8.08l4.713 6.231 5.45-6.231zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z" />
+    <path
+      fill="#000000"
+      d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.33V2h-3.63v13.67a2.91 2.91 0 1 1-2-2.76V9.23a6.53 6.53 0 1 0 5.63 6.44V8.41a8.43 8.43 0 0 0 4.93 1.58V6.36a4.84 4.84 0 0 1-1.16-.17z"
+    />
+  </svg>
+);
+
+const GoogleBusinessIcon = () => (
+  <svg
+    viewBox="0 0 24 24"
+    className="h-5 w-5"
+    aria-hidden="true"
+  >
+    <path
+      fill="#4285F4"
+      d="M21.35 12.27c0-.79-.07-1.55-.2-2.27H12v4.3h5.22a4.46 4.46 0 0 1-1.94 2.93v2.43h3.14c1.84-1.69 2.93-4.18 2.93-7.39z"
+    />
+
+    <path
+      fill="#34A853"
+      d="M12 21.99c2.63 0 4.84-.87 6.45-2.36l-3.14-2.43c-.87.58-1.98.92-3.31.92-2.54 0-4.69-1.72-5.46-4.03H3.3v2.5A9.75 9.75 0 0 0 12 21.99z"
+    />
+
+    <path
+      fill="#FBBC05"
+      d="M6.54 14.09A5.86 5.86 0 0 1 6.23 12c0-.72.12-1.42.31-2.09V7.41H3.3A9.75 9.75 0 0 0 2.25 12c0 1.57.38 3.05 1.05 4.59l3.24-2.5z"
+    />
+
+    <path
+      fill="#EA4335"
+      d="M12 5.88c1.43 0 2.72.49 3.73 1.46l2.79-2.79C16.84 2.98 14.63 2.01 12 2.01a9.75 9.75 0 0 0-8.7 5.4l3.24 2.5C7.31 7.6 9.46 5.88 12 5.88z"
+    />
   </svg>
 );
 
 /* =========================================================
-   RÉSEAUX SOCIAUX
+   RÉSEAUX
 ========================================================= */
 
 const networks: SocialNetwork[] = [
@@ -119,38 +195,24 @@ const networks: SocialNetwork[] = [
     icon: <LinkedinIcon />,
   },
   {
-    id: "twitter",
-    name: "X (Twitter)",
-    username: "@presta_officiel",
-    icon: <TwitterIcon />,
-  },
-  {
     id: "tiktok",
     name: "TikTok",
     username: "@presta_officiel",
-    icon: (
-      <span className="text-sm font-black">
-        ♪
-      </span>
-    ),
+    icon: <TikTokIcon />,
   },
   {
     id: "google",
     name: "Google Business Profile",
     username: "Presta",
-    icon: (
-      <span className="text-sm font-black text-red-dark">
-        G
-      </span>
-    ),
+    icon: <GoogleBusinessIcon />,
   },
 ];
 
 /* =========================================================
-   CONTENU
+   CONTENU PAR DÉFAUT
 ========================================================= */
 
-const postText = `🚀 Nouvelle formation Flutter !
+const defaultPostText = `🚀 Nouvelle formation Flutter !
 
 Vous êtes débutant et vous voulez créer des applications mobiles modernes ?
 
@@ -168,11 +230,12 @@ Rejoignez notre formation Flutter 100% pratique avec des projets concrets.
 ========================================================= */
 
 export default function CreatePublicationPage() {
-  const [selectedNetworks, setSelectedNetworks] = useState([
+  const [selectedNetworks, setSelectedNetworks] = useState<string[]>([
     "facebook",
     "instagram",
     "linkedin",
-    "twitter",
+    "tiktok",
+    "google",
   ]);
 
   const [showProjectMenu, setShowProjectMenu] = useState(false);
@@ -185,6 +248,37 @@ export default function CreatePublicationPage() {
     "Promouvoir notre nouvelle formation Flutter destinée aux débutants. La formation commence le 15 juillet 2026, 100% pratique avec projets."
   );
 
+  /* =======================================================
+     CONTENU INDIVIDUEL DE CHAQUE RÉSEAU
+  ======================================================= */
+
+  const [posts, setPosts] = useState<Record<string, PostContent>>({
+    facebook: {
+      text: defaultPostText,
+      image: "/flutter.png",
+    },
+
+    instagram: {
+      text: defaultPostText,
+      image: "/flutter.png",
+    },
+
+    linkedin: {
+      text: defaultPostText,
+      image: "/flutter.png",
+    },
+
+    tiktok: {
+      text: defaultPostText,
+      image: "/flutter.png",
+    },
+
+    google: {
+      text: defaultPostText,
+      image: "/flutter.png",
+    },
+  });
+
   const toggleNetwork = (id: string) => {
     setSelectedNetworks((current) =>
       current.includes(id)
@@ -193,139 +287,160 @@ export default function CreatePublicationPage() {
     );
   };
 
+  const updatePostText = (networkId: string, text: string) => {
+    setPosts((current) => ({
+      ...current,
+      [networkId]: {
+        ...current[networkId],
+        text,
+      },
+    }));
+  };
+
+  const updatePostImage = (networkId: string, image: string | null) => {
+    setPosts((current) => ({
+      ...current,
+      [networkId]: {
+        ...current[networkId],
+        image,
+      },
+    }));
+  };
+
   return (
     <div className="min-h-screen bg-[#f7f8fc] text-slate-900">
 
       {/* =====================================================
           HEADER
       ===================================================== */}
-<header className="sticky top-0 border-b border-slate-200/80 bg-white/95 backdrop-blur">
-  <div className="mx-auto flex min-h-[72px] w-full max-w-[1800px] items-center px-3 sm:px-5 lg:px-8">
 
-    {/* =====================================================
-        GAUCHE — TITRE 
-        (flex-1 pour occuper l'espace et permettre le centrage du milieu)
-    ===================================================== */}
-    <div className="flex-1 min-w-0">
-      {/* pl-14 pour ne pas être sous le burger menu noir sur mobile */}
-      <div className="pl-14 md:pl-12 lg:pl-0 xl:pl-0 min-w-0">
-        <p className="mb-0.5 hidden text-[9px] font-bold uppercase tracking-[0.16em] text-slate-400 md:block">
-          Création de contenu
-        </p>
-        <h1 className="truncate text-[14px] font-extrabold tracking-tight text-slate-900 sm:text-[16px] lg:text-[19px]">
-          Créer une publication
-        </h1>
-      </div>
-    </div>
+      <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/95 backdrop-blur">
 
-    {/* =====================================================
-        CENTRE — SÉLECTEUR DE PROJET 
-        (Centré parfaitement à partir de md)
-    ===================================================== */}
-    <div className="flex-none md:flex-1 flex md:justify-center items-center">
-      <div className="relative">
-        <button
-          onClick={() => setShowProjectMenu(!showProjectMenu)}
-          className="
-            flex items-center gap-2
-            rounded-xl border border-slate-200 bg-white
-            px-2.5 py-2 shadow-sm transition hover:border-slate-300 hover:bg-slate-50
-            w-[110px]      
-            sm:w-[130px]
-            md:w-[180px]
-            lg:w-[210px]
-          "
-        >
-          {/* ICÔNE */}
-          <div className="flex h-6 w-6 sm:h-7 sm:w-7 shrink-0 items-center justify-center rounded-lg bg-red-100 text-red-600">
-            ✦
-          </div>
+        <div className="mx-auto flex min-h-[72px] w-full max-w-[1800px] items-center px-3 sm:px-5 lg:px-8">
 
-          {/* TEXTE PROJET */}
-          <div className="min-w-0 flex-1 text-left">
-            <p className="hidden text-[8px] font-semibold text-slate-400 md:block leading-tight">
-              Projet actif
-            </p>
-            <p className="truncate text-[10px] font-bold text-slate-800 sm:text-xs">
-              Presta
-            </p>
-          </div>
+          {/* GAUCHE */}
 
-          <ChevronDown
-            size={14}
-            className={`shrink-0 text-slate-400 transition-transform duration-300 ${
-              showProjectMenu ? "rotate-180" : ""
-            }`}
-          />
-        </button>
+          <div className="min-w-0 flex-1">
 
-        {/* MENU DÉROULANT */}
-        {showProjectMenu && (
-          <div className="absolute left-1/2 -translate-x-1/2 md:left-0 md:translate-x-0 top-[52px] z-[100] w-[260px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
-            <div className="border-b border-slate-100 px-4 py-3">
-              <p className="text-[9px] font-black uppercase tracking-[0.15em] text-slate-400">
-                Mes projets
+            <div className="min-w-0 pl-14 md:pl-12 lg:pl-0">
+
+              <p className="mb-0.5 hidden text-[9px] font-bold uppercase tracking-[0.16em] text-slate-400 md:block">
+                Création de contenu
               </p>
+
+              <h1 className="truncate text-[14px] font-extrabold tracking-tight text-slate-900 sm:text-[16px] lg:text-[19px]">
+                Créer une publication
+              </h1>
+
             </div>
-            {["Presta", "Diha's Agency", "Fofana Voyage", "Clinico"].map((project, index) => (
-              <button
-                key={project}
-                onClick={() => setShowProjectMenu(false)}
-                className={`flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-slate-50 ${
-                  index === 0 ? "bg-red-50/50" : ""
-                }`}
-              >
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-sm">
-                  {index === 0 ? "✦" : "👤"}
-                </span>
-                <span className="min-w-0 flex-1 truncate text-xs font-semibold text-slate-700">
-                  {project}
-                </span>
-                {index === 0 && <Check size={15} className="shrink-0 text-red-600" />}
-              </button>
-            ))}
-            <button className="flex w-full items-center gap-2 border-t border-slate-100 px-4 py-3 text-xs font-bold text-red-600 transition hover:bg-red-50">
-              <Plus size={15} />
-              Créer un projet
-            </button>
+
           </div>
-        )}
-      </div>
-    </div>
 
-    {/* =====================================================
-        DROITE — ICONES / PROFIL
-        (Masqué sur mobile, visible sur md+)
-    ===================================================== */}
-    <div className="hidden md:flex md:flex-1 items-center justify-end gap-2 lg:gap-3">
-      {/* AIDE */}
-      <button className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-50 hover:text-slate-700 transition-colors">
-        <HelpCircle size={18} />
-      </button>
+          {/* CENTRE */}
 
-      {/* NOTIFICATIONS */}
-      <button className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-50 hover:text-slate-700 transition-colors">
-        <Bell size={18} />
-<span className="absolute right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[8px] font-black text-white">
-          3
-        </span>      </button>
+          <div className="flex flex-none items-center justify-center md:flex-1">
 
-      {/* PROFIL */}
-      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-red-600 text-xs font-black text-white">
+            <div className="relative">
+
+            
+               <div className="relative">
+            <button
+              onClick={() => setShowProjectMenu(!showProjectMenu)}
+              className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold shadow-sm transition hover:bg-slate-50"
+            >
+              <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-red-50 text-red-600">
+                ✦
+              </div>
+
+              <span className="hidden sm:block">
+                Presta
+              </span>
+
+              <ChevronDown size={14} />
+            </button>
+
+            {showProjectMenu && (
+              <div className="absolute right-0 top-12 z-50 w-64 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+                <div className="border-b border-slate-100 px-4 py-3">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+                    Mes projets
+                  </p>
+                </div>
+
+                {[
+                  "Presta",
+                  "Diha's Agency",
+                  "Fofana Voyage",
+                  "Clinico",
+                ].map((project, index) => (
+                  <button
+                    key={project}
+                    onClick={() => setShowProjectMenu(false)}
+                    className="flex w-full items-center gap-3 px-4 py-3 text-left text-xs font-semibold transition hover:bg-slate-50"
+                  >
+                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100">
+                      {index === 0 ? "✦" : "👤"}
+                    </span>
+
+                    <span className="flex-1">
+                      {project}
+                    </span>
+
+                    {index === 0 && (
+                      <CheckCircle2
+                        size={15}
+                        className="text-red-600"
+                      />
+                    )}
+                  </button>
+                ))}
+
+                <button className="flex w-full items-center gap-2 border-t border-slate-100 px-4 py-3 text-xs font-bold text-red-600 transition hover:bg-red-50">
+                  <Plus size={15} />
+                  Créer un projet
+                </button>
+              </div>
+            )}
+          </div>
+  
+
+            </div>
+
+          </div>
+
+          {/* DROITE */}
+
+          <div className="hidden flex-1 items-center justify-end gap-2 md:flex lg:gap-3">
+
+            <button className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-400 transition-colors hover:bg-slate-50 hover:text-slate-700">
+              <HelpCircle size={18} />
+            </button>
+
+            <button className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-400 transition-colors hover:bg-slate-50 hover:text-slate-700">
+
+              <Bell size={18} />
+
+              <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[8px] font-black text-white">
+                3
+              </span>
+
+            </button>
+
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-red-dark text-xs font-black text-white">
               Y
             </div>
-    </div>
 
-  </div>
-</header>
+          </div>
+
+        </div>
+
+      </header>
 
       {/* =====================================================
           CONTENU
       ===================================================== */}
 
       <main className="mx-auto max-w-[1800px] px-3 py-5 sm:px-5 sm:py-6 lg:px-7 lg:py-7">
-
-        {/* TITRE */}
 
         <div className="mb-5">
 
@@ -336,13 +451,13 @@ export default function CreatePublicationPage() {
         </div>
 
         {/* ===================================================
-            GRILLE PRINCIPALE
+            GRILLE
         =================================================== */}
 
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-[300px_minmax(0,1fr)] 2xl:grid-cols-[320px_minmax(0,1fr)]">
 
           {/* =================================================
-              COLONNE CONFIGURATION
+              CONFIGURATION
           ================================================= */}
 
           <div className="space-y-5">
@@ -365,17 +480,14 @@ export default function CreatePublicationPage() {
                   <span className="text-red-500"> *</span>
                 </label>
 
-                <div>
+                <div className="relative">
 
                   <textarea
                     value={idea}
                     onChange={(e) => setIdea(e.target.value)}
                     maxLength={10000}
                     rows={5}
-                    className="w-full resize-none rounded-xl border border-slate-200 bg-[#fafbfc] p-3.5 pb-7 text-[11px] font-medium leading-[1.6] text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-red-dark
-focus:bg-white
-focus:ring-4
-focus:ring-red-dark/10"
+                    className="w-full resize-none rounded-xl border border-slate-200 bg-[#fafbfc] p-3.5 pb-7 text-[11px] font-medium leading-[1.6] text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-red-dark focus:bg-white focus:ring-4 focus:ring-red-dark/10"
                   />
 
                   <span className="absolute bottom-2.5 right-3 text-[9px] font-medium text-slate-500">
@@ -394,14 +506,16 @@ focus:ring-red-dark/10"
                   Ton souhaité
                 </label>
 
-                <div>
+                <div className="relative">
 
-                  <select className="w-full appearance-none rounded-xl border border-slate-200 bg-[#fafbfc] px-3 py-3 text-[11px] font-semibold text-slate-700 outline-none transition focus:border-[#8b75e8] focus:bg-white focus:ring-4 focus:ring-red-light/5">
+                  <select className="w-full appearance-none rounded-xl border border-slate-200 bg-[#fafbfc] px-3 py-3 text-[11px] font-semibold text-slate-700 outline-none transition focus:border-red-dark focus:bg-white focus:ring-4 focus:ring-red-light/20">
+
                     <option>Professionnel & motivant</option>
                     <option>Décontracté</option>
                     <option>Inspirant</option>
                     <option>Commercial</option>
                     <option>Éducatif</option>
+
                   </select>
 
                   <ChevronDown
@@ -421,11 +535,13 @@ focus:ring-red-dark/10"
                   Langue
                 </label>
 
-                <div>
+                <div className="relative">
 
-                  <select className="w-full appearance-none rounded-xl border border-slate-200 bg-[#fafbfc] px-3 py-3 text-[11px] font-semibold text-slate-700 outline-none transition focus:border-[#8b75e8] focus:bg-white focus:ring-4 focus:ring-red-light/5">
+                  <select className="w-full appearance-none rounded-xl border border-slate-200 bg-[#fafbfc] px-3 py-3 text-[11px] font-semibold text-slate-700 outline-none transition focus:border-red-dark focus:bg-white focus:ring-4 focus:ring-red-light/20">
+
                     <option>Français</option>
                     <option>English</option>
+
                   </select>
 
                   <ChevronDown
@@ -469,8 +585,7 @@ focus:ring-red-dark/10"
                       className="group flex w-full items-center gap-3 py-2.5 text-left transition"
                     >
 
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-50 text-slate-700 transition group-hover:bg-red-light/10
-group-hover:text-red-dark">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-50 transition group-hover:bg-slate-100">
                         {network.icon}
                       </div>
 
@@ -493,20 +608,26 @@ group-hover:text-red-dark">
                             : "border-slate-300 bg-white"
                         }`}
                       >
-                        {selected && <Check size={12} strokeWidth={3} />}
+
+                        {selected && (
+                          <Check size={12} strokeWidth={3} />
+                        )}
+
                       </div>
 
                     </button>
                   );
+
                 })}
 
               </div>
 
-              <button
-                className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-red-dark py-3 text-[10px] font-black uppercase tracking-[0.06em] text-white shadow-[0_8px_20px_rgba(0,0,0,0.12)] transition hover:bg-red-dark/90 active:scale-[0.99]"
-              >
+              <button className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-red-dark py-3 text-[10px] font-black uppercase tracking-[0.06em] text-white shadow-[0_8px_20px_rgba(0,0,0,0.12)] transition hover:bg-red-dark/90 active:scale-[0.99]">
+
                 <Sparkles size={14} />
+
                 Générer le contenu
+
               </button>
 
             </section>
@@ -519,16 +640,18 @@ group-hover:text-red-dark">
 
           <section className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_2px_10px_rgba(15,23,42,0.03)]">
 
-            {/* HEADER PREVIEW */}
+            {/* HEADER */}
 
             <div className="flex flex-col gap-3 border-b border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-4">
 
               <div className="flex items-center gap-3">
 
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-red-light/10 text-red-dark">
+
                   <span className="text-[11px] font-black">
-                    3
+                    {selectedNetworks.length}
                   </span>
+
                 </span>
 
                 <div className="min-w-0">
@@ -538,7 +661,7 @@ group-hover:text-red-dark">
                   </h2>
 
                   <p className="mt-0.5 text-[9px] text-slate-400">
-                    Aperçu de votre contenu sur chaque réseau
+                    Aperçu adapté à chaque réseau
                   </p>
 
                 </div>
@@ -554,69 +677,93 @@ group-hover:text-red-dark">
 
             {/* TABS */}
 
-            <div className="flex overflow-x-auto border-b border-slate-100 scrollbar-none">
+            {selectedNetworks.length > 0 && (
 
-              {selectedNetworks.map((networkId) => {
+              <div className="flex overflow-x-auto border-b border-slate-100 scrollbar-none">
 
-                const network = networks.find(
-                  (item) => item.id === networkId
-                );
+                {selectedNetworks.map((networkId) => {
 
-                if (!network) return null;
+                  const network = networks.find(
+                    (item) => item.id === networkId
+                  );
 
-                return (
-                  <button
-                    key={network.id}
-                    className="flex shrink-0 items-center gap-2 border-b-2 border-red-dark px-4 py-3 text-[10px] font-bold text-red-dark sm:px-5"
-                  >
-                    {network.icon}
-                    {network.name.split(" ")[0]}
-                  </button>
-                );
+                  if (!network) return null;
 
-              })}
+                  return (
+                    <button
+                      key={network.id}
+                      className="flex shrink-0 items-center gap-2 border-b-2 border-red-dark px-4 py-3 text-[10px] font-bold text-red-dark sm:px-5"
+                    >
 
-            </div>
+                      {network.icon}
+
+                      {network.name.split(" ")[0]}
+
+                    </button>
+                  );
+
+                })}
+
+              </div>
+
+            )}
 
             {/* POSTS */}
 
             <div className="bg-[#fafbfc] p-3 sm:p-4 lg:p-5">
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-4">
+              {selectedNetworks.length === 0 ? (
 
-                <SocialPost
-                  platform="Facebook"
-                  platformIcon={<FacebookIcon />}
-                  account="Presta Officiel"
-                  post={postText}
-                  image="/flutter.png"
-                />
+                <div className="flex min-h-[350px] flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white px-5 text-center">
 
-                <SocialPost
-                  platform="Instagram"
-                  platformIcon={<InstagramIcon />}
-                  account="presta_officiel"
-                  post={postText}
-                  image="/flutter.png"
-                />
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+                    <Share2 size={22} />
+                  </div>
 
-                <SocialPost
-                  platform="LinkedIn"
-                  platformIcon={<LinkedinIcon />}
-                  account="Presta SARL"
-                  post={postText}
-                  image="/flutter.png"
-                />
+                  <h3 className="mt-4 text-sm font-black text-slate-700">
+                    Aucun réseau sélectionné
+                  </h3>
 
-                <SocialPost
-                  platform="X (Twitter)"
-                  platformIcon={<TwitterIcon />}
-                  account="@presta_officiel"
-                  post={postText}
-                  image="/flutter.png"
-                />
+                  <p className="mt-1 max-w-sm text-[10px] leading-relaxed text-slate-400">
+                    Sélectionnez au moins un réseau social pour afficher
+                    l'aperçu de votre publication.
+                  </p>
 
-              </div>
+                </div>
+
+              ) : (
+
+                <div className="grid grid-cols-1 gap-5 md:grid-cols-2 2xl:grid-cols-3">
+
+                  {selectedNetworks.map((networkId) => {
+
+                    const network = networks.find(
+                      (item) => item.id === networkId
+                    );
+
+                    if (!network) return null;
+
+                    const post = posts[networkId];
+
+                    return (
+                      <NetworkPreview
+                        key={networkId}
+                        network={network}
+                        post={post}
+                        onTextChange={(text) =>
+                          updatePostText(networkId, text)
+                        }
+                        onImageChange={(image) =>
+                          updatePostImage(networkId, image)
+                        }
+                      />
+                    );
+
+                  })}
+
+                </div>
+
+              )}
 
             </div>
 
@@ -634,8 +781,6 @@ group-hover:text-red-dark">
             number="4"
             title="Planification et publication"
           />
-
-          {/* MODES */}
 
           <div className="mt-5 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
 
@@ -680,8 +825,6 @@ group-hover:text-red-dark">
             </div>
 
           </div>
-
-          {/* ACTIONS */}
 
           <div className="mt-5 flex flex-col gap-3 border-t border-slate-100 pt-5 xl:flex-row xl:items-center xl:justify-between">
 
@@ -734,7 +877,7 @@ group-hover:text-red-dark">
 
           <span className="flex items-center gap-1">
             <ImageIcon size={12} />
-            1 image
+            Images personnalisables
           </span>
 
           <span className="hidden h-3 w-px bg-slate-200 sm:block" />
@@ -774,7 +917,8 @@ group-hover:text-red-dark">
             </p>
 
             <p className="mt-0.5 text-[9px] leading-relaxed text-slate-500">
-              Les publications avec image génèrent 42% plus d'engagement sur Instagram.
+              Les publications avec image génèrent généralement davantage
+              d'engagement sur les réseaux sociaux.
             </p>
 
           </div>
@@ -789,12 +933,13 @@ group-hover:text-red-dark">
         </div>
 
       </main>
+
     </div>
   );
 }
 
 /* =========================================================
-   SECTION TITLE
+   TITRE SECTION
 ========================================================= */
 
 function SectionTitle({
@@ -820,125 +965,935 @@ function SectionTitle({
 }
 
 /* =========================================================
-   SOCIAL POST
+   APERÇU RÉSEAU
 ========================================================= */
 
-function SocialPost({
-  platform,
-  platformIcon,
-  account,
+function NetworkPreview({
+  network,
   post,
-  image,
+  onTextChange,
+  onImageChange,
 }: {
-  platform: string;
-  platformIcon: React.ReactNode;
-  account: string;
-  post: string;
-  image: string;
+  network: SocialNetwork;
+  post: PostContent;
+  onTextChange: (text: string) => void;
+  onImageChange: (image: string | null) => void;
 }) {
+  switch (network.id) {
+    case "facebook":
+      return (
+        <FacebookPreview
+          network={network}
+          post={post}
+          onTextChange={onTextChange}
+          onImageChange={onImageChange}
+        />
+      );
+
+    case "instagram":
+      return (
+        <InstagramPreview
+          network={network}
+          post={post}
+          onTextChange={onTextChange}
+          onImageChange={onImageChange}
+        />
+      );
+
+    case "linkedin":
+      return (
+        <LinkedinPreview
+          network={network}
+          post={post}
+          onTextChange={onTextChange}
+          onImageChange={onImageChange}
+        />
+      );
+
+    case "tiktok":
+      return (
+        <TikTokPreview
+          network={network}
+          post={post}
+          onTextChange={onTextChange}
+          onImageChange={onImageChange}
+        />
+      );
+
+    case "google":
+      return (
+        <GooglePreview
+          network={network}
+          post={post}
+          onTextChange={onTextChange}
+          onImageChange={onImageChange}
+        />
+      );
+
+    default:
+      return null;
+  }
+}
+
+/* =========================================================
+   TOOLBAR D'ÉDITION
+========================================================= */
+
+function PostEditorToolbar({
+  networkId,
+  text,
+  image,
+  onTextChange,
+  onImageChange,
+}: {
+  networkId: string;
+  text: string;
+  image: string | null;
+  onTextChange: (text: string) => void;
+  onImageChange: (image: string | null) => void;
+}) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleImageUpload = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      return;
+    }
+
+    const imageUrl = URL.createObjectURL(file);
+
+    onImageChange(imageUrl);
+
+    setMenuOpen(false);
+
+    event.target.value = "";
+  };
+
+  const removeImage = () => {
+    onImageChange(null);
+    setMenuOpen(false);
+  };
+
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_2px_8px_rgba(15,23,42,0.035)] transition hover:-translate-y-0.5 hover:shadow-md">
+    <>
+      <div className="absolute right-3 top-3 z-30">
 
-      {/* PLATFORM */}
+        <button
+          onClick={() => setMenuOpen((current) => !current)}
+          className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white/95 text-slate-500 shadow-sm backdrop-blur transition hover:bg-slate-50 hover:text-slate-800"
+          aria-label="Modifier la publication"
+        >
+          <MoreHorizontal size={16} />
+        </button>
 
-      <div className="border-b border-slate-100 px-3.5 py-3">
+        {menuOpen && (
 
-        <div className="flex items-center gap-2">
+          <div className="absolute right-0 top-10 z-50 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white py-1.5 shadow-2xl">
 
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-50">
-            {platformIcon}
+            <button
+              onClick={() => {
+                setEditing(true);
+                setMenuOpen(false);
+              }}
+              className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-[10px] font-semibold text-slate-700 transition hover:bg-slate-50"
+            >
+              <Pencil size={14} />
+              Modifier le texte
+            </button>
+
+            <button
+              onClick={() => {
+                fileInputRef.current?.click();
+                setMenuOpen(false);
+              }}
+              className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-[10px] font-semibold text-slate-700 transition hover:bg-slate-50"
+            >
+              <Upload size={14} />
+              Modifier l'image
+            </button>
+
+            {image && (
+              <button
+                onClick={removeImage}
+                className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-[10px] font-semibold text-red-600 transition hover:bg-red-50"
+              >
+                <Trash2 size={14} />
+                Supprimer l'image
+              </button>
+            )}
+
           </div>
 
-          <div>
+        )}
+
+      </div>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleImageUpload}
+      />
+
+      {editing && (
+
+        <div className="absolute inset-x-3 top-14 z-40 rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
+
+          <div className="mb-2 flex items-center justify-between">
 
             <p className="text-[10px] font-black text-slate-800">
-              {platform}
+              Modifier le texte
             </p>
 
-            <p className="text-[8px] text-slate-400">
-              Aperçu du post
-            </p>
+            <button
+              onClick={() => setEditing(false)}
+              className="flex h-6 w-6 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100"
+            >
+              <X size={13} />
+            </button>
 
           </div>
+
+          <textarea
+            value={text}
+            onChange={(e) => onTextChange(e.target.value)}
+            rows={7}
+            className="w-full resize-none rounded-lg border border-slate-200 bg-slate-50 p-2.5 text-[10px] leading-relaxed text-slate-700 outline-none focus:border-red-dark focus:bg-white focus:ring-4 focus:ring-red-light/20"
+          />
+
+          <div className="mt-2 flex justify-end">
+
+            <button
+              onClick={() => setEditing(false)}
+              className="rounded-lg bg-red-dark px-3 py-2 text-[9px] font-black text-white transition hover:bg-red-dark/90"
+            >
+              Terminer
+            </button>
+
+          </div>
+
+        </div>
+
+      )}
+    </>
+  );
+}
+
+/* =========================================================
+   FACEBOOK
+========================================================= */
+
+function FacebookPreview({
+  network,
+  post,
+  onTextChange,
+  onImageChange,
+}: {
+  network: SocialNetwork;
+  post: PostContent;
+  onTextChange: (text: string) => void;
+  onImageChange: (image: string | null) => void;
+}) {
+  return (
+    <article className="relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_2px_8px_rgba(15,23,42,0.035)]">
+
+      <PostEditorToolbar
+        networkId={network.id}
+        text={post.text}
+        image={post.image}
+        onTextChange={onTextChange}
+        onImageChange={onImageChange}
+      />
+
+      <PreviewHeader
+        icon={<FacebookIcon />}
+        platform="Facebook"
+      />
+
+      <div className="flex items-center gap-2 px-3.5 py-3">
+
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200 text-[9px] font-black">
+          P
+        </div>
+
+        <div className="min-w-0">
+
+          <p className="text-[9px] font-black text-slate-800">
+            {network.username}
+          </p>
+
+          <p className="text-[8px] text-slate-400">
+            À l'instant · 🌎
+          </p>
 
         </div>
 
       </div>
 
-      {/* ACCOUNT */}
+      <div className="px-3.5 pb-3">
+
+        <p className="whitespace-pre-line text-[9px] leading-[1.65] text-slate-600">
+          {post.text}
+        </p>
+
+      </div>
+
+      <PreviewImage
+        image={post.image}
+        alt="Publication Facebook"
+        aspect="aspect-[1.91/1]"
+        onChange={onImageChange}
+      />
+
+      <div className="px-3.5 py-2.5">
+
+        <div className="flex items-center justify-between border-b border-slate-100 pb-2 text-[8px] text-slate-400">
+
+          <span className="flex items-center gap-1">
+            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-blue-500 text-white">
+              <ThumbsUp size={8} />
+            </span>
+            128
+          </span>
+
+          <span>
+            12 commentaires · 8 partages
+          </span>
+
+        </div>
+
+        <div className="grid grid-cols-3 pt-2 text-[8px] font-semibold text-slate-500">
+
+          <span className="flex items-center justify-center gap-1">
+            <ThumbsUp size={11} />
+            J'aime
+          </span>
+
+          <span className="flex items-center justify-center gap-1">
+            <MessageCircle size={11} />
+            Commenter
+          </span>
+
+          <span className="flex items-center justify-center gap-1">
+            <Share2 size={11} />
+            Partager
+          </span>
+
+        </div>
+
+      </div>
+
+    </article>
+  );
+}
+
+/* =========================================================
+   INSTAGRAM
+========================================================= */
+
+function InstagramPreview({
+  network,
+  post,
+  onTextChange,
+  onImageChange,
+}: {
+  network: SocialNetwork;
+  post: PostContent;
+  onTextChange: (text: string) => void;
+  onImageChange: (image: string | null) => void;
+}) {
+  return (
+    <article className="relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_2px_8px_rgba(15,23,42,0.035)]">
+
+      <PostEditorToolbar
+        networkId={network.id}
+        text={post.text}
+        image={post.image}
+        onTextChange={onTextChange}
+        onImageChange={onImageChange}
+      />
+
+      <PreviewHeader
+        icon={<InstagramIcon />}
+        platform="Instagram"
+      />
 
       <div className="flex items-center gap-2 px-3.5 py-3">
 
-        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-slate-100 to-slate-200 text-[9px] font-black text-slate-700">
-          P
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-yellow-300 via-pink-500 to-purple-600 p-[2px]">
+
+          <div className="flex h-full w-full items-center justify-center rounded-full bg-white text-[8px] font-black">
+            P
+          </div>
+
         </div>
 
         <div className="min-w-0 flex-1">
 
-          <p className="truncate text-[9px] font-black text-slate-800">
-            {account}
-          </p>
-
-          <p className="text-[8px] text-slate-400">
-            À l'instant
+          <p className="text-[9px] font-black text-slate-800">
+            {network.username}
           </p>
 
         </div>
 
         <MoreHorizontal
-          size={14}
-          className="shrink-0 text-slate-400"
+          size={15}
+          className="text-slate-400"
         />
 
       </div>
 
-      {/* TEXT */}
+      <PreviewImage
+        image={post.image}
+        alt="Publication Instagram"
+        aspect="aspect-square"
+        onChange={onImageChange}
+      />
 
-      <div className="px-3.5 pb-3">
+      <div className="px-3.5 pt-3">
 
-        <p className="whitespace-pre-line text-[9px] leading-[1.65] text-slate-600">
-          {post}
+        <div className="flex items-center justify-between">
+
+          <div className="flex items-center gap-3">
+
+            <Heart size={16} />
+
+            <MessageCircle size={16} />
+
+            <Share2 size={16} />
+
+          </div>
+
+          <Bookmark size={16} />
+
+        </div>
+
+        <p className="mt-2 text-[9px] font-black text-slate-800">
+          128 J'aime
         </p>
 
       </div>
 
-      {/* IMAGE */}
+      <div className="px-3.5 pb-4 pt-2">
 
-      <div className="mx-3.5 overflow-hidden rounded-xl bg-slate-100">
+        <p className="line-clamp-7 whitespace-pre-line text-[9px] leading-[1.6] text-slate-600">
+          <strong className="font-black text-slate-800">
+            {network.username}
+          </strong>{" "}
+          {post.text}
+        </p>
 
-        <img
-          src="/flutter.png"
-          alt={`Publication ${platform}`}
-          className="aspect-square w-full object-cover transition duration-500 hover:scale-[1.01]"
-        />
+        <p className="mt-2 text-[8px] text-slate-400">
+          Voir les 12 commentaires
+        </p>
 
       </div>
 
-      {/* ACTIONS */}
+    </article>
+  );
+}
 
-      <div className="flex items-center justify-between px-3.5 py-3 text-slate-400">
+/* =========================================================
+   LINKEDIN
+========================================================= */
 
-        <div className="flex items-center gap-3">
+function LinkedinPreview({
+  network,
+  post,
+  onTextChange,
+  onImageChange,
+}: {
+  network: SocialNetwork;
+  post: PostContent;
+  onTextChange: (text: string) => void;
+  onImageChange: (image: string | null) => void;
+}) {
+  return (
+    <article className="relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_2px_8px_rgba(15,23,42,0.035)]">
 
-          <span className="text-[12px]">
-            ♡
+      <PostEditorToolbar
+        networkId={network.id}
+        text={post.text}
+        image={post.image}
+        onTextChange={onTextChange}
+        onImageChange={onImageChange}
+      />
+
+      <PreviewHeader
+        icon={<LinkedinIcon />}
+        platform="LinkedIn"
+      />
+
+      <div className="flex items-start gap-2 px-3.5 py-3">
+
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-200 text-[9px] font-black">
+          P
+        </div>
+
+        <div className="min-w-0 flex-1">
+
+          <p className="text-[9px] font-black text-slate-800">
+            {network.username}
+          </p>
+
+          <p className="text-[8px] text-slate-400">
+            Développement & Formation · 1 h
+          </p>
+
+        </div>
+
+        <button className="text-[9px] font-bold text-blue-600">
+          + Suivre
+        </button>
+
+      </div>
+
+      <div className="px-3.5 pb-3">
+
+        <p className="whitespace-pre-line text-[9px] leading-[1.65] text-slate-600">
+          {post.text}
+        </p>
+
+      </div>
+
+      <PreviewImage
+        image={post.image}
+        alt="Publication LinkedIn"
+        aspect="aspect-[1.91/1]"
+        onChange={onImageChange}
+      />
+
+      <div className="px-3.5 py-3">
+
+        <div className="flex items-center justify-between border-b border-slate-100 pb-2 text-[8px] text-slate-400">
+
+          <span className="flex items-center gap-1">
+            👍 ❤️ 💡
+            <span>128</span>
           </span>
 
-          <span className="text-[11px]">
-            ○
-          </span>
-
-          <span className="text-[11px]">
-            ↗
+          <span>
+            14 commentaires · 5 reposts
           </span>
 
         </div>
 
-        <span className="text-[8px]">
-          128 J'aime
-        </span>
+        <div className="grid grid-cols-3 pt-2 text-[8px] font-semibold text-slate-500">
+
+          <span className="flex items-center justify-center gap-1">
+            <ThumbsUp size={11} />
+            J'aime
+          </span>
+
+          <span className="flex items-center justify-center gap-1">
+            <MessageCircle size={11} />
+            Commenter
+          </span>
+
+          <span className="flex items-center justify-center gap-1">
+            <Repeat2 size={11} />
+            Republier
+          </span>
+
+        </div>
 
       </div>
+
+    </article>
+  );
+}
+
+/* =========================================================
+   TIKTOK
+========================================================= */
+
+function TikTokPreview({
+  network,
+  post,
+  onTextChange,
+  onImageChange,
+}: {
+  network: SocialNetwork;
+  post: PostContent;
+  onTextChange: (text: string) => void;
+  onImageChange: (image: string | null) => void;
+}) {
+  return (
+    <article className="relative overflow-hidden rounded-xl border border-slate-200 bg-black shadow-[0_2px_8px_rgba(15,23,42,0.08)]">
+
+      <PostEditorToolbar
+        networkId={network.id}
+        text={post.text}
+        image={post.image}
+        onTextChange={onTextChange}
+        onImageChange={onImageChange}
+      />
+
+      {/* HEADER TIKTOK */}
+
+      <div className="absolute left-3 right-12 top-3 z-20 flex items-center gap-2">
+
+        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-[8px] font-black">
+          P
+        </div>
+
+        <div className="min-w-0">
+
+          <p className="text-[9px] font-black text-white">
+            {network.username}
+          </p>
+
+          <p className="text-[7px] text-white/70">
+            Original sound
+          </p>
+
+        </div>
+
+      </div>
+
+      {/* IMAGE / VIDÉO */}
+
+      <div className="relative aspect-[9/16] w-full overflow-hidden bg-slate-900">
+
+        {post.image ? (
+
+          <img
+            src={post.image}
+            alt="Publication TikTok"
+            className="h-full w-full object-cover"
+          />
+
+        ) : (
+
+          <div className="flex h-full w-full flex-col items-center justify-center bg-slate-900 text-white">
+
+            <Play size={28} />
+
+            <p className="mt-2 text-[9px] font-bold">
+              Ajoutez une vidéo ou une image
+            </p>
+
+          </div>
+
+        )}
+
+        {/* DÉGRADÉ */}
+
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20" />
+
+        {/* ACTIONS À DROITE */}
+
+        <div className="absolute bottom-24 right-3 z-20 flex flex-col items-center gap-4 text-white">
+
+          <div className="flex flex-col items-center gap-1">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 backdrop-blur">
+              <Heart size={19} fill="white" />
+            </div>
+            <span className="text-[8px] font-bold">
+              128
+            </span>
+          </div>
+
+          <div className="flex flex-col items-center gap-1">
+            <MessageCircle size={20} />
+            <span className="text-[8px] font-bold">
+              12
+            </span>
+          </div>
+
+          <div className="flex flex-col items-center gap-1">
+            <Bookmark size={19} />
+            <span className="text-[8px] font-bold">
+              24
+            </span>
+          </div>
+
+          <div className="flex flex-col items-center gap-1">
+            <Share2 size={19} />
+            <span className="text-[8px] font-bold">
+              Partager
+            </span>
+          </div>
+
+        </div>
+
+        {/* TEXTE */}
+
+        <div className="absolute bottom-4 left-3 right-14 z-20">
+
+          <p className="whitespace-pre-line text-[9px] font-medium leading-[1.55] text-white">
+            {post.text}
+          </p>
+
+        </div>
+
+      </div>
+
+    </article>
+  );
+}
+
+/* =========================================================
+   GOOGLE BUSINESS
+========================================================= */
+
+function GooglePreview({
+  network,
+  post,
+  onTextChange,
+  onImageChange,
+}: {
+  network: SocialNetwork;
+  post: PostContent;
+  onTextChange: (text: string) => void;
+  onImageChange: (image: string | null) => void;
+}) {
+  return (
+    <article className="relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_2px_8px_rgba(15,23,42,0.035)]">
+
+      <PostEditorToolbar
+        networkId={network.id}
+        text={post.text}
+        image={post.image}
+        onTextChange={onTextChange}
+        onImageChange={onImageChange}
+      />
+
+      <PreviewHeader
+        icon={<GoogleBusinessIcon />}
+        platform="Google Business"
+      />
+
+      <div className="px-3.5 py-3">
+
+        <div className="flex items-center gap-2">
+
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-[9px] font-black">
+            P
+          </div>
+
+          <div className="min-w-0">
+
+            <p className="text-[9px] font-black text-slate-800">
+              {network.username}
+            </p>
+
+            <div className="flex items-center gap-1 text-[8px] text-slate-400">
+              <span>Google</span>
+              <span>·</span>
+              <span>Il y a 1 h</span>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <div className="px-3.5 pb-3">
+
+        <p className="whitespace-pre-line text-[9px] leading-[1.65] text-slate-600">
+          {post.text}
+        </p>
+
+      </div>
+
+      <PreviewImage
+        image={post.image}
+        alt="Publication Google Business"
+        aspect="aspect-[1.91/1]"
+        onChange={onImageChange}
+      />
+
+      <div className="p-3.5">
+
+        <div className="flex items-center gap-1 text-[8px] text-slate-500">
+
+          <MapPin size={11} />
+
+          <span>
+            Cotonou · Ouvert
+          </span>
+
+        </div>
+
+        <div className="mt-3 flex gap-2">
+
+          <button className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-slate-200 py-2 text-[8px] font-bold text-slate-600">
+            <Eye size={11} />
+            Voir
+          </button>
+
+          <button className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-blue-600 py-2 text-[8px] font-bold text-white">
+            En savoir plus
+          </button>
+
+        </div>
+
+      </div>
+
+    </article>
+  );
+}
+
+/* =========================================================
+   HEADER APERÇU
+========================================================= */
+
+function PreviewHeader({
+  icon,
+  platform,
+}: {
+  icon: React.ReactNode;
+  platform: string;
+}) {
+  return (
+    <div className="border-b border-slate-100 px-3.5 py-3">
+
+      <div className="flex items-center gap-2">
+
+        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-50">
+          {icon}
+        </div>
+
+        <div>
+
+          <p className="text-[10px] font-black text-slate-800">
+            {platform}
+          </p>
+
+          <p className="text-[8px] text-slate-400">
+            Aperçu de la publication
+          </p>
+
+        </div>
+
+      </div>
+
+    </div>
+  );
+}
+
+/* =========================================================
+   IMAGE AVEC MODIFICATION / SUPPRESSION
+========================================================= */
+
+function PreviewImage({
+  image,
+  alt,
+  aspect,
+  onChange,
+}: {
+  image: string | null;
+  alt: string;
+  aspect: string;
+  onChange: (image: string | null) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleFile = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) return;
+
+    const imageUrl = URL.createObjectURL(file);
+
+    onChange(imageUrl);
+
+    event.target.value = "";
+  };
+
+  if (!image) {
+    return (
+      <div className="relative mx-3.5 overflow-hidden rounded-xl border border-dashed border-slate-300 bg-slate-50">
+
+        <div className="flex aspect-[1.5/1] flex-col items-center justify-center px-5 text-center">
+
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-slate-400 shadow-sm">
+            <ImageIcon size={19} />
+          </div>
+
+          <p className="mt-2 text-[9px] font-bold text-slate-600">
+            Aucune image
+          </p>
+
+          <button
+            onClick={() => inputRef.current?.click()}
+            className="mt-2 flex items-center gap-1.5 rounded-lg bg-red-dark px-3 py-2 text-[8px] font-black text-white"
+          >
+            <Upload size={11} />
+            Ajouter une image
+          </button>
+
+        </div>
+
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleFile}
+        />
+
+      </div>
+    );
+  }
+
+  return (
+    <div className="group/image relative mx-3.5 overflow-hidden rounded-xl bg-slate-100">
+
+      <img
+        src={image}
+        alt={alt}
+        className={`${aspect} w-full object-cover transition duration-500 group-hover/image:scale-[1.01]`}
+      />
+
+      {/* OVERLAY IMAGE */}
+
+      <div className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition group-hover/image:bg-black/30 group-hover/image:opacity-100">
+
+        <div className="flex items-center gap-2">
+
+          <button
+            onClick={() => inputRef.current?.click()}
+            className="flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-[8px] font-black text-slate-700 shadow-lg transition hover:bg-slate-50"
+          >
+            <Upload size={12} />
+            Modifier
+          </button>
+
+          <button
+            onClick={() => onChange(null)}
+            className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-red-600 shadow-lg transition hover:bg-red-50"
+            aria-label="Supprimer l'image"
+          >
+            <Trash2 size={13} />
+          </button>
+
+        </div>
+
+      </div>
+
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleFile}
+      />
 
     </div>
   );
@@ -965,9 +1920,9 @@ function PublishOption({
 
       <span
         className={`flex h-4 w-4 items-center justify-center rounded-full border transition ${
-         active
-  ? "border-red-dark"
-  : "border-slate-300"
+          active
+            ? "border-red-dark"
+            : "border-slate-300"
         }`}
       >
 

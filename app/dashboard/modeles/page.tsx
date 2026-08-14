@@ -51,7 +51,7 @@ const initialTemplates: Template[] = [
     platform: "Tous les réseaux",
     image: "/flutter.png",
     color: "bg-red-50 text-red-600",
-    icon: <Megaphone size={20} />,
+    icon: <Megaphone size={16} />,
     favorite: true,
   },
   {
@@ -63,7 +63,7 @@ const initialTemplates: Template[] = [
     platform: "Instagram",
     image: "/presta.png",
     color: "bg-pink-50 text-pink-600",
-    icon: <Sparkles size={20} />,
+    icon: <Sparkles size={16} />,
     favorite: false,
   },
   {
@@ -73,9 +73,9 @@ const initialTemplates: Template[] = [
       "Partagez une astuce utile pour informer et engager votre communauté.",
     category: "Éducatif",
     platform: "LinkedIn",
-    image: "/dihas.jpg",
+    image: "/dihas.png",
     color: "bg-blue-50 text-blue-600",
-    icon: <FileText size={20} />,
+    icon: <FileText size={16} />,
     favorite: true,
   },
   {
@@ -87,7 +87,7 @@ const initialTemplates: Template[] = [
     platform: "Facebook",
     image: "/livro.png",
     color: "bg-violet-50 text-violet-600",
-    icon: <CalendarDays size={20} />,
+    icon: <CalendarDays size={16} />,
     favorite: false,
   },
   {
@@ -99,7 +99,7 @@ const initialTemplates: Template[] = [
     platform: "Instagram",
     image: "/aif.png",
     color: "bg-orange-50 text-orange-600",
-    icon: <ImageIcon size={20} />,
+    icon: <ImageIcon size={16} />,
     favorite: false,
   },
   {
@@ -111,7 +111,7 @@ const initialTemplates: Template[] = [
     platform: "Tous les réseaux",
     image: "/presta.png",
     color: "bg-emerald-50 text-emerald-600",
-    icon: <Layout size={20} />,
+    icon: <Layout size={16} />,
     favorite: false,
   },
   {
@@ -123,7 +123,7 @@ const initialTemplates: Template[] = [
     platform: "Tous les réseaux",
     image: "/flutter.png",
     color: "bg-red-50 text-red-600",
-    icon: <Star size={20} />,
+    icon: <Star size={16} />,
     favorite: true,
   },
   {
@@ -133,9 +133,9 @@ const initialTemplates: Template[] = [
       "Partagez une actualité importante concernant votre entreprise.",
     category: "Entreprise",
     platform: "LinkedIn",
-    image: "/dihas.jpg",
+    image: "/dihas.png",
     color: "bg-slate-100 text-slate-700",
-    icon: <FileText size={20} />,
+    icon: <FileText size={16} />,
     favorite: false,
   },
 ];
@@ -233,7 +233,7 @@ export default function ModelesPage() {
 
           {/* GAUCHE */}
 
-          <div className="min-w-0 pl-14 md:pl-12 lg:pl-0 xl:pl-0">
+          <div className="min-w-0 pl-14 md:pl-12 lg:pl-0">
 
             <p className="hidden text-[9px] font-black uppercase tracking-[0.18em] text-slate-400 sm:block">
               Bibliothèque
@@ -262,7 +262,6 @@ export default function ModelesPage() {
               <span className="sm:hidden">
                 Créer
               </span>
-
             </Link>
 
           </div>
@@ -329,12 +328,10 @@ export default function ModelesPage() {
         </div>
 
         {/* ===================================================
-            BARRE DE RECHERCHE
+            RECHERCHE + TRI
         =================================================== */}
 
         <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-
-          {/* RECHERCHE */}
 
           <div className="relative w-full lg:max-w-md">
 
@@ -354,8 +351,6 @@ export default function ModelesPage() {
             />
 
           </div>
-
-          {/* FILTRE */}
 
           <button className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-bold text-slate-600 lg:w-44">
 
@@ -425,7 +420,7 @@ export default function ModelesPage() {
         </div>
 
         {/* ===================================================
-            GRILLE MODÈLES
+            GRILLE
         =================================================== */}
 
         {filteredTemplates.length > 0 ? (
@@ -458,10 +453,6 @@ export default function ModelesPage() {
           </div>
 
         ) : (
-
-          /* =================================================
-             EMPTY STATE
-          ================================================= */
 
           <div className="flex min-h-[350px] flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white px-6 text-center">
 
@@ -590,84 +581,43 @@ function TemplateCard({
   onDelete: () => void;
 }) {
   return (
-    <div className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+    <article className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg">
 
       {/* =================================================
-          APERÇU
+          IMAGE
       ================================================= */}
 
-      <div className="relative h-44 overflow-hidden bg-slate-100">
+      <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
 
-        {/* FAUSSE PRÉVISUALISATION */}
+        <Image
+          src={template.image}
+          alt={template.title}
+          fill
+          priority={template.id <= 4}
+          sizes="
+            (max-width: 639px) 100vw,
+            (max-width: 1279px) 50vw,
+            (max-width: 1535px) 33vw,
+            25vw
+          "
+          className="object-cover object-center transition-transform duration-500 group-hover:scale-105"
+        />
 
-       <div className="relative h-52 overflow-hidden bg-slate-100">
-  <Image
-    src={template.image}
-    alt={template.title}
-    fill
-    sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 25vw"
-    className="
-      object-cover
-      transition duration-500
-      group-hover:scale-105
-    "
-  />
+        {/* Overlay */}
 
-  {/* Overlay léger */}
-
-  <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
-
-  {/* FAVORI */}
-
-  <button
-    onClick={onFavorite}
-    className="
-      absolute right-3 top-3
-      flex h-8 w-8
-      items-center justify-center
-      rounded-lg
-      bg-white/90
-      text-slate-400
-      shadow-sm
-      backdrop-blur
-      transition
-      hover:text-red-500
-    "
-    aria-label="Ajouter aux favoris"
-  >
-    <Heart
-      size={15}
-      className={
-        template.favorite
-          ? "fill-red-500 text-red-500"
-          : ""
-      }
-    />
-  </button>
-
-  {/* CATÉGORIE */}
-
-  <span
-    className={`
-      absolute bottom-3 left-3
-      rounded-lg px-2.5 py-1.5
-      text-[8px] font-black
-      shadow-sm
-      ${template.color}
-    `}
-  >
-    {template.category}
-  </span>
-</div>
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-black/5 to-transparent" />
 
         {/* FAVORI */}
 
         <button
           onClick={onFavorite}
-          className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-lg bg-white/90 text-slate-400 shadow-sm backdrop-blur transition hover:text-red-500"
-          aria-label="Ajouter aux favoris"
+          className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-lg bg-white/90 text-slate-400 shadow-md backdrop-blur-sm transition hover:bg-white hover:text-red-500"
+          aria-label={
+            template.favorite
+              ? "Retirer des favoris"
+              : "Ajouter aux favoris"
+          }
         >
-
           <Heart
             size={15}
             className={
@@ -676,26 +626,35 @@ function TemplateCard({
                 : ""
             }
           />
-
         </button>
+
+        {/* CATÉGORIE */}
+
+        <span
+          className={`absolute bottom-3 left-3 rounded-lg px-2.5 py-1.5 text-[8px] font-black shadow-md ${template.color}`}
+        >
+          {template.category}
+        </span>
 
       </div>
 
       {/* =================================================
-          INFORMATIONS
+          CONTENU
       ================================================= */}
 
       <div className="p-4">
 
         <div className="flex items-start justify-between gap-3">
 
-          <div className="min-w-0">
+          {/* TITRE */}
+
+          <div className="min-w-0 flex-1">
 
             <h3 className="truncate text-sm font-black text-slate-800">
               {template.title}
             </h3>
 
-            <p className="mt-1 line-clamp-2 text-[10px] leading-relaxed text-slate-400">
+            <p className="mt-1 line-clamp-2 min-h-[30px] text-[10px] leading-relaxed text-slate-400">
               {template.description}
             </p>
 
@@ -707,16 +666,17 @@ function TemplateCard({
 
             <button
               onClick={onMenu}
-              className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+              aria-label="Options du modèle"
             >
               <MoreHorizontal size={16} />
             </button>
 
             {menuOpen && (
 
-              <div className="absolute right-0 top-8 z-20 w-40 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
+              <div className="absolute right-0 top-8 z-30 w-40 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
 
-                <button className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-[10px] font-semibold text-slate-600 hover:bg-slate-50">
+                <button className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-[10px] font-semibold text-slate-600 transition hover:bg-slate-50">
 
                   <Edit3 size={13} />
 
@@ -724,7 +684,7 @@ function TemplateCard({
 
                 </button>
 
-                <button className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-[10px] font-semibold text-slate-600 hover:bg-slate-50">
+                <button className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-[10px] font-semibold text-slate-600 transition hover:bg-slate-50">
 
                   <Copy size={13} />
 
@@ -734,7 +694,7 @@ function TemplateCard({
 
                 <button
                   onClick={onDelete}
-                  className="flex w-full items-center gap-2 border-t border-slate-100 px-3 py-2.5 text-left text-[10px] font-semibold text-red-600 hover:bg-red-50"
+                  className="flex w-full items-center gap-2 border-t border-slate-100 px-3 py-2.5 text-left text-[10px] font-semibold text-red-600 transition hover:bg-red-50"
                 >
 
                   <Trash2 size={13} />
@@ -751,12 +711,14 @@ function TemplateCard({
 
         </div>
 
-        {/* TAGS */}
+        {/* =================================================
+            INFOS
+        ================================================= */}
 
-        <div className="mt-4 flex items-center justify-between gap-2">
+        <div className="mt-4 flex min-h-[28px] items-center justify-between gap-2">
 
           <span
-            className={`flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[8px] font-black ${template.color}`}
+            className={`flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1.5 text-[8px] font-black ${template.color}`}
           >
 
             {template.icon}
@@ -773,11 +735,13 @@ function TemplateCard({
 
         </div>
 
-        {/* ACTION */}
+        {/* =================================================
+            ACTION
+        ================================================= */}
 
         <Link
           href="/dashboard/publication"
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 py-2.5 text-[9px] font-black uppercase tracking-wide text-white transition hover:bg-red-700"
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 py-2.5 text-[9px] font-black uppercase tracking-wide text-white shadow-sm shadow-red-600/10 transition hover:bg-red-700"
         >
 
           <Copy size={13} />
@@ -788,6 +752,6 @@ function TemplateCard({
 
       </div>
 
-    </div>
+    </article>
   );
 }

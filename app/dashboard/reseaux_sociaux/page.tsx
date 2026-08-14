@@ -10,7 +10,6 @@ import {
   MoreHorizontal,
   Users,
   Eye,
-  BarChart3,
   ArrowUpRight,
   RefreshCw,
   ShieldCheck,
@@ -18,6 +17,14 @@ import {
   ChevronRight,
   Search,
 } from "lucide-react";
+
+import {
+  siFacebook,
+  siInstagram,
+  siTiktok,
+  siX,
+  siGoogle,
+} from "simple-icons";
 
 /* =========================================================
    TYPES
@@ -34,93 +41,152 @@ type SocialNetwork = {
   followers: string;
   posts: number;
   views: string;
-  color: string;
   icon: React.ReactNode;
 };
 
 /* =========================================================
-   ICÔNES SOCIALES
-   Pas de dépendance aux icônes lucide pour les réseaux
+   LOGO SIMPLE ICON
 ========================================================= */
 
-const FacebookIcon = () => (
-  <svg
-    viewBox="0 0 24 24"
-    className="h-6 w-6"
-    fill="currentColor"
-  >
-    <path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073c0 6.019 4.388 11.006 10.125 11.927v-8.432H7.078v-3.495h3.047V9.413c0-3.022 1.791-4.693 4.533-4.693 1.312 0 2.686.236 2.686.236v2.973h-1.514c-1.491 0-1.956.931-1.956 1.887v2.257h3.328l-.532 3.495h-2.796V24C19.612 23.079 24 18.092 24 12.073z" />
-  </svg>
-);
-
-const InstagramIcon = () => (
-  <svg
-    viewBox="0 0 24 24"
-    className="h-6 w-6"
-    fill="none"
-  >
-    <rect
-      x="3"
-      y="3"
-      width="18"
-      height="18"
-      rx="5"
-      stroke="currentColor"
-      strokeWidth="2"
-    />
-
-    <circle
-      cx="12"
-      cy="12"
-      r="4"
-      stroke="currentColor"
-      strokeWidth="2"
-    />
-
-    <circle
-      cx="17.5"
-      cy="6.5"
-      r="1"
+function SocialLogo({
+  icon,
+  className = "h-6 w-6",
+}: {
+  icon: {
+    path: string;
+  };
+  className?: string;
+}) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
       fill="currentColor"
-    />
-  </svg>
-);
+      aria-hidden="true"
+    >
+      <path d={icon.path} />
+    </svg>
+  );
+}
 
-const LinkedinIcon = () => (
-  <svg
-    viewBox="0 0 24 24"
-    className="h-6 w-6"
-    fill="currentColor"
-  >
-    <path d="M20.45 20.45h-3.56v-5.57c0-1.33-.03-3.04-1.85-3.04-1.85 0-2.13 1.44-2.13 2.94v5.67H9.35V8.99h3.41v1.56h.05c.47-.9 1.63-1.85 3.35-1.85 3.59 0 4.25 2.36 4.25 5.43v6.32zM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14zM3.56 8.99h3.56v11.46H3.56V8.99z" />
-  </svg>
-);
+/* =========================================================
+   FACEBOOK
+========================================================= */
 
-const XIcon = () => (
-  <svg
-    viewBox="0 0 24 24"
-    className="h-6 w-6"
-    fill="currentColor"
-  >
-    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817-5.963 6.817H1.684l7.73-8.835L1.254 2.25H8.08l4.713 6.231 5.45-6.231zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z" />
-  </svg>
-);
+function FacebookIcon() {
+  return (
+    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#1877F2]/10">
+      <SocialLogo
+        icon={siFacebook}
+        className="h-6 w-6 text-[#1877F2]"
+      />
+    </div>
+  );
+}
 
-const TikTokIcon = () => (
-  <svg
-    viewBox="0 0 24 24"
-    className="h-6 w-6"
-    fill="currentColor"
-  >
-    <path d="M16.5 2h3.1c.2 1.5 1 2.8 2.4 3.7v3.2c-1.3-.1-2.5-.5-3.6-1.1v7.1c0 3.6-2.8 6.1-6.3 6.1-3.3 0-5.8-2.5-5.8-5.7 0-3.4 2.8-5.9 6.3-5.9.3 0 .7 0 1 .1v3.2c-.3-.1-.6-.2-1-.2-1.6 0-2.9 1.1-2.9 2.7 0 1.4 1.1 2.6 2.5 2.6 1.5 0 2.8-1 2.8-3V2h1.5z" />
-  </svg>
-);
+/* =========================================================
+   INSTAGRAM
+========================================================= */
 
-const GoogleIcon = () => (
-  <span className="text-xl font-black">
-    G
-  </span>
-);
+function InstagramIcon() {
+  return (
+    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#F58529]/10 via-[#DD2A7B]/10 to-[#8134AF]/10">
+      <svg
+        viewBox="0 0 24 24"
+        className="h-6 w-6"
+        aria-hidden="true"
+      >
+        <defs>
+          <linearGradient
+            id="instagramGradient"
+            x1="0%"
+            y1="100%"
+            x2="100%"
+            y2="0%"
+          >
+            <stop offset="0%" stopColor="#F58529" />
+            <stop offset="45%" stopColor="#DD2A7B" />
+            <stop offset="75%" stopColor="#8134AF" />
+            <stop offset="100%" stopColor="#515BD4" />
+          </linearGradient>
+        </defs>
+
+        <path
+          fill="url(#instagramGradient)"
+          d={siInstagram.path}
+        />
+      </svg>
+    </div>
+  );
+}
+
+/* =========================================================
+   LINKEDIN
+========================================================= */
+
+function LinkedinIcon() {
+  return (
+    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#0A66C2]/10">
+      <svg
+        viewBox="0 0 24 24"
+        className="h-6 w-6 text-[#0A66C2]"
+        fill="currentColor"
+        aria-hidden="true"
+      >
+        <path d="M20.45 20.45h-3.56v-5.57c0-1.33-.03-3.04-1.85-3.04-1.85 0-2.13 1.44-2.13 2.94v5.67H9.35V8.99h3.41v1.56h.05c.47-.9 1.63-1.85 3.35-1.85 3.59 0 4.25 2.36 4.25 5.43v6.32z" />
+
+        <path d="M5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14z" />
+
+        <path d="M3.56 8.99h3.56v11.46H3.56V8.99z" />
+      </svg>
+    </div>
+  );
+}
+
+/* =========================================================
+   TIKTOK
+========================================================= */
+
+function TikTokIcon() {
+  return (
+    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100">
+      <SocialLogo
+        icon={siTiktok}
+        className="h-6 w-6 text-black"
+      />
+    </div>
+  );
+}
+
+/* =========================================================
+   X
+========================================================= */
+
+function XIcon() {
+  return (
+    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100">
+      <SocialLogo
+        icon={siX}
+        className="h-6 w-6 text-black"
+      />
+    </div>
+  );
+}
+
+/* =========================================================
+   GOOGLE BUSINESS
+========================================================= */
+
+function GoogleIcon() {
+  return (
+    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50">
+      <SocialLogo
+        icon={siGoogle}
+        className="h-6 w-6 text-[#4285F4]"
+      />
+    </div>
+  );
+}
 
 /* =========================================================
    DONNÉES
@@ -136,9 +202,9 @@ const networks: SocialNetwork[] = [
     followers: "12,8K",
     posts: 48,
     views: "84,2K",
-    color: "text-blue-600",
     icon: <FacebookIcon />,
   },
+
   {
     id: "instagram",
     name: "Instagram",
@@ -148,9 +214,9 @@ const networks: SocialNetwork[] = [
     followers: "8,4K",
     posts: 36,
     views: "61,7K",
-    color: "text-pink-600",
     icon: <InstagramIcon />,
   },
+
   {
     id: "linkedin",
     name: "LinkedIn",
@@ -160,9 +226,9 @@ const networks: SocialNetwork[] = [
     followers: "3,2K",
     posts: 24,
     views: "29,5K",
-    color: "text-blue-700",
     icon: <LinkedinIcon />,
   },
+
   {
     id: "tiktok",
     name: "TikTok",
@@ -172,9 +238,9 @@ const networks: SocialNetwork[] = [
     followers: "5,7K",
     posts: 19,
     views: "42,8K",
-    color: "text-slate-900",
     icon: <TikTokIcon />,
   },
+
   {
     id: "google",
     name: "Google Business",
@@ -184,9 +250,9 @@ const networks: SocialNetwork[] = [
     followers: "1,8K",
     posts: 15,
     views: "18,4K",
-    color: "text-blue-500",
     icon: <GoogleIcon />,
   },
+
   {
     id: "x",
     name: "X",
@@ -196,7 +262,6 @@ const networks: SocialNetwork[] = [
     followers: "—",
     posts: 0,
     views: "—",
-    color: "text-slate-900",
     icon: <XIcon />,
   },
 ];
@@ -233,7 +298,7 @@ export default function ReseauxSociauxPage() {
 
         <div className="flex min-h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
 
-          <div className="min-w-0 pl-14 md:pl-12 lg:pl-0 xl:pl-0">
+          <div className="min-w-0 pl-14 md:pl-12 lg:pl-0">
 
             <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-400">
               Gestion des comptes
@@ -271,7 +336,9 @@ export default function ReseauxSociauxPage() {
 
       <main className="mx-auto max-w-[1500px] p-4 sm:p-6 lg:p-8">
 
-        {/* INTRO */}
+        {/* =====================================================
+            INTRO
+        ===================================================== */}
 
         <section className="mb-7">
 
@@ -554,11 +621,7 @@ function NetworkCard({
 
         <div className="flex min-w-0 items-center gap-3">
 
-          <div
-            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-50 ${network.color}`}
-          >
-            {network.icon}
-          </div>
+          {network.icon}
 
           <div className="min-w-0">
 

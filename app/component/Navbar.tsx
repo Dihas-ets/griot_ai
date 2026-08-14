@@ -72,9 +72,6 @@ export default function Navbar() {
         {/* Desktop Buttons */}
         <div className="hidden lg:flex items-center gap-3">
 
-          <button className="px-5 py-2.5 rounded-full font-medium text-white hover:text-red-300 transition">
-            Connexion
-          </button>
 <a href="../auth/register">
           <button className="px-6 py-3 rounded-full bg-slate-100 text-red-600 hover:bg-red-300 hover:text-white font-semibold shadow-lg transition flex items-center gap-2">
             Commencer
