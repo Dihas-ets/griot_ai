@@ -15,6 +15,9 @@ import {
   CheckCircle2,
   FileText,
   Sparkles,
+  BriefcaseBusiness,
+  Globe2,
+  Check,
 } from "lucide-react";
 
 /* =========================================================
@@ -22,6 +25,22 @@ import {
 ========================================================= */
 
 type ViewMode = "month" | "week";
+
+type NetworkId =
+  | "facebook"
+  | "instagram"
+  | "linkedin"
+  | "tiktok"
+  | "google";
+
+type Project = {
+  id: string;
+  name: string;
+  initials: string;
+  sector: string;
+  color: string;
+  networks: NetworkId[];
+};
 
 type Publication = {
   id: number;
@@ -32,6 +51,10 @@ type Publication = {
   status: "scheduled" | "published" | "draft";
   color: string;
 };
+
+/* =========================================================
+   ICONES RÉSEAUX
+========================================================= */
 
 const FacebookIcon = ({ size = 16 }: { size?: number }) => (
   <svg
@@ -57,7 +80,7 @@ const InstagramIcon = ({ size = 16 }: { size?: number }) => (
   >
     <defs>
       <linearGradient
-        id="instagramGradient"
+        id="instagramGradientCalendar"
         x1="3"
         y1="21"
         x2="21"
@@ -78,7 +101,7 @@ const InstagramIcon = ({ size = 16 }: { size?: number }) => (
       width="19"
       height="19"
       rx="5.5"
-      fill="url(#instagramGradient)"
+      fill="url(#instagramGradientCalendar)"
     />
 
     <rect
@@ -99,12 +122,7 @@ const InstagramIcon = ({ size = 16 }: { size?: number }) => (
       strokeWidth="1.8"
     />
 
-    <circle
-      cx="17"
-      cy="7"
-      r="1"
-      fill="white"
-    />
+    <circle cx="17" cy="7" r="1" fill="white" />
   </svg>
 );
 
@@ -115,12 +133,7 @@ const LinkedinIcon = ({ size = 16 }: { size?: number }) => (
     height={size}
     fill="none"
   >
-    <rect
-      width="24"
-      height="24"
-      rx="4"
-      fill="#0A66C2"
-    />
+    <rect width="24" height="24" rx="4" fill="#0A66C2" />
 
     <path
       d="M7.2 9.1H4.5V19h2.7V9.1ZM5.85 5A1.6 1.6 0 1 0 5.85 8.2 1.6 1.6 0 0 0 5.85 5ZM19.5 13.3c0-2.98-1.59-4.37-3.71-4.37-1.7 0-2.46.94-2.88 1.6V9.1h-2.7V19h2.7v-4.9c0-1.29.24-2.54 1.84-2.54 1.58 0 1.6 1.48 1.6 2.63V19h2.7l.45-5.7Z"
@@ -129,8 +142,65 @@ const LinkedinIcon = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
+function NetworkIcon({
+  network,
+  size = 14,
+}: {
+  network: Publication["network"];
+  size?: number;
+}) {
+  if (network === "Facebook") {
+    return <FacebookIcon size={size} />;
+  }
+
+  if (network === "Instagram") {
+    return <InstagramIcon size={size} />;
+  }
+
+  return <LinkedinIcon size={size} />;
+}
+
 /* =========================================================
-   DONNÉES
+   PROJETS
+========================================================= */
+
+const projects: Project[] = [
+  {
+    id: "presta",
+    name: "Presta",
+    initials: "P",
+    sector: "Formation & technologie",
+    color: "bg-red-600",
+    networks: ["facebook", "instagram", "linkedin", "tiktok", "google"],
+  },
+  {
+    id: "dihas-agency",
+    name: "Diha's Agency",
+    initials: "DA",
+    sector: "Communication",
+    color: "bg-slate-800",
+    networks: ["facebook", "instagram", "linkedin"],
+  },
+  {
+    id: "fofana-voyage",
+    name: "Fofana Voyage",
+    initials: "FV",
+    sector: "Voyage & tourisme",
+    color: "bg-emerald-600",
+    networks: ["facebook", "instagram"],
+  },
+  {
+    id: "clinico",
+    name: "Clinico",
+    initials: "C",
+    sector: "Santé",
+    color: "bg-blue-600",
+    networks: ["facebook", "instagram", "linkedin"],
+  },
+];
+
+/* =========================================================
+   PUBLICATIONS
 ========================================================= */
 
 const publications: Publication[] = [
@@ -209,50 +279,75 @@ const publications: Publication[] = [
 ];
 
 /* =========================================================
-   ICONES RÉSEAUX
-========================================================= */
-
-function NetworkIcon({
-  network,
-  size = 14,
-}: {
-  network: Publication["network"];
-  size?: number;
-}) {
-  if (network === "Facebook") {
-    return <FacebookIcon size={size} />;
-  }
-
-  if (network === "Instagram") {
-    return <InstagramIcon size={size} />;
-  }
-
-  return <LinkedinIcon size={size} />;
-}
-
-/* =========================================================
    PAGE
 ========================================================= */
 
 export default function CalendarPage() {
+  /* =======================================================
+     PROJET ACTUEL
+  ======================================================= */
+
+  const [activeProjectId, setActiveProjectId] =
+    useState<string>("presta");
+
+  const [showProjectMenu, setShowProjectMenu] =
+    useState(false);
+
+  const activeProject =
+    projects.find(
+      (project) => project.id === activeProjectId
+    ) ?? projects[0];
+
+  /* =======================================================
+     RÉSEAUX DU PROJET
+  ======================================================= */
+
+  const [selectedNetworks, setSelectedNetworks] =
+    useState<NetworkId[]>(activeProject.networks);
+
+  /* =======================================================
+     DATE
+  ======================================================= */
+
   const [currentDate, setCurrentDate] = useState(
     new Date(2026, 7, 13)
   );
 
-  const [viewMode, setViewMode] = useState<ViewMode>("month");
+  /* =======================================================
+     VUE
+  ======================================================= */
 
-  const [showProjectMenu, setShowProjectMenu] = useState(false);
-
-  const monthName = currentDate.toLocaleDateString("fr-FR", {
-    month: "long",
-    year: "numeric",
-  });
-
-  const formattedMonth =
-    monthName.charAt(0).toUpperCase() + monthName.slice(1);
+  const [viewMode, setViewMode] =
+    useState<ViewMode>("month");
 
   /* =======================================================
-     NAVIGATION
+     MOIS
+  ======================================================= */
+
+  const monthName =
+    currentDate.toLocaleDateString("fr-FR", {
+      month: "long",
+      year: "numeric",
+    });
+
+  const formattedMonth =
+    monthName.charAt(0).toUpperCase() +
+    monthName.slice(1);
+
+  /* =======================================================
+     CHANGEMENT DE PROJET
+  ======================================================= */
+
+  const handleProjectChange = (project: Project) => {
+    setActiveProjectId(project.id);
+
+    setSelectedNetworks(project.networks);
+
+    setShowProjectMenu(false);
+  };
+
+  /* =======================================================
+     NAVIGATION MOIS
   ======================================================= */
 
   const previousMonth = () => {
@@ -297,7 +392,10 @@ export default function CalendarPage() {
 
     const totalDays = lastDay.getDate();
 
-    const days = [];
+    const days: {
+      date: Date;
+      currentMonth: boolean;
+    }[] = [];
 
     // Jours du mois précédent
     for (let i = startDay - 1; i >= 0; i--) {
@@ -317,7 +415,7 @@ export default function CalendarPage() {
       });
     }
 
-    // Compléter la dernière semaine
+    // Jours du mois suivant
     let nextDay = 1;
 
     while (days.length % 7 !== 0) {
@@ -333,16 +431,28 @@ export default function CalendarPage() {
   }, [currentDate]);
 
   /* =======================================================
-     PUBLICATIONS D'UN JOUR
+     PUBLICATIONS D'UNE DATE
   ======================================================= */
 
   const getPublicationsForDate = (date: Date) => {
-    const dateString = date.toISOString().split("T")[0];
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(
+      2,
+      "0"
+    );
+    const day = String(date.getDate()).padStart(2, "0");
+
+    const dateString = `${year}-${month}-${day}`;
 
     return publications.filter(
-      (publication) => publication.date === dateString
+      (publication) =>
+        publication.date === dateString
     );
   };
+
+  /* =======================================================
+     AUJOURD'HUI
+  ======================================================= */
 
   const isToday = (date: Date) => {
     return (
@@ -352,6 +462,31 @@ export default function CalendarPage() {
     );
   };
 
+  /* =======================================================
+     RÉSEAUX SÉLECTIONNÉS
+  ======================================================= */
+
+  const filteredPublications = publications.filter(
+    (publication) => {
+      const networkMap: Record<
+        Publication["network"],
+        NetworkId
+      > = {
+        Facebook: "facebook",
+        Instagram: "instagram",
+        LinkedIn: "linkedin",
+      };
+
+      return selectedNetworks.includes(
+        networkMap[publication.network]
+      );
+    }
+  );
+
+  /* =======================================================
+     RENDER
+  ======================================================= */
+
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900">
       {/* =====================================================
@@ -359,7 +494,7 @@ export default function CalendarPage() {
       ===================================================== */}
 
       <header className="sticky top-0 z-30 border-b border-slate-200 bg-white">
-        <div className="flex min-h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+        <div className="flex min-h-16 items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
           {/* GAUCHE */}
 
           <div className="flex min-w-0 items-center gap-3">
@@ -381,66 +516,181 @@ export default function CalendarPage() {
             </div>
           </div>
 
-          {/* PROJET */}
+          {/* =================================================
+              PROJET
+          ================================================= */}
 
-          <div className="relative">
-            <button
-              onClick={() => setShowProjectMenu(!showProjectMenu)}
-              className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold shadow-sm transition hover:bg-slate-50"
-            >
-              <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-red-50 text-red-600">
-                ✦
-              </div>
-
-              <span className="hidden sm:block">
-                Presta
-              </span>
-
-              <ChevronDown size={14} />
-            </button>
-
-            {showProjectMenu && (
-              <div className="absolute right-0 top-12 z-50 w-64 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
-                <div className="border-b border-slate-100 px-4 py-3">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">
-                    Mes projets
-                  </p>
+          <div className="flex flex-none items-center justify-center md:flex-1">
+            <div className="relative">
+              <button
+                onClick={() =>
+                  setShowProjectMenu(
+                    (current) => !current
+                  )
+                }
+                aria-expanded={showProjectMenu}
+                className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold shadow-sm transition hover:bg-slate-50"
+              >
+                <div
+                  className={`flex h-6 w-6 items-center justify-center rounded-lg text-[9px] font-black text-white ${activeProject.color}`}
+                >
+                  {activeProject.initials}
                 </div>
 
-                {[
-                  "Presta",
-                  "Diha's Agency",
-                  "Fofana Voyage",
-                  "Clinico",
-                ].map((project, index) => (
-                  <button
-                    key={project}
-                    onClick={() => setShowProjectMenu(false)}
-                    className="flex w-full items-center gap-3 px-4 py-3 text-left text-xs font-semibold transition hover:bg-slate-50"
+                <span className="hidden max-w-[120px] truncate sm:block">
+                  {activeProject.name}
+                </span>
+
+                <ChevronDown
+                  size={14}
+                  className={`transition-transform ${
+                    showProjectMenu
+                      ? "rotate-180"
+                      : ""
+                  }`}
+                />
+              </button>
+
+              {/* =================================================
+                  MENU PROJETS
+              ================================================= */}
+
+              {showProjectMenu && (
+                <div className="absolute right-0 top-12 z-50 w-[320px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+                  {/* HEADER */}
+
+                  <div className="border-b border-slate-100 px-4 py-3">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+                      Mes projets
+                    </p>
+
+                    <p className="mt-1 text-[10px] text-slate-500">
+                      Sélectionnez le projet sur lequel
+                      vous travaillez.
+                    </p>
+                  </div>
+
+                  {/* LISTE */}
+
+                  <div className="max-h-[360px] overflow-y-auto">
+                    {projects.map((project) => {
+                      const isActive =
+                        activeProjectId === project.id;
+
+                      return (
+                        <button
+                          key={project.id}
+                          onClick={() =>
+                            handleProjectChange(project)
+                          }
+                          className={`group flex w-full items-start gap-3 border-b border-slate-50 px-4 py-3 text-left transition ${
+                            isActive
+                              ? "bg-red-50/70"
+                              : "hover:bg-slate-50"
+                          }`}
+                        >
+                          {/* LOGO */}
+
+                          <div
+                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[9px] font-black text-white shadow-sm ${project.color}`}
+                          >
+                            {project.initials}
+                          </div>
+
+                          {/* INFOS */}
+
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <p
+                                className={`truncate text-[11px] font-black ${
+                                  isActive
+                                    ? "text-red-dark"
+                                    : "text-slate-800"
+                                }`}
+                              >
+                                {project.name}
+                              </p>
+
+                              {isActive && (
+                                <span className="rounded-full bg-red-100 px-1.5 py-0.5 text-[7px] font-black uppercase text-red-dark">
+                                  Actif
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="mt-2 flex items-center gap-3">
+                              <span className="flex items-center gap-1 text-[8px] font-semibold text-slate-400">
+                                <BriefcaseBusiness
+                                  size={10}
+                                />
+
+                                {project.sector}
+                              </span>
+
+                              <span className="flex items-center gap-1 text-[8px] font-semibold text-slate-400">
+                                <Globe2 size={10} />
+
+                                {project.networks.length}{" "}
+                                réseaux
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* CHECK */}
+
+                          <div className="flex h-7 w-7 shrink-0 items-center justify-center">
+                            {isActive ? (
+                              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-dark text-white">
+                                <Check
+                                  size={12}
+                                  strokeWidth={3}
+                                />
+                              </span>
+                            ) : (
+                              <span className="h-5 w-5 rounded-full border border-slate-200 opacity-0 transition group-hover:opacity-100" />
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* PROJET ACTUEL */}
+
+                  <div className="border-t border-slate-100 bg-slate-50/70 px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-red-dark shadow-sm">
+                        <CheckCircle2 size={15} />
+                      </div>
+
+                      <div className="min-w-0">
+                        <p className="text-[8px] font-black uppercase tracking-wider text-slate-400">
+                          Vous travaillez actuellement
+                          sur
+                        </p>
+
+                        <p className="truncate text-[10px] font-black text-slate-800">
+                          {activeProject.name}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* CRÉER UN PROJET */}
+
+                  <Link
+                    href="/dashboard/projets"
+                    onClick={() =>
+                      setShowProjectMenu(false)
+                    }
+                    className="flex w-full items-center gap-2 border-t border-slate-100 px-4 py-3 text-xs font-bold text-red-600 transition hover:bg-red-50"
                   >
-                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100">
-                      {index === 0 ? "✦" : "👤"}
-                    </span>
-
-                    <span className="flex-1">
-                      {project}
-                    </span>
-
-                    {index === 0 && (
-                      <CheckCircle2
-                        size={15}
-                        className="text-red-600"
-                      />
-                    )}
-                  </button>
-                ))}
-
-                <button className="flex w-full items-center gap-2 border-t border-slate-100 px-4 py-3 text-xs font-bold text-red-600 transition hover:bg-red-50">
-                  <Plus size={15} />
-                  Créer un projet
-                </button>
-              </div>
-            )}
+                    <Plus size={15} />
+                    Créer un projet
+                  </Link>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* DROITE */}
@@ -464,9 +714,7 @@ export default function CalendarPage() {
       ===================================================== */}
 
       <main className="mx-auto max-w-[1700px] p-4 sm:p-6 lg:p-8">
-        {/* ===================================================
-            INTRO
-        =================================================== */}
+        {/* INTRO */}
 
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -524,29 +772,31 @@ export default function CalendarPage() {
         </div>
 
         {/* ===================================================
-            OUTILS CALENDRIER
+            CALENDRIER
         =================================================== */}
 
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          {/* OUTILS */}
+
           <div className="flex flex-col gap-4 border-b border-slate-100 p-4 sm:p-5 lg:flex-row lg:items-center lg:justify-between">
             {/* MOIS */}
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <button
                 onClick={previousMonth}
-                className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-900"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-900"
                 aria-label="Mois précédent"
               >
                 <ChevronLeft size={17} />
               </button>
 
-              <h2 className="min-w-[160px] text-center text-sm font-black sm:text-base">
+              <h2 className="min-w-[130px] text-center text-sm font-black sm:min-w-[160px] sm:text-base">
                 {formattedMonth}
               </h2>
 
               <button
                 onClick={nextMonth}
-                className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-900"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-900"
                 aria-label="Mois suivant"
               >
                 <ChevronRight size={17} />
@@ -588,7 +838,7 @@ export default function CalendarPage() {
           </div>
 
           {/* =================================================
-              CALENDRIER
+              VUE MOIS
           ================================================= */}
 
           {viewMode === "month" ? (
@@ -621,7 +871,14 @@ export default function CalendarPage() {
                   {calendarDays.map(
                     ({ date, currentMonth }, index) => {
                       const dayPublications =
-                        getPublicationsForDate(date);
+                        getPublicationsForDate(
+                          date
+                        ).filter((publication) =>
+                          filteredPublications.some(
+                            (item) =>
+                              item.id === publication.id
+                          )
+                        );
 
                       return (
                         <div
@@ -684,7 +941,7 @@ export default function CalendarPage() {
                                     {publication.title}
                                   </p>
 
-                                  <div className="mt-1 flex items-center gap-1">
+                                  <div className="mt-1">
                                     {publication.status ===
                                       "published" && (
                                       <span className="text-[7px] font-bold text-emerald-600">
@@ -758,7 +1015,8 @@ export default function CalendarPage() {
                 </h2>
 
                 <p className="mt-1 text-[10px] text-slate-400">
-                  Les contenus prévus dans les prochains jours.
+                  Les contenus prévus dans les prochains
+                  jours.
                 </p>
               </div>
 
@@ -771,10 +1029,11 @@ export default function CalendarPage() {
             </div>
 
             <div className="mt-5 divide-y divide-slate-100">
-              {publications
+              {filteredPublications
                 .filter(
                   (publication) =>
-                    publication.status === "scheduled"
+                    publication.status ===
+                    "scheduled"
                 )
                 .slice(0, 5)
                 .map((publication) => (
@@ -797,7 +1056,9 @@ export default function CalendarPage() {
                       <p className="mt-1 flex items-center gap-1 text-[9px] text-slate-400">
                         <CalendarDays size={11} />
 
-                        {formatDate(publication.date)}
+                        {formatDate(
+                          publication.date
+                        )}
 
                         <span>•</span>
 
@@ -807,7 +1068,10 @@ export default function CalendarPage() {
                       </p>
                     </div>
 
-                    <button className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-50 hover:text-slate-900">
+                    <button
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-50 hover:text-slate-900"
+                      aria-label="Options"
+                    >
                       <MoreHorizontal size={16} />
                     </button>
                   </div>
@@ -830,8 +1094,9 @@ export default function CalendarPage() {
               </h3>
 
               <p className="mt-2 text-[10px] leading-relaxed text-red-100">
-                Planifiez vos contenus à l'avance pour maintenir
-                une présence régulière sur vos réseaux sociaux.
+                Planifiez vos contenus à l'avance pour
+                maintenir une présence régulière sur vos
+                réseaux sociaux.
               </p>
 
               <Link
@@ -902,7 +1167,9 @@ function Legend({
 }) {
   return (
     <div className="flex items-center gap-2 text-[9px] font-medium text-slate-500">
-      <span className={`h-2 w-2 rounded-full ${color}`} />
+      <span
+        className={`h-2 w-2 rounded-full ${color}`}
+      />
       {label}
     </div>
   );
@@ -913,14 +1180,12 @@ function Legend({
 ========================================================= */
 
 function formatDate(date: string) {
-  const formatted = new Date(
+  return new Date(
     `${date}T12:00:00`
   ).toLocaleDateString("fr-FR", {
     day: "numeric",
     month: "long",
   });
-
-  return formatted;
 }
 
 /* =========================================================
@@ -962,6 +1227,8 @@ function WeekView() {
   return (
     <div className="overflow-x-auto">
       <div className="min-w-[850px]">
+        {/* JOURS */}
+
         <div className="grid grid-cols-7 border-b border-slate-100">
           {weekDays.map((day) => (
             <div
@@ -985,16 +1252,20 @@ function WeekView() {
           ))}
         </div>
 
+        {/* CONTENU */}
+
         <div className="grid min-h-[420px] grid-cols-7">
           {weekDays.map((day) => (
             <div
               key={day.date}
               className="border-r border-slate-100 p-2"
             >
+              {/* 13 AOÛT */}
+
               {day.date === "13" && (
                 <div className="rounded-xl border border-red-100 bg-red-50 p-3">
                   <div className="flex items-center gap-1.5">
-                    <LinkedinIcon/>
+                    <LinkedinIcon size={14} />
 
                     <span className="text-[8px] font-black text-slate-400">
                       09:00
@@ -1002,7 +1273,8 @@ function WeekView() {
                   </div>
 
                   <p className="mt-2 text-[9px] font-bold leading-tight text-slate-700">
-                    Les outils indispensables du développeur
+                    Les outils indispensables du
+                    développeur
                   </p>
 
                   <span className="mt-2 inline-flex rounded-md bg-red-100 px-2 py-1 text-[7px] font-bold text-red-600">
@@ -1011,10 +1283,12 @@ function WeekView() {
                 </div>
               )}
 
+              {/* 15 AOÛT */}
+
               {day.date === "15" && (
                 <div className="rounded-xl border border-pink-100 bg-pink-50 p-3">
                   <div className="flex items-center gap-1.5">
-                    <InstagramIcon/>
+                    <InstagramIcon size={14} />
 
                     <span className="text-[8px] font-black text-slate-400">
                       11:00
@@ -1022,7 +1296,8 @@ function WeekView() {
                   </div>
 
                   <p className="mt-2 text-[9px] font-bold leading-tight text-slate-700">
-                    Formation Flutter : inscriptions ouvertes
+                    Formation Flutter :
+                    inscriptions ouvertes
                   </p>
 
                   <span className="mt-2 inline-flex rounded-md bg-red-100 px-2 py-1 text-[7px] font-bold text-red-600">

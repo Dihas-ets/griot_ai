@@ -587,56 +587,92 @@ function TemplateCard({
           IMAGE
       ================================================= */}
 
-      <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
+      {/* =================================================
+    IMAGE
+================================================= */}
 
-        <Image
-          src={template.image}
-          alt={template.title}
-          fill
-          priority={template.id <= 4}
-          sizes="
-            (max-width: 639px) 100vw,
-            (max-width: 1279px) 50vw,
-            (max-width: 1535px) 33vw,
-            25vw
-          "
-          className="object-cover object-center transition-transform duration-500 group-hover:scale-105"
-        />
+<div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-50">
 
-        {/* Overlay */}
+  <Image
+    src={template.image}
+    alt={template.title}
+    fill
+    priority={template.id <= 4}
+    sizes="
+      (max-width: 639px) 100vw,
+      (max-width: 1279px) 50vw,
+      (max-width: 1535px) 33vw,
+      25vw
+    "
+    className="
+      object-contain
+      object-center
+      p-2
+      transition-transform
+      duration-500
+      group-hover:scale-[1.03]
+    "
+  />
 
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-black/5 to-transparent" />
+  {/* Overlay très léger */}
 
-        {/* FAVORI */}
+  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent" />
 
-        <button
-          onClick={onFavorite}
-          className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-lg bg-white/90 text-slate-400 shadow-md backdrop-blur-sm transition hover:bg-white hover:text-red-500"
-          aria-label={
-            template.favorite
-              ? "Retirer des favoris"
-              : "Ajouter aux favoris"
-          }
-        >
-          <Heart
-            size={15}
-            className={
-              template.favorite
-                ? "fill-red-500 text-red-500"
-                : ""
-            }
-          />
-        </button>
+  {/* FAVORI */}
 
-        {/* CATÉGORIE */}
+  <button
+    onClick={onFavorite}
+    className="
+      absolute right-3 top-3
+      z-10
+      flex h-8 w-8
+      items-center justify-center
+      rounded-lg
+      bg-white/95
+      text-slate-400
+      shadow-md
+      backdrop-blur-sm
+      transition
+      hover:bg-white
+      hover:text-red-500
+    "
+    aria-label={
+      template.favorite
+        ? "Retirer des favoris"
+        : "Ajouter aux favoris"
+    }
+  >
+    <Heart
+      size={15}
+      className={
+        template.favorite
+          ? "fill-red-500 text-red-500"
+          : ""
+      }
+    />
+  </button>
 
-        <span
-          className={`absolute bottom-3 left-3 rounded-lg px-2.5 py-1.5 text-[8px] font-black shadow-md ${template.color}`}
-        >
-          {template.category}
-        </span>
+  {/* CATÉGORIE */}
 
-      </div>
+  <span
+    className={`
+      absolute
+      bottom-3
+      left-3
+      z-10
+      rounded-lg
+      px-2.5
+      py-1.5
+      text-[8px]
+      font-black
+      shadow-md
+      ${template.color}
+    `}
+  >
+    {template.category}
+  </span>
+
+</div>
 
       {/* =================================================
           CONTENU

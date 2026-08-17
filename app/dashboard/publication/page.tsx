@@ -29,12 +29,24 @@ import {
   MapPin,
   Play,
   Eye,
-  CheckCircle2
+  CheckCircle2,
+  BriefcaseBusiness,
+  Users,
+  Globe2,
 } from "lucide-react";
 
 /* =========================================================
    TYPES
 ========================================================= */
+
+type Project = {
+  id: string;
+  name: string;
+  sector: string;
+  initials: string;
+  color: string;
+  networks: SocialNetwork[];
+};
 
 type SocialNetwork = {
   id: string;
@@ -50,7 +62,6 @@ type PostContent = {
 
 /* =========================================================
    ICÔNES RÉSEAUX SOCIAUX
-   COULEURS OFFICIELLES
 ========================================================= */
 
 const FacebookIcon = () => (
@@ -172,10 +183,10 @@ const GoogleBusinessIcon = () => (
 );
 
 /* =========================================================
-   RÉSEAUX
+   RÉSEAUX PAR PROJET
 ========================================================= */
 
-const networks: SocialNetwork[] = [
+const prestaNetworks: SocialNetwork[] = [
   {
     id: "facebook",
     name: "Facebook Page",
@@ -208,6 +219,123 @@ const networks: SocialNetwork[] = [
   },
 ];
 
+const dihasNetworks: SocialNetwork[] = [
+  {
+    id: "facebook",
+    name: "Facebook Page",
+    username: "Diha's Agency",
+    icon: <FacebookIcon />,
+  },
+  {
+    id: "instagram",
+    name: "Instagram",
+    username: "@dihas.agency",
+    icon: <InstagramIcon />,
+  },
+  {
+    id: "linkedin",
+    name: "LinkedIn",
+    username: "Diha's Agency",
+    icon: <LinkedinIcon />,
+  },
+];
+
+const fofanaNetworks: SocialNetwork[] = [
+  {
+    id: "facebook",
+    name: "Facebook Page",
+    username: "Fofana Voyage",
+    icon: <FacebookIcon />,
+  },
+  {
+    id: "instagram",
+    name: "Instagram",
+    username: "@fofana_voyage",
+    icon: <InstagramIcon />,
+  },
+  {
+    id: "tiktok",
+    name: "TikTok",
+    username: "@fofana_voyage",
+    icon: <TikTokIcon />,
+  },
+  {
+    id: "google",
+    name: "Google Business Profile",
+    username: "Fofana Voyage",
+    icon: <GoogleBusinessIcon />,
+  },
+];
+
+const clinicoNetworks: SocialNetwork[] = [
+  {
+    id: "facebook",
+    name: "Facebook Page",
+    username: "Clinico",
+    icon: <FacebookIcon />,
+  },
+  {
+    id: "instagram",
+    name: "Instagram",
+    username: "@clinico",
+    icon: <InstagramIcon />,
+  },
+  {
+    id: "linkedin",
+    name: "LinkedIn",
+    username: "Clinico",
+    icon: <LinkedinIcon />,
+  },
+  {
+    id: "google",
+    name: "Google Business Profile",
+    username: "Clinico",
+    icon: <GoogleBusinessIcon />,
+  },
+];
+
+/* =========================================================
+   PROJETS
+========================================================= */
+
+const projects: Project[] = [
+  {
+    id: "presta",
+    name: "Presta",
+    sector: "Formation & Technologie",
+    initials: "P",
+    color: "bg-red-dark",
+    networks: prestaNetworks,
+  },
+
+  {
+    id: "dihas-agency",
+    name: "Diha's Agency",
+   sector: "Communication & Marketing",
+    initials: "DA",
+    color: "bg-slate-800",
+    networks: dihasNetworks,
+  },
+
+  {
+    id: "fofana-voyage",
+    name: "Fofana Voyage",
+   sector: "Voyage & Transport",
+    initials: "FV",
+    color: "bg-emerald-600",
+    networks: fofanaNetworks,
+  },
+
+  {
+    id: "clinico",
+    name: "Clinico",
+   sector: "Santé",
+    initials: "C",
+    color: "bg-blue-600",
+    networks: clinicoNetworks,
+  },
+];
+
 /* =========================================================
    CONTENU PAR DÉFAUT
 ========================================================= */
@@ -230,29 +358,53 @@ Rejoignez notre formation Flutter 100% pratique avec des projets concrets.
 ========================================================= */
 
 export default function CreatePublicationPage() {
-  const [selectedNetworks, setSelectedNetworks] = useState<string[]>([
-    "facebook",
-    "instagram",
-    "linkedin",
-    "tiktok",
-    "google",
-  ]);
+  /* =======================================================
+     PROJET ACTUEL
+  ======================================================= */
 
-  const [showProjectMenu, setShowProjectMenu] = useState(false);
+  const [activeProjectId, setActiveProjectId] =
+    useState("presta");
+
+  const [showProjectMenu, setShowProjectMenu] =
+    useState(false);
+
+  const activeProject =
+    projects.find(
+      (project) => project.id === activeProjectId
+    ) ?? projects[0];
+
+  /* =======================================================
+     RÉSEAUX DU PROJET ACTUEL
+  ======================================================= */
+
+  const [selectedNetworks, setSelectedNetworks] =
+    useState<string[]>(
+      prestaNetworks.map((network) => network.id)
+    );
+
+  /* =======================================================
+     MODE DE PUBLICATION
+  ======================================================= */
 
   const [publishMode, setPublishMode] = useState<
     "now" | "schedule" | "draft"
   >("now");
+
+  /* =======================================================
+     IDÉE
+  ======================================================= */
 
   const [idea, setIdea] = useState(
     "Promouvoir notre nouvelle formation Flutter destinée aux débutants. La formation commence le 15 juillet 2026, 100% pratique avec projets."
   );
 
   /* =======================================================
-     CONTENU INDIVIDUEL DE CHAQUE RÉSEAU
+     CONTENU DES POSTS
   ======================================================= */
 
-  const [posts, setPosts] = useState<Record<string, PostContent>>({
+  const [posts, setPosts] = useState<
+    Record<string, PostContent>
+  >({
     facebook: {
       text: defaultPostText,
       image: "/flutter.png",
@@ -279,6 +431,28 @@ export default function CreatePublicationPage() {
     },
   });
 
+  /* =======================================================
+     CHANGEMENT DE PROJET
+  ======================================================= */
+
+  const handleProjectChange = (project: Project) => {
+    setActiveProjectId(project.id);
+
+    /*
+      On sélectionne automatiquement les réseaux
+      connectés au nouveau projet.
+    */
+    setSelectedNetworks(
+      project.networks.map((network) => network.id)
+    );
+
+    setShowProjectMenu(false);
+  };
+
+  /* =======================================================
+     CHANGEMENT RÉSEAU
+  ======================================================= */
+
   const toggleNetwork = (id: string) => {
     setSelectedNetworks((current) =>
       current.includes(id)
@@ -287,9 +461,17 @@ export default function CreatePublicationPage() {
     );
   };
 
-  const updatePostText = (networkId: string, text: string) => {
+  /* =======================================================
+     MODIFIER TEXTE
+  ======================================================= */
+
+  const updatePostText = (
+    networkId: string,
+    text: string
+  ) => {
     setPosts((current) => ({
       ...current,
+
       [networkId]: {
         ...current[networkId],
         text,
@@ -297,9 +479,17 @@ export default function CreatePublicationPage() {
     }));
   };
 
-  const updatePostImage = (networkId: string, image: string | null) => {
+  /* =======================================================
+     MODIFIER IMAGE
+  ======================================================= */
+
+  const updatePostImage = (
+    networkId: string,
+    image: string | null
+  ) => {
     setPosts((current) => ({
       ...current,
+
       [networkId]: {
         ...current[networkId],
         image,
@@ -314,11 +504,13 @@ export default function CreatePublicationPage() {
           HEADER
       ===================================================== */}
 
-      <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/95 backdrop-blur">
+      <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/95 backdrop-blur">
 
         <div className="mx-auto flex min-h-[72px] w-full max-w-[1800px] items-center px-3 sm:px-5 lg:px-8">
 
-          {/* GAUCHE */}
+          {/* =================================================
+              GAUCHE
+          ================================================= */}
 
           <div className="min-w-0 flex-1">
 
@@ -336,87 +528,246 @@ export default function CreatePublicationPage() {
 
           </div>
 
-          {/* CENTRE */}
+          {/* =================================================
+              SÉLECTEUR DE PROJET
+          ================================================= */}
 
           <div className="flex flex-none items-center justify-center md:flex-1">
 
             <div className="relative">
 
-            
-               <div className="relative">
-            <button
-              onClick={() => setShowProjectMenu(!showProjectMenu)}
-              className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold shadow-sm transition hover:bg-slate-50"
-            >
-              <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-red-50 text-red-600">
-                ✦
-              </div>
+              {/* =============================================
+                  BOUTON PROJET ACTUEL
+              ============================================= */}
 
-              <span className="hidden sm:block">
-                Presta
-              </span>
+              <button
+                onClick={() =>
+                  setShowProjectMenu((current) => !current)
+                }
+                aria-expanded={showProjectMenu}
+                className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold shadow-sm transition hover:bg-slate-50"
+              >
 
-              <ChevronDown size={14} />
-            </button>
+                {/* ICÔNE PROJET */}
 
-            {showProjectMenu && (
-              <div className="absolute right-0 top-12 z-50 w-64 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
-                <div className="border-b border-slate-100 px-4 py-3">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">
-                    Mes projets
-                  </p>
+                <div
+                  className={`flex h-6 w-6 items-center justify-center rounded-lg text-[9px] font-black text-white ${activeProject.color}`}
+                >
+                  {activeProject.initials}
                 </div>
 
-                {[
-                  "Presta",
-                  "Diha's Agency",
-                  "Fofana Voyage",
-                  "Clinico",
-                ].map((project, index) => (
+                {/* NOM */}
+
+                <span className="hidden max-w-[120px] truncate sm:block">
+                  {activeProject.name}
+                </span>
+
+                {/* FLÈCHE */}
+
+                <ChevronDown
+                  size={14}
+                  className={`transition-transform ${
+                    showProjectMenu
+                      ? "rotate-180"
+                      : ""
+                  }`}
+                />
+
+              </button>
+
+              {/* =============================================
+                  MENU DES PROJETS
+              ============================================= */}
+
+              {showProjectMenu && (
+
+                <div className="absolute right-0 top-12 z-50 w-[320px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+
+                  {/* =======================================
+                      HEADER DU MENU
+                  ======================================= */}
+
+                  <div className="border-b border-slate-100 px-4 py-3">
+
+                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+                      Mes projets
+                    </p>
+
+                    <p className="mt-1 text-[10px] text-slate-500">
+                      Sélectionnez le projet sur lequel vous travaillez.
+                    </p>
+
+                  </div>
+
+                  {/* =======================================
+                      LISTE
+                  ======================================= */}
+
+                  <div className="max-h-[360px] overflow-y-auto">
+
+                    {projects.map((project) => {
+
+                      const isActive =
+                        activeProjectId === project.id;
+
+                      return (
+
+                        <button
+                          key={project.id}
+                          onClick={() =>
+                            handleProjectChange(project)
+                          }
+                          className={`group flex w-full items-start gap-3 border-b border-slate-50 px-4 py-3 text-left transition ${
+                            isActive
+                              ? "bg-red-50/70"
+                              : "hover:bg-slate-50"
+                          }`}
+                        >
+
+                          {/* LOGO */}
+
+                          <div
+                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[9px] font-black text-white shadow-sm ${project.color}`}
+                          >
+                            {project.initials}
+                          </div>
+
+                          {/* INFORMATIONS */}
+
+                          <div className="min-w-0 flex-1">
+
+                            <div className="flex items-center gap-2">
+
+                              <p
+                                className={`truncate text-[11px] font-black ${
+                                  isActive
+                                    ? "text-red-dark"
+                                    : "text-slate-800"
+                                }`}
+                              >
+                                {project.name}
+                              </p>
+
+                              {isActive && (
+                                <span className="rounded-full bg-red-100 px-1.5 py-0.5 text-[7px] font-black uppercase text-red-dark">
+                                  Actif
+                                </span>
+                              )}
+
+                            </div>
+
+                            <div className="mt-2 flex items-center gap-3">
+
+                              <span className="flex items-center gap-1 text-[8px] font-semibold text-slate-400">
+                                <BriefcaseBusiness size={10} />
+                                {project.sector}
+                              </span>
+
+                              <span className="flex items-center gap-1 text-[8px] font-semibold text-slate-400">
+                                <Globe2 size={10} />
+                                {project.networks.length} réseaux
+                              </span>
+
+                            </div>
+
+                          </div>
+
+                          {/* COCHE */}
+
+                          <div className="flex h-7 w-7 shrink-0 items-center justify-center">
+
+                            {isActive ? (
+
+                              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-dark text-white">
+                                <Check
+                                  size={12}
+                                  strokeWidth={3}
+                                />
+                              </span>
+
+                            ) : (
+
+                              <span className="h-5 w-5 rounded-full border border-slate-200 opacity-0 transition group-hover:opacity-100" />
+
+                            )}
+
+                          </div>
+
+                        </button>
+
+                      );
+
+                    })}
+
+                  </div>
+
+                  {/* =======================================
+                      PROJET ACTUEL
+                  ======================================= */}
+
+                  <div className="border-t border-slate-100 bg-slate-50/70 px-4 py-3">
+
+                    <div className="flex items-center gap-2">
+
+                      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-red-dark shadow-sm">
+                        <CheckCircle2 size={15} />
+                      </div>
+
+                      <div className="min-w-0">
+
+                        <p className="text-[8px] font-black uppercase tracking-wider text-slate-400">
+                          Vous travaillez actuellement sur
+                        </p>
+
+                        <p className="truncate text-[10px] font-black text-slate-800">
+                          {activeProject.name}
+                        </p>
+
+                      </div>
+
+                    </div>
+
+                  </div>
+
+                  {/* =======================================
+                      CRÉER UN PROJET
+                  ======================================= */}
+<a href="/dashboard/projets">
                   <button
-                    key={project}
-                    onClick={() => setShowProjectMenu(false)}
-                    className="flex w-full items-center gap-3 px-4 py-3 text-left text-xs font-semibold transition hover:bg-slate-50"
+                    className="flex w-full items-center gap-2 border-t border-slate-100 px-4 py-3 text-xs font-bold text-red-600 transition hover:bg-red-50"
                   >
-                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100">
-                      {index === 0 ? "✦" : "👤"}
-                    </span>
 
-                    <span className="flex-1">
-                      {project}
-                    </span>
+                    <Plus size={15} />
 
-                    {index === 0 && (
-                      <CheckCircle2
-                        size={15}
-                        className="text-red-600"
-                      />
-                    )}
+                    Créer un projet
+
                   </button>
-                ))}
+</a>
+                </div>
 
-                <button className="flex w-full items-center gap-2 border-t border-slate-100 px-4 py-3 text-xs font-bold text-red-600 transition hover:bg-red-50">
-                  <Plus size={15} />
-                  Créer un projet
-                </button>
-              </div>
-            )}
-          </div>
-  
+              )}
 
             </div>
 
           </div>
 
-          {/* DROITE */}
+          {/* =================================================
+              DROITE
+          ================================================= */}
 
           <div className="hidden flex-1 items-center justify-end gap-2 md:flex lg:gap-3">
 
-            <button className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-400 transition-colors hover:bg-slate-50 hover:text-slate-700">
+            <button
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-400 transition-colors hover:bg-slate-50 hover:text-slate-700"
+              aria-label="Aide"
+            >
               <HelpCircle size={18} />
             </button>
 
-            <button className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-400 transition-colors hover:bg-slate-50 hover:text-slate-700">
+            <button
+              className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-400 transition-colors hover:bg-slate-50 hover:text-slate-700"
+              aria-label="Notifications"
+            >
 
               <Bell size={18} />
 
@@ -442,10 +793,98 @@ export default function CreatePublicationPage() {
 
       <main className="mx-auto max-w-[1800px] px-3 py-5 sm:px-5 sm:py-6 lg:px-7 lg:py-7">
 
+        {/* ===================================================
+            INFORMATIONS DU PROJET ACTUEL
+        =================================================== */}
+
+        <div className="mb-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_2px_10px_rgba(15,23,42,0.03)] sm:p-5">
+
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+
+            <div className="flex min-w-0 items-center gap-3">
+
+              <div
+                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-xs font-black text-white shadow-sm ${activeProject.color}`}
+              >
+                {activeProject.initials}
+              </div>
+
+              <div className="min-w-0">
+
+                <div className="flex flex-wrap items-center gap-2">
+
+                  <h2 className="truncate text-sm font-black text-slate-800">
+                    {activeProject.name}
+                  </h2>
+
+                  <span className="flex items-center gap-1 rounded-full bg-red-50 px-2 py-1 text-[8px] font-black text-red-dark">
+                    <CheckCircle2 size={10} />
+                    Projet actif
+                  </span>
+
+                </div>
+
+              </div>
+
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+
+              <div className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2">
+
+                <BriefcaseBusiness
+                  size={13}
+                  className="text-slate-400"
+                />
+
+                <div>
+                  <p className="text-[8px] text-slate-400">
+                    Secteur
+                  </p>
+
+                  <p className="text-[9px] font-bold text-slate-700">
+                    {activeProject.sector}
+                  </p>
+                </div>
+
+              </div>
+
+              <div className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2">
+
+                <Users
+                  size={13}
+                  className="text-slate-400"
+                />
+
+                <div>
+                  <p className="text-[8px] text-slate-400">
+                    Réseaux connectés
+                  </p>
+
+                  <p className="text-[9px] font-bold text-slate-700">
+                    {activeProject.networks.length}
+                  </p>
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        {/* ===================================================
+            DESCRIPTION
+        =================================================== */}
+
         <div className="mb-5">
 
           <p className="text-[11px] font-medium text-slate-400 sm:text-xs">
-            Générez, personnalisez et publiez sur vos réseaux sociaux
+            Générez, personnalisez et publiez sur les réseaux sociaux de{" "}
+            <strong className="font-bold text-slate-600">
+              {activeProject.name}
+            </strong>
           </p>
 
         </div>
@@ -462,7 +901,9 @@ export default function CreatePublicationPage() {
 
           <div className="space-y-5">
 
-            {/* CONFIGURATION */}
+            {/* ===============================================
+                CONFIGURATION
+            =============================================== */}
 
             <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_2px_10px_rgba(15,23,42,0.03)] sm:p-5">
 
@@ -484,7 +925,9 @@ export default function CreatePublicationPage() {
 
                   <textarea
                     value={idea}
-                    onChange={(e) => setIdea(e.target.value)}
+                    onChange={(e) =>
+                      setIdea(e.target.value)
+                    }
                     maxLength={10000}
                     rows={5}
                     className="w-full resize-none rounded-xl border border-slate-200 bg-[#fafbfc] p-3.5 pb-7 text-[11px] font-medium leading-[1.6] text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-red-dark focus:bg-white focus:ring-4 focus:ring-red-dark/10"
@@ -510,11 +953,25 @@ export default function CreatePublicationPage() {
 
                   <select className="w-full appearance-none rounded-xl border border-slate-200 bg-[#fafbfc] px-3 py-3 text-[11px] font-semibold text-slate-700 outline-none transition focus:border-red-dark focus:bg-white focus:ring-4 focus:ring-red-light/20">
 
-                    <option>Professionnel & motivant</option>
-                    <option>Décontracté</option>
-                    <option>Inspirant</option>
-                    <option>Commercial</option>
-                    <option>Éducatif</option>
+                    <option>
+                      Professionnel & motivant
+                    </option>
+
+                    <option>
+                      Décontracté
+                    </option>
+
+                    <option>
+                      Inspirant
+                    </option>
+
+                    <option>
+                      Commercial
+                    </option>
+
+                    <option>
+                      Éducatif
+                    </option>
 
                   </select>
 
@@ -540,6 +997,7 @@ export default function CreatePublicationPage() {
                   <select className="w-full appearance-none rounded-xl border border-slate-200 bg-[#fafbfc] px-3 py-3 text-[11px] font-semibold text-slate-700 outline-none transition focus:border-red-dark focus:bg-white focus:ring-4 focus:ring-red-light/20">
 
                     <option>Français</option>
+
                     <option>English</option>
 
                   </select>
@@ -568,57 +1026,73 @@ export default function CreatePublicationPage() {
 
               <p className="mt-1.5 text-[10px] leading-[1.6] text-slate-400">
                 Sélectionnez les réseaux sur lesquels vous souhaitez publier
-                pour ce projet.
+                pour le projet{" "}
+                <strong className="text-slate-600">
+                  {activeProject.name}
+                </strong>
+                .
               </p>
 
               <div className="mt-3 divide-y divide-slate-100">
 
-                {networks.map((network) => {
+                {activeProject.networks.map(
+                  (network) => {
 
-                  const selected = selectedNetworks.includes(network.id);
+                    const selected =
+                      selectedNetworks.includes(
+                        network.id
+                      );
 
-                  return (
-                    <button
-                      key={network.id}
-                      onClick={() => toggleNetwork(network.id)}
-                      aria-pressed={selected}
-                      className="group flex w-full items-center gap-3 py-2.5 text-left transition"
-                    >
+                    return (
 
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-50 transition group-hover:bg-slate-100">
-                        {network.icon}
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-
-                        <p className="truncate text-[11px] font-bold text-slate-800">
-                          {network.name}
-                        </p>
-
-                        <p className="truncate text-[9px] text-slate-400">
-                          {network.username}
-                        </p>
-
-                      </div>
-
-                      <div
-                        className={`flex h-[19px] w-[19px] shrink-0 items-center justify-center rounded-[5px] border transition ${
-                          selected
-                            ? "border-red-dark bg-red-dark text-white"
-                            : "border-slate-300 bg-white"
-                        }`}
+                      <button
+                        key={network.id}
+                        onClick={() =>
+                          toggleNetwork(network.id)
+                        }
+                        aria-pressed={selected}
+                        className="group flex w-full items-center gap-3 py-2.5 text-left transition"
                       >
 
-                        {selected && (
-                          <Check size={12} strokeWidth={3} />
-                        )}
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-50 transition group-hover:bg-slate-100">
+                          {network.icon}
+                        </div>
 
-                      </div>
+                        <div className="min-w-0 flex-1">
 
-                    </button>
-                  );
+                          <p className="truncate text-[11px] font-bold text-slate-800">
+                            {network.name}
+                          </p>
 
-                })}
+                          <p className="truncate text-[9px] text-slate-400">
+                            {network.username}
+                          </p>
+
+                        </div>
+
+                        <div
+                          className={`flex h-[19px] w-[19px] shrink-0 items-center justify-center rounded-[5px] border transition ${
+                            selected
+                              ? "border-red-dark bg-red-dark text-white"
+                              : "border-slate-300 bg-white"
+                          }`}
+                        >
+
+                          {selected && (
+                            <Check
+                              size={12}
+                              strokeWidth={3}
+                            />
+                          )}
+
+                        </div>
+
+                      </button>
+
+                    );
+
+                  }
+                )}
 
               </div>
 
@@ -681,28 +1155,34 @@ export default function CreatePublicationPage() {
 
               <div className="flex overflow-x-auto border-b border-slate-100 scrollbar-none">
 
-                {selectedNetworks.map((networkId) => {
+                {selectedNetworks.map(
+                  (networkId) => {
 
-                  const network = networks.find(
-                    (item) => item.id === networkId
-                  );
+                    const network =
+                      activeProject.networks.find(
+                        (item) =>
+                          item.id === networkId
+                      );
 
-                  if (!network) return null;
+                    if (!network) return null;
 
-                  return (
-                    <button
-                      key={network.id}
-                      className="flex shrink-0 items-center gap-2 border-b-2 border-red-dark px-4 py-3 text-[10px] font-bold text-red-dark sm:px-5"
-                    >
+                    return (
 
-                      {network.icon}
+                      <button
+                        key={network.id}
+                        className="flex shrink-0 items-center gap-2 border-b-2 border-red-dark px-4 py-3 text-[10px] font-bold text-red-dark sm:px-5"
+                      >
 
-                      {network.name.split(" ")[0]}
+                        {network.icon}
 
-                    </button>
-                  );
+                        {network.name.split(" ")[0]}
 
-                })}
+                      </button>
+
+                    );
+
+                  }
+                )}
 
               </div>
 
@@ -735,31 +1215,45 @@ export default function CreatePublicationPage() {
 
                 <div className="grid grid-cols-1 gap-5 md:grid-cols-2 2xl:grid-cols-3">
 
-                  {selectedNetworks.map((networkId) => {
+                  {selectedNetworks.map(
+                    (networkId) => {
 
-                    const network = networks.find(
-                      (item) => item.id === networkId
-                    );
+                      const network =
+                        activeProject.networks.find(
+                          (item) =>
+                            item.id === networkId
+                        );
 
-                    if (!network) return null;
+                      if (!network)
+                        return null;
 
-                    const post = posts[networkId];
+                      const post =
+                        posts[networkId];
 
-                    return (
-                      <NetworkPreview
-                        key={networkId}
-                        network={network}
-                        post={post}
-                        onTextChange={(text) =>
-                          updatePostText(networkId, text)
-                        }
-                        onImageChange={(image) =>
-                          updatePostImage(networkId, image)
-                        }
-                      />
-                    );
+                      return (
 
-                  })}
+                        <NetworkPreview
+                          key={networkId}
+                          network={network}
+                          post={post}
+                          onTextChange={(text) =>
+                            updatePostText(
+                              networkId,
+                              text
+                            )
+                          }
+                          onImageChange={(image) =>
+                            updatePostImage(
+                              networkId,
+                              image
+                            )
+                          }
+                        />
+
+                      );
+
+                    }
+                  )}
 
                 </div>
 
@@ -788,19 +1282,29 @@ export default function CreatePublicationPage() {
 
               <PublishOption
                 active={publishMode === "now"}
-                onClick={() => setPublishMode("now")}
+                onClick={() =>
+                  setPublishMode("now")
+                }
                 label="Publier maintenant"
               />
 
               <PublishOption
-                active={publishMode === "schedule"}
-                onClick={() => setPublishMode("schedule")}
+                active={
+                  publishMode === "schedule"
+                }
+                onClick={() =>
+                  setPublishMode("schedule")
+                }
                 label="Programmer pour plus tard"
               />
 
               <PublishOption
-                active={publishMode === "draft"}
-                onClick={() => setPublishMode("draft")}
+                active={
+                  publishMode === "draft"
+                }
+                onClick={() =>
+                  setPublishMode("draft")
+                }
                 label="Enregistrer comme brouillon"
               />
 
@@ -878,6 +1382,15 @@ export default function CreatePublicationPage() {
           <span className="flex items-center gap-1">
             <ImageIcon size={12} />
             Images personnalisables
+          </span>
+
+          <span className="hidden h-3 w-px bg-slate-200 sm:block" />
+
+          <span>
+            Projet :{" "}
+            <strong className="text-slate-600">
+              {activeProject.name}
+            </strong>
           </span>
 
           <span className="hidden h-3 w-px bg-slate-200 sm:block" />
@@ -980,6 +1493,7 @@ function NetworkPreview({
   onImageChange: (image: string | null) => void;
 }) {
   switch (network.id) {
+
     case "facebook":
       return (
         <FacebookPreview
@@ -1052,15 +1566,21 @@ function PostEditorToolbar({
   onTextChange: (text: string) => void;
   onImageChange: (image: string | null) => void;
 }) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [editing, setEditing] = useState(false);
+  const [menuOpen, setMenuOpen] =
+    useState(false);
 
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [editing, setEditing] =
+    useState(false);
+
+  const fileInputRef =
+    useRef<HTMLInputElement | null>(null);
 
   const handleImageUpload = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    const file = event.target.files?.[0];
+
+    const file =
+      event.target.files?.[0];
 
     if (!file) return;
 
@@ -1068,7 +1588,8 @@ function PostEditorToolbar({
       return;
     }
 
-    const imageUrl = URL.createObjectURL(file);
+    const imageUrl =
+      URL.createObjectURL(file);
 
     onImageChange(imageUrl);
 
@@ -1087,7 +1608,11 @@ function PostEditorToolbar({
       <div className="absolute right-3 top-3 z-30">
 
         <button
-          onClick={() => setMenuOpen((current) => !current)}
+          onClick={() =>
+            setMenuOpen(
+              (current) => !current
+            )
+          }
           className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white/95 text-slate-500 shadow-sm backdrop-blur transition hover:bg-slate-50 hover:text-slate-800"
           aria-label="Modifier la publication"
         >
@@ -1121,6 +1646,7 @@ function PostEditorToolbar({
             </button>
 
             {image && (
+
               <button
                 onClick={removeImage}
                 className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-[10px] font-semibold text-red-600 transition hover:bg-red-50"
@@ -1128,6 +1654,7 @@ function PostEditorToolbar({
                 <Trash2 size={14} />
                 Supprimer l'image
               </button>
+
             )}
 
           </div>
@@ -1155,7 +1682,9 @@ function PostEditorToolbar({
             </p>
 
             <button
-              onClick={() => setEditing(false)}
+              onClick={() =>
+                setEditing(false)
+              }
               className="flex h-6 w-6 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100"
             >
               <X size={13} />
@@ -1165,7 +1694,9 @@ function PostEditorToolbar({
 
           <textarea
             value={text}
-            onChange={(e) => onTextChange(e.target.value)}
+            onChange={(e) =>
+              onTextChange(e.target.value)
+            }
             rows={7}
             className="w-full resize-none rounded-lg border border-slate-200 bg-slate-50 p-2.5 text-[10px] leading-relaxed text-slate-700 outline-none focus:border-red-dark focus:bg-white focus:ring-4 focus:ring-red-light/20"
           />
@@ -1173,7 +1704,9 @@ function PostEditorToolbar({
           <div className="mt-2 flex justify-end">
 
             <button
-              onClick={() => setEditing(false)}
+              onClick={() =>
+                setEditing(false)
+              }
               className="rounded-lg bg-red-dark px-3 py-2 text-[9px] font-black text-white transition hover:bg-red-dark/90"
             >
               Terminer
@@ -1184,6 +1717,7 @@ function PostEditorToolbar({
         </div>
 
       )}
+
     </>
   );
 }
@@ -1222,7 +1756,7 @@ function FacebookPreview({
       <div className="flex items-center gap-2 px-3.5 py-3">
 
         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200 text-[9px] font-black">
-          P
+          {network.username.charAt(0)}
         </div>
 
         <div className="min-w-0">
@@ -1259,10 +1793,13 @@ function FacebookPreview({
         <div className="flex items-center justify-between border-b border-slate-100 pb-2 text-[8px] text-slate-400">
 
           <span className="flex items-center gap-1">
+
             <span className="flex h-4 w-4 items-center justify-center rounded-full bg-blue-500 text-white">
               <ThumbsUp size={8} />
             </span>
+
             128
+
           </span>
 
           <span>
@@ -1332,7 +1869,7 @@ function InstagramPreview({
         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-yellow-300 via-pink-500 to-purple-600 p-[2px]">
 
           <div className="flex h-full w-full items-center justify-center rounded-full bg-white text-[8px] font-black">
-            P
+            {network.username.charAt(1)}
           </div>
 
         </div>
@@ -1386,10 +1923,13 @@ function InstagramPreview({
       <div className="px-3.5 pb-4 pt-2">
 
         <p className="line-clamp-7 whitespace-pre-line text-[9px] leading-[1.6] text-slate-600">
+
           <strong className="font-black text-slate-800">
             {network.username}
           </strong>{" "}
+
           {post.text}
+
         </p>
 
         <p className="mt-2 text-[8px] text-slate-400">
@@ -1436,7 +1976,7 @@ function LinkedinPreview({
       <div className="flex items-start gap-2 px-3.5 py-3">
 
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-200 text-[9px] font-black">
-          P
+          {network.username.charAt(0)}
         </div>
 
         <div className="min-w-0 flex-1">
@@ -1538,12 +2078,10 @@ function TikTokPreview({
         onImageChange={onImageChange}
       />
 
-      {/* HEADER TIKTOK */}
-
       <div className="absolute left-3 right-12 top-3 z-20 flex items-center gap-2">
 
         <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-[8px] font-black">
-          P
+          {network.username.charAt(1)}
         </div>
 
         <div className="min-w-0">
@@ -1559,8 +2097,6 @@ function TikTokPreview({
         </div>
 
       </div>
-
-      {/* IMAGE / VIDÉO */}
 
       <div className="relative aspect-[9/16] w-full overflow-hidden bg-slate-900">
 
@@ -1586,21 +2122,20 @@ function TikTokPreview({
 
         )}
 
-        {/* DÉGRADÉ */}
-
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20" />
-
-        {/* ACTIONS À DROITE */}
 
         <div className="absolute bottom-24 right-3 z-20 flex flex-col items-center gap-4 text-white">
 
           <div className="flex flex-col items-center gap-1">
+
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 backdrop-blur">
               <Heart size={19} fill="white" />
             </div>
+
             <span className="text-[8px] font-bold">
               128
             </span>
+
           </div>
 
           <div className="flex flex-col items-center gap-1">
@@ -1625,8 +2160,6 @@ function TikTokPreview({
           </div>
 
         </div>
-
-        {/* TEXTE */}
 
         <div className="absolute bottom-4 left-3 right-14 z-20">
 
@@ -1678,7 +2211,7 @@ function GooglePreview({
         <div className="flex items-center gap-2">
 
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-[9px] font-black">
-            P
+            {network.username.charAt(0)}
           </div>
 
           <div className="min-w-0">
@@ -1798,18 +2331,23 @@ function PreviewImage({
   aspect: string;
   onChange: (image: string | null) => void;
 }) {
-  const inputRef = useRef<HTMLInputElement | null>(null);
+  const inputRef =
+    useRef<HTMLInputElement | null>(null);
 
   const handleFile = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    const file = event.target.files?.[0];
+
+    const file =
+      event.target.files?.[0];
 
     if (!file) return;
 
-    if (!file.type.startsWith("image/")) return;
+    if (!file.type.startsWith("image/"))
+      return;
 
-    const imageUrl = URL.createObjectURL(file);
+    const imageUrl =
+      URL.createObjectURL(file);
 
     onChange(imageUrl);
 
@@ -1817,7 +2355,9 @@ function PreviewImage({
   };
 
   if (!image) {
+
     return (
+
       <div className="relative mx-3.5 overflow-hidden rounded-xl border border-dashed border-slate-300 bg-slate-50">
 
         <div className="flex aspect-[1.5/1] flex-col items-center justify-center px-5 text-center">
@@ -1831,7 +2371,9 @@ function PreviewImage({
           </p>
 
           <button
-            onClick={() => inputRef.current?.click()}
+            onClick={() =>
+              inputRef.current?.click()
+            }
             className="mt-2 flex items-center gap-1.5 rounded-lg bg-red-dark px-3 py-2 text-[8px] font-black text-white"
           >
             <Upload size={11} />
@@ -1849,10 +2391,12 @@ function PreviewImage({
         />
 
       </div>
+
     );
   }
 
   return (
+
     <div className="group/image relative mx-3.5 overflow-hidden rounded-xl bg-slate-100">
 
       <img
@@ -1861,14 +2405,14 @@ function PreviewImage({
         className={`${aspect} w-full object-cover transition duration-500 group-hover/image:scale-[1.01]`}
       />
 
-      {/* OVERLAY IMAGE */}
-
       <div className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition group-hover/image:bg-black/30 group-hover/image:opacity-100">
 
         <div className="flex items-center gap-2">
 
           <button
-            onClick={() => inputRef.current?.click()}
+            onClick={() =>
+              inputRef.current?.click()
+            }
             className="flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-[8px] font-black text-slate-700 shadow-lg transition hover:bg-slate-50"
           >
             <Upload size={12} />
@@ -1876,7 +2420,9 @@ function PreviewImage({
           </button>
 
           <button
-            onClick={() => onChange(null)}
+            onClick={() =>
+              onChange(null)
+            }
             className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-red-600 shadow-lg transition hover:bg-red-50"
             aria-label="Supprimer l'image"
           >
@@ -1896,6 +2442,7 @@ function PreviewImage({
       />
 
     </div>
+
   );
 }
 
@@ -1913,6 +2460,7 @@ function PublishOption({
   label: string;
 }) {
   return (
+
     <button
       onClick={onClick}
       className="flex items-center gap-2 text-[10px] font-semibold text-slate-600 transition hover:text-slate-900"
@@ -1935,5 +2483,6 @@ function PublishOption({
       {label}
 
     </button>
+
   );
 }

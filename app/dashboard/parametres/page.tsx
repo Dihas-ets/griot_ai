@@ -1,21 +1,22 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ChevronLeft,
   User,
   Bell,
   Shield,
-  Palette,
   Globe,
   CreditCard,
   Lock,
   Save,
   Camera,
-  Check,
   ChevronRight,
   LogOut,
+  Image as ImageIcon,
+  X,
 } from "lucide-react";
 
 /* =========================================================
@@ -23,7 +24,14 @@ import {
 ========================================================= */
 
 export default function SettingsPage() {
-  const [activeSection, setActiveSection] = useState("profil");
+  const router = useRouter();
+
+  const [activeSection, setActiveSection] =
+    useState("profil");
+
+  /* =======================================================
+     NOTIFICATIONS
+  ======================================================= */
 
   const [notifications, setNotifications] = useState({
     publications: true,
@@ -32,9 +40,29 @@ export default function SettingsPage() {
     marketing: false,
   });
 
-  const [language, setLanguage] = useState("Français");
-  const [timezone, setTimezone] = useState("GMT +1");
-  const [theme, setTheme] = useState("Clair");
+  /* =======================================================
+     PRÉFÉRENCES
+  ======================================================= */
+
+  const [language, setLanguage] =
+    useState("Français");
+
+  const [timezone, setTimezone] =
+    useState("GMT +1");
+
+  /* =======================================================
+     PHOTO DE PROFIL
+  ======================================================= */
+
+  const [profileImage, setProfileImage] =
+    useState<string | null>(null);
+
+  const fileInputRef =
+    useRef<HTMLInputElement>(null);
+
+  /* =======================================================
+     MENU
+  ======================================================= */
 
   const menuSections = [
     {
@@ -56,12 +84,6 @@ export default function SettingsPage() {
       icon: Shield,
     },
     {
-      id: "apparence",
-      label: "Apparence",
-      description: "Personnaliser l'interface",
-      icon: Palette,
-    },
-    {
       id: "preferences",
       label: "Préférences",
       description: "Langue et région",
@@ -74,6 +96,76 @@ export default function SettingsPage() {
       icon: CreditCard,
     },
   ];
+
+  /* =======================================================
+     AJOUTER / MODIFIER PHOTO
+  ======================================================= */
+
+  const handleImageChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    /* Vérification du type */
+
+    if (!file.type.startsWith("image/")) {
+      alert("Veuillez sélectionner une image.");
+      return;
+    }
+
+    /* Vérification de la taille */
+
+    if (file.size > 2 * 1024 * 1024) {
+      alert(
+        "L'image ne doit pas dépasser 2 Mo."
+      );
+      return;
+    }
+
+    const imageUrl =
+      URL.createObjectURL(file);
+
+    setProfileImage(imageUrl);
+  };
+
+  /* =======================================================
+     OUVRIR SÉLECTEUR IMAGE
+  ======================================================= */
+
+  const openImagePicker = () => {
+    fileInputRef.current?.click();
+  };
+
+  /* =======================================================
+     SUPPRIMER PHOTO
+  ======================================================= */
+
+  const removeProfileImage = () => {
+    setProfileImage(null);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  /* =======================================================
+     DÉCONNEXION
+  ======================================================= */
+
+  const handleLogout = () => {
+    /*
+      Ici tu peux également supprimer le token,
+      la session ou le localStorage si ton système
+      d'authentification en utilise un.
+
+      Exemple :
+      localStorage.removeItem("token");
+    */
+
+    router.push("../../auth/login");
+  };
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900">
@@ -98,6 +190,7 @@ export default function SettingsPage() {
             </Link>
 
             <div className="min-w-0">
+
               <p className="hidden text-[9px] font-black uppercase tracking-[0.18em] text-slate-400 sm:block">
                 Configuration
               </p>
@@ -105,6 +198,7 @@ export default function SettingsPage() {
               <h1 className="truncate text-sm font-black sm:text-base">
                 Paramètres
               </h1>
+
             </div>
 
           </div>
@@ -114,6 +208,7 @@ export default function SettingsPage() {
           <div className="flex items-center gap-3">
 
             <div className="hidden text-right sm:block">
+
               <p className="text-xs font-bold text-slate-800">
                 YEKINI K.
               </p>
@@ -121,10 +216,21 @@ export default function SettingsPage() {
               <p className="text-[9px] text-slate-400">
                 Administrateur
               </p>
+
             </div>
 
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-red-600 text-xs font-black text-white">
-              Y
+            <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-red-600 text-xs font-black text-white">
+
+              {profileImage ? (
+                <img
+                  src={profileImage}
+                  alt="Photo de profil"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                "Y"
+              )}
+
             </div>
 
           </div>
@@ -168,13 +274,18 @@ export default function SettingsPage() {
             <div className="space-y-1">
 
               {menuSections.map((section) => {
+
                 const Icon = section.icon;
-                const active = activeSection === section.id;
+
+                const active =
+                  activeSection === section.id;
 
                 return (
                   <button
                     key={section.id}
-                    onClick={() => setActiveSection(section.id)}
+                    onClick={() =>
+                      setActiveSection(section.id)
+                    }
                     className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition ${
                       active
                         ? "bg-red-50 text-red-600"
@@ -223,14 +334,21 @@ export default function SettingsPage() {
 
             </div>
 
-            {/* DÉCONNEXION */}
+            {/* =================================================
+                DÉCONNEXION
+            ================================================= */}
 
             <div className="mt-2 border-t border-slate-100 pt-2">
 
-              <button className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-slate-500 transition hover:bg-red-50 hover:text-red-600">
+              <button
+                onClick={handleLogout}
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-slate-500 transition hover:bg-red-50 hover:text-red-600"
+              >
 
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100">
+
                   <LogOut size={17} />
+
                 </div>
 
                 <span className="text-xs font-bold">
@@ -254,65 +372,136 @@ export default function SettingsPage() {
             ================================================= */}
 
             {activeSection === "profil" && (
+
               <SettingsCard
                 title="Informations du profil"
                 description="Modifiez les informations associées à votre compte."
               >
 
-                {/* PHOTO */}
+                {/* =================================================
+                    PHOTO
+                ================================================= */}
 
-                <div className="flex flex-col gap-4 border-b border-slate-100 pb-6 sm:flex-row sm:items-center">
+                <div className="border-b border-slate-100 pb-6">
 
-                  <div className="relative">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
 
-                    <div className="flex h-20 w-20 items-center justify-center rounded-full bg-red-600 text-xl font-black text-white">
-                      IM
+                    {/* PHOTO */}
+
+                    <div className="relative shrink-0">
+
+                      <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-red-600 text-xl font-black text-white">
+
+                        {profileImage ? (
+
+                          <img
+                            src={profileImage}
+                            alt="Photo de profil"
+                            className="h-full w-full object-cover"
+                          />
+
+                        ) : (
+
+                          "YK"
+
+                        )}
+
+                      </div>
+
+                      {/* CAMÉRA */}
+
+                      <button
+                        type="button"
+                        onClick={openImagePicker}
+                        className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-slate-900 text-white transition hover:bg-red-600"
+                        aria-label="Modifier la photo"
+                      >
+                        <Camera size={13} />
+                      </button>
+
                     </div>
 
-                    <button
-                      className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-slate-900 text-white"
-                      aria-label="Modifier la photo"
-                    >
-                      <Camera size={13} />
-                    </button>
+                    {/* DESCRIPTION */}
+
+                    <div className="min-w-0">
+
+                      <h3 className="text-sm font-black text-slate-800">
+                        Photo de profil
+                      </h3>
+
+                      <p className="mt-1 text-[10px] leading-relaxed text-slate-400">
+                        JPG, PNG ou WEBP. Taille maximale 2 Mo.
+                      </p>
+
+                      <div className="mt-3 flex flex-wrap gap-2">
+
+                        <button
+                          type="button"
+                          onClick={openImagePicker}
+                          className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-[10px] font-bold text-slate-600 transition hover:bg-slate-50"
+                        >
+
+                          <ImageIcon size={13} />
+
+                          {profileImage
+                            ? "Modifier la photo"
+                            : "Ajouter une photo"}
+
+                        </button>
+
+                        {profileImage && (
+
+                          <button
+                            type="button"
+                            onClick={removeProfileImage}
+                            className="flex items-center gap-2 rounded-lg border border-red-100 px-3 py-2 text-[10px] font-bold text-red-600 transition hover:bg-red-50"
+                          >
+
+                            <X size={13} />
+
+                            Supprimer
+
+                          </button>
+
+                        )}
+
+                      </div>
+
+                    </div>
 
                   </div>
 
-                  <div>
+                  {/* INPUT IMAGE CACHÉ */}
 
-                    <h3 className="text-sm font-black text-slate-800">
-                      Photo de profil
-                    </h3>
-
-                    <p className="mt-1 text-[10px] text-slate-400">
-                      JPG, PNG ou WEBP. Taille maximale 2 Mo.
-                    </p>
-
-                    <button className="mt-3 rounded-lg border border-slate-200 px-3 py-2 text-[10px] font-bold text-slate-600 hover:bg-slate-50">
-                      Modifier la photo
-                    </button>
-
-                  </div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={handleImageChange}
+                    className="hidden"
+                  />
 
                 </div>
 
-                {/* FORMULAIRE */}
+                {/* =================================================
+                    FORMULAIRE
+                ================================================= */}
 
                 <div className="grid grid-cols-1 gap-5 pt-6 sm:grid-cols-2">
 
                   <InputField
                     label="Prénom"
-                    value="Idrissou"
+                    value="Koubourath"
                   />
 
                   <InputField
                     label="Nom"
-                    value="M."
+                    value="Yekini"
                   />
 
                   <InputField
                     label="Adresse e-mail"
-                    value="idrissou@example.com"
+                    value="yekini@example.com"
                     type="email"
                   />
 
@@ -322,10 +511,12 @@ export default function SettingsPage() {
                   />
 
                   <div className="sm:col-span-2">
+
                     <InputField
                       label="Nom de l'entreprise"
-                      value="Presta SARL"
+                      value="Griot AI"
                     />
+
                   </div>
 
                 </div>
@@ -340,6 +531,7 @@ export default function SettingsPage() {
             ================================================= */}
 
             {activeSection === "notifications" && (
+
               <SettingsCard
                 title="Notifications"
                 description="Choisissez les notifications que vous souhaitez recevoir."
@@ -354,7 +546,8 @@ export default function SettingsPage() {
                     onChange={() =>
                       setNotifications({
                         ...notifications,
-                        publications: !notifications.publications,
+                        publications:
+                          !notifications.publications,
                       })
                     }
                   />
@@ -366,7 +559,8 @@ export default function SettingsPage() {
                     onChange={() =>
                       setNotifications({
                         ...notifications,
-                        reminders: !notifications.reminders,
+                        reminders:
+                          !notifications.reminders,
                       })
                     }
                   />
@@ -378,7 +572,8 @@ export default function SettingsPage() {
                     onChange={() =>
                       setNotifications({
                         ...notifications,
-                        analytics: !notifications.analytics,
+                        analytics:
+                          !notifications.analytics,
                       })
                     }
                   />
@@ -390,7 +585,8 @@ export default function SettingsPage() {
                     onChange={() =>
                       setNotifications({
                         ...notifications,
-                        marketing: !notifications.marketing,
+                        marketing:
+                          !notifications.marketing,
                       })
                     }
                   />
@@ -407,6 +603,7 @@ export default function SettingsPage() {
             ================================================= */}
 
             {activeSection === "securite" && (
+
               <SettingsCard
                 title="Sécurité du compte"
                 description="Protégez votre compte et gérez vos informations de connexion."
@@ -421,6 +618,7 @@ export default function SettingsPage() {
                     </div>
 
                     <div>
+
                       <p className="text-xs font-black text-red-700">
                         Votre compte est sécurisé
                       </p>
@@ -429,6 +627,7 @@ export default function SettingsPage() {
                         Votre mot de passe est actuellement actif.
                         Pensez à le modifier régulièrement.
                       </p>
+
                     </div>
 
                   </div>
@@ -466,98 +665,11 @@ export default function SettingsPage() {
             )}
 
             {/* =================================================
-                APPARENCE
-            ================================================= */}
-
-            {activeSection === "apparence" && (
-              <SettingsCard
-                title="Apparence"
-                description="Personnalisez l'apparence de votre espace de travail."
-              >
-
-                <div>
-
-                  <label className="mb-3 block text-xs font-black text-slate-700">
-                    Thème
-                  </label>
-
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-
-                    {["Clair", "Sombre", "Système"].map((item) => {
-
-                      const active = theme === item;
-
-                      return (
-                        <button
-                          key={item}
-                          onClick={() => setTheme(item)}
-                          className={`rounded-xl border p-4 text-left transition ${
-                            active
-                              ? "border-red-500 bg-red-50"
-                              : "border-slate-200 hover:border-slate-300"
-                          }`}
-                        >
-
-                          <div
-                            className={`mb-3 h-16 rounded-lg border ${
-                              item === "Sombre"
-                                ? "border-slate-700 bg-slate-900"
-                                : "border-slate-200 bg-white"
-                            }`}
-                          />
-
-                          <div className="flex items-center justify-between">
-
-                            <span className="text-xs font-bold text-slate-700">
-                              {item}
-                            </span>
-
-                            {active && (
-                              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-white">
-                                <Check size={12} />
-                              </span>
-                            )}
-
-                          </div>
-
-                        </button>
-                      );
-                    })}
-
-                  </div>
-
-                </div>
-
-                <div className="mt-6 rounded-xl border border-slate-200 p-4">
-
-                  <div className="flex items-center justify-between">
-
-                    <div>
-                      <p className="text-xs font-bold text-slate-700">
-                        Interface compacte
-                      </p>
-
-                      <p className="mt-1 text-[10px] text-slate-400">
-                        Réduire les espacements pour afficher davantage de contenu.
-                      </p>
-                    </div>
-
-                    <Toggle checked={false} />
-
-                  </div>
-
-                </div>
-
-                <SaveButton />
-
-              </SettingsCard>
-            )}
-
-            {/* =================================================
                 PRÉFÉRENCES
             ================================================= */}
 
             {activeSection === "preferences" && (
+
               <SettingsCard
                 title="Préférences générales"
                 description="Configurez la langue et les paramètres régionaux de votre espace."
@@ -624,6 +736,7 @@ export default function SettingsPage() {
             ================================================= */}
 
             {activeSection === "abonnement" && (
+
               <SettingsCard
                 title="Mon abonnement"
                 description="Consultez votre formule et gérez votre abonnement Griot AI."
@@ -665,6 +778,7 @@ export default function SettingsPage() {
                   </div>
 
                   <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/10" />
+
                   <div className="absolute -bottom-16 -right-4 h-40 w-40 rounded-full bg-white/5" />
 
                 </div>
@@ -806,14 +920,18 @@ function SelectField({
 
       <select
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) =>
+          onChange(e.target.value)
+        }
         className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-xs font-semibold outline-none focus:border-red-400 focus:bg-white"
       >
+
         {options.map((option) => (
           <option key={option}>
             {option}
           </option>
         ))}
+
       </select>
 
     </div>
@@ -872,16 +990,21 @@ function Toggle({
 }) {
   return (
     <button
+      type="button"
       onClick={onChange}
       className={`relative h-6 w-11 shrink-0 rounded-full transition ${
-        checked ? "bg-red-600" : "bg-slate-200"
+        checked
+          ? "bg-red-600"
+          : "bg-slate-200"
       }`}
       aria-label="Activer ou désactiver"
     >
 
       <span
         className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow-sm transition ${
-          checked ? "left-6" : "left-1"
+          checked
+            ? "left-6"
+            : "left-1"
         }`}
       />
 
@@ -901,7 +1024,10 @@ function SaveButton({
   return (
     <div className="mt-6 flex justify-end border-t border-slate-100 pt-5">
 
-      <button className="flex items-center gap-2 rounded-xl bg-red-600 px-5 py-3 text-[10px] font-black uppercase tracking-wider text-white shadow-lg shadow-red-600/20 transition hover:bg-red-700">
+      <button
+        type="button"
+        className="flex items-center gap-2 rounded-xl bg-red-600 px-5 py-3 text-[10px] font-black uppercase tracking-wider text-white shadow-lg shadow-red-600/20 transition hover:bg-red-700"
+      >
 
         <Save size={14} />
 

@@ -15,13 +15,10 @@ import {
   Grid3X3,
   List,
   Upload,
-  Trash2,
-  Download,
-  Copy,
-  FolderOpen,
   ChevronDown,
   Check,
   X,
+  FolderOpen,
 } from "lucide-react";
 
 /* =========================================================
@@ -119,6 +116,10 @@ const medias: Media[] = [
   },
 ];
 
+/* =========================================================
+   DOSSIERS
+========================================================= */
+
 const folders = [
   {
     name: "Tous les médias",
@@ -152,14 +153,27 @@ const folders = [
 ========================================================= */
 
 export default function MediasPage() {
-  const [view, setView] = useState<"grid" | "list">("grid");
+  const [view, setView] =
+    useState<"grid" | "list">("grid");
+
   const [search, setSearch] = useState("");
+
   const [filter, setFilter] = useState<
     "all" | "image" | "video" | "document"
   >("all");
-  const [selectedFolder, setSelectedFolder] = useState("Tous les médias");
-  const [selectedMedia, setSelectedMedia] = useState<number | null>(null);
-  const [showUpload, setShowUpload] = useState(false);
+
+  const [selectedFolder, setSelectedFolder] =
+    useState("Tous les médias");
+
+  const [selectedMedia, setSelectedMedia] =
+    useState<number | null>(null);
+
+  const [showUpload, setShowUpload] =
+    useState(false);
+
+  /* =======================================================
+     FILTRAGE
+  ======================================================= */
 
   const filteredMedias = useMemo(() => {
     return medias.filter((media) => {
@@ -168,13 +182,18 @@ export default function MediasPage() {
         .includes(search.toLowerCase());
 
       const matchesType =
-        filter === "all" || media.type === filter;
+        filter === "all" ||
+        media.type === filter;
 
       const matchesFolder =
         selectedFolder === "Tous les médias" ||
         media.folder === selectedFolder;
 
-      return matchesSearch && matchesType && matchesFolder;
+      return (
+        matchesSearch &&
+        matchesType &&
+        matchesFolder
+      );
     });
   }, [search, filter, selectedFolder]);
 
@@ -201,6 +220,7 @@ export default function MediasPage() {
             </Link>
 
             <div className="min-w-0">
+
               <p className="hidden text-[9px] font-black uppercase tracking-[0.18em] text-slate-400 sm:block">
                 Bibliothèque
               </p>
@@ -208,6 +228,7 @@ export default function MediasPage() {
               <h1 className="truncate text-sm font-black sm:text-base">
                 Médias
               </h1>
+
             </div>
 
           </div>
@@ -248,6 +269,7 @@ export default function MediasPage() {
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
 
           <div>
+
             <p className="text-xs font-medium text-slate-400">
               Gérez et organisez tous vos fichiers utilisés dans vos contenus.
             </p>
@@ -255,6 +277,7 @@ export default function MediasPage() {
             <h2 className="mt-1 text-xl font-black text-slate-900 sm:text-2xl">
               Votre bibliothèque média
             </h2>
+
           </div>
 
           <button
@@ -262,6 +285,7 @@ export default function MediasPage() {
             className="flex items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-3 text-xs font-black text-white shadow-lg shadow-red-600/20 transition hover:bg-red-700"
           >
             <Upload size={15} />
+
             Importer un média
           </button>
 
@@ -326,13 +350,18 @@ export default function MediasPage() {
             <div className="space-y-1">
 
               {folders.map((folder) => {
+
                 const Icon = folder.icon;
-                const active = selectedFolder === folder.name;
+
+                const active =
+                  selectedFolder === folder.name;
 
                 return (
                   <button
                     key={folder.name}
-                    onClick={() => setSelectedFolder(folder.name)}
+                    onClick={() =>
+                      setSelectedFolder(folder.name)
+                    }
                     className={`flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left transition ${
                       active
                         ? "bg-red-50 text-red-600"
@@ -358,6 +387,7 @@ export default function MediasPage() {
 
                   </button>
                 );
+
               })}
 
             </div>
@@ -422,7 +452,9 @@ export default function MediasPage() {
 
                 <input
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(e) =>
+                    setSearch(e.target.value)
+                  }
                   placeholder="Rechercher un média..."
                   className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-3 text-xs font-medium outline-none transition focus:border-red-400 focus:bg-white"
                 />
@@ -432,6 +464,7 @@ export default function MediasPage() {
               <div className="flex items-center gap-2">
 
                 <button className="flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2.5 text-[10px] font-bold text-slate-600 hover:bg-slate-50">
+
                   <span>
                     {filter === "all"
                       ? "Tous les fichiers"
@@ -441,7 +474,9 @@ export default function MediasPage() {
                       ? "Vidéos"
                       : "Documents"}
                   </span>
+
                   <ChevronDown size={13} />
+
                 </button>
 
                 <div className="flex rounded-xl border border-slate-200 p-1">
@@ -479,14 +514,19 @@ export default function MediasPage() {
             <div className="mb-3 flex items-center justify-between">
 
               <p className="text-[10px] font-semibold text-slate-400">
+
                 {filteredMedias.length} média
                 {filteredMedias.length > 1 ? "s" : ""} trouvé
                 {filteredMedias.length > 1 ? "s" : ""}
+
               </p>
 
               <button className="flex items-center gap-1 text-[10px] font-bold text-slate-500 hover:text-red-600">
+
                 Plus récent
+
                 <ChevronDown size={12} />
+
               </button>
 
             </div>
@@ -496,13 +536,17 @@ export default function MediasPage() {
             ================================================= */}
 
             {view === "grid" && (
+
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
 
                 {filteredMedias.map((media) => (
+
                   <MediaCard
                     key={media.id}
                     media={media}
-                    selected={selectedMedia === media.id}
+                    selected={
+                      selectedMedia === media.id
+                    }
                     onSelect={() =>
                       setSelectedMedia(
                         selectedMedia === media.id
@@ -511,9 +555,11 @@ export default function MediasPage() {
                       )
                     }
                   />
+
                 ))}
 
               </div>
+
             )}
 
             {/* =================================================
@@ -521,6 +567,7 @@ export default function MediasPage() {
             ================================================= */}
 
             {view === "list" && (
+
               <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
 
                 <div className="hidden grid-cols-[1fr_120px_110px_100px_40px] gap-4 border-b border-slate-100 px-4 py-3 text-[9px] font-black uppercase tracking-wider text-slate-400 sm:grid">
@@ -534,18 +581,22 @@ export default function MediasPage() {
                 </div>
 
                 {filteredMedias.map((media) => (
+
                   <MediaListItem
                     key={media.id}
                     media={media}
                   />
+
                 ))}
 
               </div>
+
             )}
 
             {/* VIDE */}
 
             {filteredMedias.length === 0 && (
+
               <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
 
                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
@@ -561,6 +612,7 @@ export default function MediasPage() {
                 </p>
 
               </div>
+
             )}
 
           </section>
@@ -574,6 +626,7 @@ export default function MediasPage() {
       ===================================================== */}
 
       {showUpload && (
+
         <div
           className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4"
           onClick={() => setShowUpload(false)}
@@ -587,6 +640,7 @@ export default function MediasPage() {
             <div className="flex items-center justify-between">
 
               <div>
+
                 <h2 className="text-base font-black text-slate-900">
                   Importer un média
                 </h2>
@@ -594,6 +648,7 @@ export default function MediasPage() {
                 <p className="mt-1 text-[10px] text-slate-400">
                   Ajoutez une image, une vidéo ou un document.
                 </p>
+
               </div>
 
               <button
@@ -628,6 +683,7 @@ export default function MediasPage() {
           </div>
 
         </div>
+
       )}
 
     </div>
@@ -655,6 +711,7 @@ function MediaStat({
       </div>
 
       <div>
+
         <p className="text-lg font-black text-slate-900">
           {value}
         </p>
@@ -662,6 +719,7 @@ function MediaStat({
         <p className="text-[9px] font-semibold text-slate-400">
           {label}
         </p>
+
       </div>
 
     </div>
@@ -683,41 +741,69 @@ function MediaCard({
 }) {
   return (
     <div
-      className={`group overflow-hidden rounded-2xl border bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
+      className={`group overflow-hidden rounded-2xl border bg-white shadow-sm transition duration-300 hover:-translate-y-0.5 hover:shadow-md ${
         selected
           ? "border-red-500 ring-2 ring-red-500/10"
           : "border-slate-200"
       }`}
     >
 
-      {/* PREVIEW */}
+      {/* =================================================
+          PREVIEW
+      ================================================= */}
 
       <div
         onClick={onSelect}
-        className="relative aspect-[4/3] cursor-pointer overflow-hidden bg-slate-100"
+        className="relative aspect-[4/3] cursor-pointer overflow-hidden bg-slate-50"
       >
 
         {media.type === "image" && media.src ? (
-          <img
-            src={media.src}
-            alt={media.name}
-            className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-          />
+
+          /*
+           * IMPORTANT :
+           * object-contain = toute l'image reste visible.
+           * object-cover = l'image serait coupée.
+           */
+
+          <div className="absolute inset-0 flex items-center justify-center p-3">
+
+            <img
+              src={media.src}
+              alt={media.name}
+              className="
+                h-full
+                w-full
+                object-contain
+                object-center
+                transition-transform
+                duration-300
+                group-hover:scale-[1.02]
+              "
+            />
+
+          </div>
+
         ) : (
+
           <div className="flex h-full items-center justify-center">
 
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-red-500 shadow-sm">
+
               {media.type === "video" ? (
                 <Video size={25} />
               ) : (
                 <FileText size={25} />
               )}
+
             </div>
 
           </div>
+
         )}
 
-        <div className="absolute left-3 top-3 rounded-lg bg-black/50 px-2 py-1 text-[8px] font-bold text-white backdrop-blur">
+        {/* TYPE */}
+
+        <div className="absolute left-3 top-3 z-10 rounded-lg bg-black/50 px-2 py-1 text-[8px] font-bold text-white backdrop-blur">
           {media.type === "image"
             ? "IMAGE"
             : media.type === "video"
@@ -725,15 +811,21 @@ function MediaCard({
             : "DOCUMENT"}
         </div>
 
+        {/* SÉLECTION */}
+
         {selected && (
-          <div className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-white">
+
+          <div className="absolute right-3 top-3 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-white">
             <Check size={13} />
           </div>
+
         )}
 
       </div>
 
-      {/* INFOS */}
+      {/* =================================================
+          INFOS
+      ================================================= */}
 
       <div className="p-3">
 
@@ -751,7 +843,10 @@ function MediaCard({
 
           </div>
 
-          <button className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-900">
+          <button
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-900"
+            aria-label="Plus d'options"
+          >
             <MoreHorizontal size={15} />
           </button>
 
@@ -777,18 +872,32 @@ function MediaListItem({
 
       <div className="flex min-w-0 items-center gap-3">
 
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-100">
+        {/* MINIATURE */}
+
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-50 p-1">
 
           {media.type === "image" && media.src ? (
+
             <img
               src={media.src}
               alt={media.name}
-              className="h-full w-full object-cover"
+              className="h-full w-full object-contain object-center"
             />
+
           ) : media.type === "video" ? (
-            <Video size={17} className="text-red-500" />
+
+            <Video
+              size={17}
+              className="text-red-500"
+            />
+
           ) : (
-            <FileText size={17} className="text-red-500" />
+
+            <FileText
+              size={17}
+              className="text-red-500"
+            />
+
           )}
 
         </div>
@@ -823,7 +932,10 @@ function MediaListItem({
         {media.date}
       </span>
 
-      <button className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-900">
+      <button
+        className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-900"
+        aria-label="Plus d'options"
+      >
         <MoreHorizontal size={15} />
       </button>
 
