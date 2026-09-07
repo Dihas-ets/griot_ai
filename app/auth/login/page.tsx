@@ -1,5 +1,8 @@
 "use client";
+
+import axios from "@/lib/axios";
 import { motion } from "framer-motion";
+import { useState } from "react";
 import { Mail, Lock, ArrowRight, ChevronLeft, Sparkles, } from "lucide-react";
 import Link from "next/link";
 
@@ -14,6 +17,47 @@ const GoogleIcon = () => (
 );
 
 export default function LoginPage() {
+  const [errorMessage, setErrorMessage] = useState("");
+const [loading, setLoading] = useState(false);
+    const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+ const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    setErrorMessage("");
+    setLoading(true);
+
+    try {
+        await axios.get("/sanctum/csrf-cookie");
+
+        const response = await axios.post("/api/login", {
+            email,
+            password,
+        });
+
+        console.log("Connexion réussie :", response.data);
+
+        // Pour tester :
+        window.location.href = "/dashboard";
+
+    } catch (error: any) {
+        console.error("Erreur login :", error);
+
+        if (error.response?.status === 401) {
+            setErrorMessage("Email ou mot de passe incorrect.");
+        } else if (error.response?.status === 419) {
+            setErrorMessage("Session expirée. Veuillez réessayer.");
+        } else {
+            setErrorMessage(
+                error.response?.data?.message ||
+                "Une erreur est survenue lors de la connexion."
+            );
+        }
+    } finally {
+        setLoading(false);
+    }
+};
   return (
     <div className="relative min-h-screen w-full bg-slate-50 flex items-center justify-center p-4 overflow-hidden">
       
@@ -38,31 +82,40 @@ export default function LoginPage() {
             <p className="text-slate-500 font-medium text-sm">Le Griot est prêt à rédiger vos prochains succès.</p>
           </div>
 
-          <form className="space-y-5">
+          <form onSubmit={handleLogin} className="space-y-5">
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Email</label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                <input type="email" placeholder="nom@exemple.com" className="w-full pl-12 pr-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:border-red-light focus:ring-4 focus:ring-red-500/5 outline-none transition-all font-medium" />
+                <input type="email" placeholder="nom@exemple.com" value={email}
+onChange={(e) => setEmail(e.target.value)} className="w-full pl-12 pr-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:border-red-light focus:ring-4 focus:ring-red-500/5 outline-none transition-all font-medium" />
               </div>
             </div>
 
             <div className="space-y-2">
               <div className="flex justify-between px-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Mot de passe</label>
-                <button type="button" className="text-[10px] font-bold text-red-light uppercase tracking-widest">Oublié ?</button>
+                <button type="button"  className="text-[10px] font-bold text-red-light uppercase tracking-widest">Oublié ?</button>
               </div>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                <input type="password" placeholder="••••••••" className="w-full pl-12 pr-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:border-red-light focus:ring-4 focus:ring-red-500/5 outline-none transition-all font-medium" />
+                <input type="password" placeholder="••••••••" value={password}
+onChange={(e) => setPassword(e.target.value)} className="w-full pl-12 pr-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:border-red-light focus:ring-4 focus:ring-red-500/5 outline-none transition-all font-medium" />
               </div>
             </div>
-<Link
-  href="/dashboard"
-  className="w-full py-4 bg-red-light text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg shadow-red-600/20 hover:bg-red-700 transition-all flex items-center justify-center gap-2"
+            {errorMessage && (
+    <div className="rounded-2xl bg-red-50 border border-red-100 px-4 py-3 text-sm font-medium text-red-600">
+        {errorMessage}
+    </div>
+)}
+<button
+    type="submit"
+    disabled={loading}
+    className="w-full py-4 bg-red-light text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg shadow-red-600/20 hover:bg-red-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
 >
-  Se Connecter <ArrowRight size={16} />
-</Link>
+    {loading ? "Connexion..." : "Se Connecter"}
+    {!loading && <ArrowRight size={16} />}
+</button>
           </form>
 
           <div className="relative my-8 text-center">

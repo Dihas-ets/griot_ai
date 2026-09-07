@@ -1,6 +1,8 @@
 "use client";
 
+import axios from "@/lib/axios";
 import { motion } from "framer-motion";
+import { useState } from "react";
 import { User, Mail, Lock, ArrowRight, ChevronLeft, Rocket } from "lucide-react";
 import Link from "next/link";
 
@@ -16,6 +18,73 @@ const GoogleIcon = () => (
 
 
 export default function RegisterPage() {
+  const [errorMessage, setErrorMessage] = useState("");
+const [successMessage, setSuccessMessage] = useState("");
+const [loading, setLoading] = useState(false);
+    const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+ const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    setErrorMessage("");
+    setSuccessMessage("");
+    setLoading(true);
+
+    try {
+        // 1. Récupérer le cookie CSRF
+        await axios.get("/sanctum/csrf-cookie");
+
+        // 2. Créer le compte
+        const response = await axios.post("/api/register", {
+            name,
+            email,
+            password,
+        });
+
+        console.log("Inscription réussie :", response.data);
+
+        setSuccessMessage("Compte créé avec succès !");
+
+        // 3. Redirection vers la connexion
+        setTimeout(() => {
+            window.location.href = "/auth/login";
+        }, 1000);
+
+    } catch (error: any) {
+        console.error("Erreur inscription :", error);
+
+        if (error.response?.status === 422) {
+            const errors = error.response.data.errors;
+
+            if (errors?.email) {
+                setErrorMessage(errors.email[0]);
+            } else if (errors?.password) {
+                setErrorMessage(errors.password[0]);
+            } else if (errors?.name) {
+                setErrorMessage(errors.name[0]);
+            } else {
+                setErrorMessage(
+                    "Veuillez vérifier les informations saisies."
+                );
+            }
+
+        } else if (error.response?.status === 419) {
+            setErrorMessage(
+                "Session CSRF expirée. Veuillez réessayer."
+            );
+
+        } else {
+            setErrorMessage(
+                error.response?.data?.message ||
+                "Une erreur est survenue lors de l'inscription."
+            );
+        }
+
+    } finally {
+        setLoading(false);
+    }                                                                                                                                                                                        
+};
   return (
     <div className="relative min-h-screen w-full bg-slate-50 flex items-center justify-center p-4 overflow-hidden">
       
@@ -43,12 +112,18 @@ export default function RegisterPage() {
             <p className="text-slate-500 font-medium text-sm">Prêt à dominer les réseaux avec Griot AI ?</p>
           </div>
 
-          <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+          <form className="space-y-4" onSubmit={handleRegister}>
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Nom Complet</label>
               <div className="relative">
                 <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                <input type="text" placeholder="Jean Dupont" className="w-full pl-12 pr-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:border-red-light focus:ring-4 focus:ring-red-500/5 outline-none transition-all font-medium" />
+               <input
+  type="text"
+  placeholder="Jean Dupont"
+  value={name}
+  onChange={(e) => setName(e.target.value)}
+  className="w-full pl-12 pr-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:border-red-light focus:ring-4 focus:ring-red-500/5 outline-none transition-all font-medium"
+/>
               </div>
             </div>
 
@@ -56,7 +131,13 @@ export default function RegisterPage() {
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Email Professionnel</label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                <input type="email" placeholder="jean@entreprise.com" className="w-full pl-12 pr-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:border-red-light focus:ring-4 focus:ring-red-500/5 outline-none transition-all font-medium" />
+               <input
+  type="email"
+  placeholder="jean@entreprise.com"
+  value={email}
+  onChange={(e) => setEmail(e.target.value)}
+  className="w-full pl-12 pr-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:border-red-light focus:ring-4 focus:ring-red-500/5 outline-none transition-all font-medium"
+/>
               </div>
             </div>
 
@@ -64,14 +145,34 @@ export default function RegisterPage() {
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Mot de passe</label>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                <input type="password" placeholder="Min. 8 caractères" className="w-full pl-12 pr-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:border-red-light focus:ring-4 focus:ring-red-500/5 outline-none transition-all font-medium" />
+               <input
+  type="password"
+  placeholder="Min. 8 caractères"
+  value={password}
+  onChange={(e) => setPassword(e.target.value)}
+  className="w-full pl-12 pr-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:border-red-light focus:ring-4 focus:ring-red-500/5 outline-none transition-all font-medium"
+/>
               </div>
             </div>
-<Link href="/auth/login" >
-            <button className="w-full py-4 bg-red-light text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg shadow-red-600/20 hover:bg-red-700 transition-all flex items-center justify-center gap-2 mt-4">
-              Créer mon compte <Rocket size={16} />
-            </button>
-            </Link>
+            {errorMessage && (
+    <div className="rounded-2xl bg-red-50 border border-red-100 px-4 py-3 text-sm font-medium text-red-600">
+        {errorMessage}
+    </div>
+)}
+
+{successMessage && (
+    <div className="rounded-2xl bg-green-50 border border-green-100 px-4 py-3 text-sm font-medium text-green-600">
+        {successMessage}
+    </div>
+)}
+<button
+    type="submit"
+    disabled={loading}
+    className="w-full py-4 bg-red-light text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg shadow-red-600/20 hover:bg-red-700 transition-all flex items-center justify-center gap-2 mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+>
+    {loading ? "Création..." : "Créer mon compte"}
+    {!loading && <Rocket size={16} />}
+</button>
           </form>
 
           <div className="relative my-8 text-center">
