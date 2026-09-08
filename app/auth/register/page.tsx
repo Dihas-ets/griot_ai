@@ -181,9 +181,15 @@ const [loading, setLoading] = useState(false);
           </div>
 
             <div className="w-full py-2 rounded-2xl shadow-lg transition-all border border-slate-100 hover:bg-slate-50 flex items-center justify-center gap-2 mt-1">
-            <button className="flex items-center justify-center gap-3 py-3  transition-colors font-bold text-sm text-slate-700">
-              <GoogleIcon /> Google
-            </button>
+          <button
+  type="button"
+  onClick={() => {
+    window.location.href = `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/google`;
+  }}
+  className="flex items-center justify-center gap-3 py-3 transition-colors font-bold text-sm text-slate-700"
+>
+  <GoogleIcon /> Google
+</button>
           </div>
 
           <p className="mt-10 text-center text-sm font-medium text-slate-500">
