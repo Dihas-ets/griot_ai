@@ -14,6 +14,7 @@ import {
   CalendarDays,
   Sparkles,
 } from "lucide-react";
+import axios from "@/lib/axios";
 
 /* =========================================================
    PAGE CRÉATION PROJET
@@ -27,8 +28,11 @@ export default function NouveauProjetPage() {
   const [status, setStatus] =
     useState("Actif");
 
-  const [image, setImage] =
-    useState<string | null>(null);
+ const [image, setImage] =
+  useState<string | null>(null);
+
+const [imageFile, setImageFile] =
+  useState<File | null>(null);
 
   const [members, setMembers] =
     useState("1");
@@ -46,6 +50,7 @@ export default function NouveauProjetPage() {
     const file = event.target.files?.[0];
 
     if (!file) return;
+    setImageFile(file);
 
     const reader = new FileReader();
 
@@ -60,18 +65,42 @@ export default function NouveauProjetPage() {
      SUBMIT
   ======================================================= */
 
-  const handleSubmit = (
-    event: React.FormEvent
-  ) => {
-    event.preventDefault();
+ const handleSubmit = async (
+  event: React.FormEvent
+) => {
+  event.preventDefault();
 
-    if (!name.trim()) {
-      alert("Veuillez renseigner le nom du projet.");
-      return;
-    }
+  if (!name.trim()) {
+    alert("Veuillez renseigner le nom du projet.");
+    return;
+  }
 
-    setSuccess(true);
-  };
+try {
+  await axios.get("/sanctum/csrf-cookie");
+  console.log("✅ 1 - CSRF OK");
+
+  const me = await axios.get("/api/user");
+  console.log("✅ 2 - USER OK :", me.data);
+
+  const response = await axios.post("/api/projects", {
+    name: name.trim(),
+    description: description.trim(),
+    status,
+  });
+
+  console.log("✅ 3 - PROJET OK :", response.data);
+
+  setSuccess(true);
+
+} catch (error: any) {
+  console.error("❌ ERREUR :", error);
+
+  if (error.response) {
+    console.error("STATUS :", error.response.status);
+    console.error("DATA :", error.response.data);
+  }
+} 
+};
 
   /* =======================================================
      RENDU
