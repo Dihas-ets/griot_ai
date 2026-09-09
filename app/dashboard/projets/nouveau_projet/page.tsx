@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   FolderPlus,
@@ -21,32 +22,29 @@ import axios from "@/lib/axios";
 ========================================================= */
 
 export default function NouveauProjetPage() {
+  const router = useRouter();
   const [name, setName] = useState("");
-  const [description, setDescription] =
-    useState("");
+  const [description, setDescription] = useState("");
 
-  const [status, setStatus] =
-    useState("Actif");
+  const [status, setStatus] = useState("Actif");
 
- const [image, setImage] =
-  useState<string | null>(null);
+  const [image, setImage] = useState<string | null>(null);
 
-const [imageFile, setImageFile] =
-  useState<File | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
-  const [members, setMembers] =
-    useState("1");
+  const [members, setMembers] = useState("1");
 
-  const [success, setSuccess] =
-    useState(false);
+  const [success, setSuccess] = useState(false);
+
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   /* =======================================================
      IMAGE
   ======================================================= */
 
-  const handleImageChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
 
     if (!file) return;
@@ -65,42 +63,95 @@ const [imageFile, setImageFile] =
      SUBMIT
   ======================================================= */
 
- const handleSubmit = async (
-  event: React.FormEvent
-) => {
-  event.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
 
-  if (!name.trim()) {
-    alert("Veuillez renseigner le nom du projet.");
-    return;
-  }
+    if (!name.trim()) {
+      setErrorMessage("Veuillez renseigner le nom du projet.");
+      return;
+    }
 
-try {
-  await axios.get("/sanctum/csrf-cookie");
-  console.log("✅ 1 - CSRF OK");
+    setErrorMessage("");
+    setIsSubmitting(true);
 
-  const me = await axios.get("/api/user");
-  console.log("✅ 2 - USER OK :", me.data);
+    try {
+      const csrfResponse = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/sanctum/csrf-cookie`,
+        {
+          credentials: "include",
+          headers: {
+            Accept: "application/json",
+          },
+        },
+      );
 
-  const response = await axios.post("/api/projects", {
-    name: name.trim(),
-    description: description.trim(),
-    status,
-  });
+      if (!csrfResponse.ok && csrfResponse.status !== 204) {
+        throw new Error("Impossible de renouveler le token CSRF.");
+      }
 
-  console.log("✅ 3 - PROJET OK :", response.data);
+      const xsrfToken = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("XSRF-TOKEN="));
 
-  setSuccess(true);
+      if (!xsrfToken) {
+        throw new Error("Cookie CSRF absent.");
+      }
 
-} catch (error: any) {
-  console.error("❌ ERREUR :", error);
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/projects`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            "X-XSRF-TOKEN": decodeURIComponent(xsrfToken.split("=")[1]),
+          },
+          body: JSON.stringify({
+            name: name.trim(),
+            description: description.trim(),
+            status,
+            members: Number(members) || 1,
+          }),
+        },
+      );
 
-  if (error.response) {
-    console.error("STATUS :", error.response.status);
-    console.error("DATA :", error.response.data);
-  }
-} 
-};
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          setErrorMessage("Votre session a expiré. Veuillez vous reconnecter.");
+          return;
+        }
+
+        if (data.errors && typeof data.errors === "object") {
+          const flattened = Object.values(data.errors).flat().join(" ");
+          setErrorMessage(flattened || "Erreur de validation.");
+          return;
+        }
+
+        setErrorMessage(
+          data.message ||
+            "Une erreur est survenue lors de la création du projet.",
+        );
+        return;
+      }
+
+      console.log("✅ PROJET CRÉÉ :", data);
+      setSuccess(true);
+      window.setTimeout(() => {
+        router.push("/dashboard/projets");
+      }, 1200);
+    } catch (error: any) {
+      console.error("❌ ERREUR CRÉATION PROJET :", error);
+      setErrorMessage(
+        error.message ||
+          "Une erreur est survenue lors de la création du projet.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   /* =======================================================
      RENDU
@@ -144,9 +195,7 @@ try {
               Organisation
             </p>
 
-            <h1 className="text-lg font-black">
-              Nouveau projet
-            </h1>
+            <h1 className="text-lg font-black">Nouveau projet</h1>
           </div>
         </div>
       </header>
@@ -171,15 +220,11 @@ try {
             <FolderPlus size={24} />
           </div>
 
-          <h2 className="text-2xl font-black">
-            Créer un nouveau projet
-          </h2>
+          <h2 className="text-2xl font-black">Créer un nouveau projet</h2>
 
           <p className="mt-2 max-w-2xl text-xs leading-relaxed text-slate-400">
-            Créez un espace dédié à une marque, une
-            activité ou un client pour organiser vos
-            publications, médias, campagnes et réseaux
-            sociaux.
+            Créez un espace dédié à une marque, une activité ou un client pour
+            organiser vos publications, médias, campagnes et réseaux sociaux.
           </p>
         </div>
 
@@ -196,6 +241,11 @@ try {
             lg:grid-cols-[1fr_360px]
           "
         >
+          {errorMessage && (
+            <div className="lg:col-span-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-xs font-medium text-red-700">
+              {errorMessage}
+            </div>
+          )}
           {/* =================================================
               COLONNE PRINCIPALE
           ================================================= */}
@@ -214,13 +264,10 @@ try {
               "
             >
               <div className="mb-5">
-                <h3 className="text-sm font-black">
-                  Informations du projet
-                </h3>
+                <h3 className="text-sm font-black">Informations du projet</h3>
 
                 <p className="mt-1 text-[10px] text-slate-400">
-                  Définissez les informations principales
-                  de votre projet.
+                  Définissez les informations principales de votre projet.
                 </p>
               </div>
 
@@ -245,9 +292,7 @@ try {
                   id="project-name"
                   type="text"
                   value={name}
-                  onChange={(e) =>
-                    setName(e.target.value)
-                  }
+                  onChange={(e) => setName(e.target.value)}
                   placeholder="Ex : Presta, Livro, Fofana Voyage..."
                   className="
                     w-full
@@ -287,9 +332,7 @@ try {
                 <textarea
                   id="project-description"
                   value={description}
-                  onChange={(e) =>
-                    setDescription(e.target.value)
-                  }
+                  onChange={(e) => setDescription(e.target.value)}
                   placeholder="Décrivez brièvement l'objectif de ce projet..."
                   rows={5}
                   className="
@@ -335,9 +378,7 @@ try {
                   <select
                     id="project-status"
                     value={status}
-                    onChange={(e) =>
-                      setStatus(e.target.value)
-                    }
+                    onChange={(e) => setStatus(e.target.value)}
                     className="
                       w-full
                       rounded-xl
@@ -378,9 +419,7 @@ try {
                     type="number"
                     min="1"
                     value={members}
-                    onChange={(e) =>
-                      setMembers(e.target.value)
-                    }
+                    onChange={(e) => setMembers(e.target.value)}
                     className="
                       w-full
                       rounded-xl
@@ -410,13 +449,10 @@ try {
               "
             >
               <div className="mb-5">
-                <h3 className="text-sm font-black">
-                  Organisation du projet
-                </h3>
+                <h3 className="text-sm font-black">Organisation du projet</h3>
 
                 <p className="mt-1 text-[10px] text-slate-400">
-                  Les contenus associés pourront être
-                  organisés dans cet espace.
+                  Les contenus associés pourront être organisés dans cet espace.
                 </p>
               </div>
 
@@ -465,9 +501,7 @@ try {
               "
             >
               <div className="mb-4">
-                <h3 className="text-sm font-black">
-                  Image du projet
-                </h3>
+                <h3 className="text-sm font-black">Image du projet</h3>
 
                 <p className="mt-1 text-[10px] text-slate-400">
                   Ajoutez une image ou un logo.
@@ -545,9 +579,7 @@ try {
                     <Upload size={20} />
                   </div>
 
-                  <p className="mt-3 text-xs font-black">
-                    Ajouter une image
-                  </p>
+                  <p className="mt-3 text-xs font-black">Ajouter une image</p>
 
                   <p className="mt-1 text-[9px] text-slate-400">
                     PNG, JPG, WEBP jusqu'à 5 MB
@@ -575,9 +607,7 @@ try {
               "
             >
               <div className="border-b border-slate-100 p-5">
-                <h3 className="text-sm font-black">
-                  Aperçu
-                </h3>
+                <h3 className="text-sm font-black">Aperçu</h3>
               </div>
 
               <div className="p-4">
@@ -650,20 +680,11 @@ try {
                     </p>
 
                     <div className="mt-4 grid grid-cols-3 rounded-xl bg-slate-50 py-2.5">
-                      <PreviewStat
-                        value="0"
-                        label="Posts"
-                      />
+                      <PreviewStat value="0" label="Posts" />
 
-                      <PreviewStat
-                        value="0"
-                        label="Programmés"
-                      />
+                      <PreviewStat value="0" label="Programmés" />
 
-                      <PreviewStat
-                        value="0"
-                        label="Médias"
-                      />
+                      <PreviewStat value="0" label="Médias" />
                     </div>
                   </div>
                 </div>
@@ -700,8 +721,8 @@ try {
                   </p>
 
                   <p className="mt-1 text-[9px] leading-relaxed text-slate-500">
-                    Utilisez un nom clair afin de retrouver
-                    facilement votre projet.
+                    Utilisez un nom clair afin de retrouver facilement votre
+                    projet.
                   </p>
                 </div>
               </div>
@@ -729,6 +750,7 @@ try {
 
               <button
                 type="submit"
+                disabled={isSubmitting}
                 className="
                   flex flex-1
                   items-center justify-center
@@ -743,10 +765,12 @@ try {
                   shadow-red-600/20
                   transition
                   hover:bg-red-700
+                  disabled:cursor-not-allowed
+                  disabled:opacity-60
                 "
               >
                 <Check size={15} />
-                Créer le projet
+                {isSubmitting ? "Création..." : "Créer le projet"}
               </button>
             </div>
           </div>
@@ -790,20 +814,16 @@ try {
                 <Check size={25} />
               </div>
 
-              <h3 className="mt-4 text-lg font-black">
-                Projet créé !
-              </h3>
+              <h3 className="mt-4 text-lg font-black">Projet créé !</h3>
 
               <p className="mt-2 text-xs leading-relaxed text-slate-400">
-                Le projet{" "}
-                <strong className="text-slate-700">
-                  {name}
-                </strong>{" "}
-                a été créé avec succès.
+                Le projet <strong className="text-slate-700">{name}</strong> a
+                été créé avec succès.
               </p>
 
-              <Link
-                href="/dashboard/projets"
+              <button
+                type="button"
+                onClick={() => router.push("/dashboard/projets")}
                 className="
                   mt-6
                   flex w-full
@@ -818,7 +838,7 @@ try {
                 "
               >
                 Voir mes projets
-              </Link>
+              </button>
             </div>
           </div>
         )}
@@ -865,9 +885,7 @@ function InfoBox({
       </div>
 
       <div>
-        <h4 className="text-[10px] font-black">
-          {title}
-        </h4>
+        <h4 className="text-[10px] font-black">{title}</h4>
 
         <p className="mt-1 text-[9px] leading-relaxed text-slate-400">
           {description}
@@ -881,22 +899,12 @@ function InfoBox({
    PREVIEW STAT
 ========================================================= */
 
-function PreviewStat({
-  value,
-  label,
-}: {
-  value: string;
-  label: string;
-}) {
+function PreviewStat({ value, label }: { value: string; label: string }) {
   return (
     <div className="text-center">
-      <p className="text-xs font-black text-slate-800">
-        {value}
-      </p>
+      <p className="text-xs font-black text-slate-800">{value}</p>
 
-      <p className="mt-0.5 text-[7px] text-slate-400">
-        {label}
-      </p>
+      <p className="mt-0.5 text-[7px] text-slate-400">{label}</p>
     </div>
   );
 }

@@ -1,15 +1,15 @@
-import Axios from 'axios'
+import Axios from "axios";
 
 const axios = Axios.create({
-    baseURL: process.env.NEXT_PUBLIC_BACKEND_URL,
+  baseURL: process.env.NEXT_PUBLIC_BACKEND_URL,
+  headers: {
+    "X-Requested-With": "XMLHttpRequest",
+    Accept: "application/json",
+  },
+  withCredentials: true,
+  withXSRFToken: true,
+  xsrfCookieName: "XSRF-TOKEN",
+  xsrfHeaderName: "X-XSRF-TOKEN",
+});
 
-    headers: {
-        'X-Requested-With': 'XMLHttpRequest',
-        'Accept': 'application/json',
-    },
-
-    withCredentials: true,
-    withXSRFToken: true
-})
-
-export default axios
+export default axios;
