@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -14,6 +14,7 @@ import {
   FileText,
   CalendarDays,
   Sparkles,
+  Loader2,
 } from "lucide-react";
 import axios from "@/lib/axios";
 
@@ -60,98 +61,94 @@ export default function NouveauProjetPage() {
   };
 
   /* =======================================================
-     SUBMIT
+     SUBMIT (Version corrigée avec Axios)
   ======================================================= */
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
+const handleSubmit = async (event: React.FormEvent) => {
+  event.preventDefault();
 
-    if (!name.trim()) {
-      setErrorMessage("Veuillez renseigner le nom du projet.");
-      return;
+  if (!name.trim()) {
+    setErrorMessage("Veuillez renseigner le nom du projet.");
+    return;
+  }
+
+  setErrorMessage("");
+  setIsSubmitting(true);
+
+  try {
+    // 1. CSRF
+    console.log("➡️ 1 - Demande CSRF");
+    await axios.get("/sanctum/csrf-cookie");
+    console.log("✅ 1 - CSRF OK");
+
+    // 2. Vérifier la session
+    console.log("➡️ 2 - Vérification utilisateur");
+    const me = await axios.get("/api/user");
+    console.log("✅ 2 - UTILISATEUR :", me.data);
+
+    // 3. Créer le projet
+    console.log("➡️ 3 - Création projet");
+
+    const response = await axios.post("/api/projects", {
+      name: name.trim(),
+      description: description.trim(),
+      status,
+      members: Number(members) || 1,
+    });
+
+    console.log("✅ 3 - PROJET CRÉÉ :", response.data);
+
+    const createdProject = response.data?.project;
+
+    if (createdProject) {
+      localStorage.setItem(
+        "lastCreatedProject",
+        JSON.stringify(createdProject)
+      );
     }
 
-    setErrorMessage("");
-    setIsSubmitting(true);
+    setSuccess(true);
 
-    try {
-      const csrfResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/sanctum/csrf-cookie`,
-        {
-          credentials: "include",
-          headers: {
-            Accept: "application/json",
-          },
-        },
-      );
+    window.setTimeout(() => {
+      router.push("/dashboard/projets?created=1");
+    }, 1200);
 
-      if (!csrfResponse.ok && csrfResponse.status !== 204) {
-        throw new Error("Impossible de renouveler le token CSRF.");
-      }
+  } catch (error: any) {
+    console.error("❌ ERREUR :", error);
 
-      const xsrfToken = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("XSRF-TOKEN="));
+    if (error.response) {
+      console.error("❌ STATUS :", error.response.status);
+      console.error("❌ DATA :", error.response.data);
 
-      if (!xsrfToken) {
-        throw new Error("Cookie CSRF absent.");
-      }
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/projects`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-            "X-XSRF-TOKEN": decodeURIComponent(xsrfToken.split("=")[1]),
-          },
-          body: JSON.stringify({
-            name: name.trim(),
-            description: description.trim(),
-            status,
-            members: Number(members) || 1,
-          }),
-        },
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          setErrorMessage("Votre session a expiré. Veuillez vous reconnecter.");
-          return;
-        }
-
-        if (data.errors && typeof data.errors === "object") {
-          const flattened = Object.values(data.errors).flat().join(" ");
-          setErrorMessage(flattened || "Erreur de validation.");
-          return;
-        }
-
+      if (error.response.status === 401) {
         setErrorMessage(
-          data.message ||
-            "Une erreur est survenue lors de la création du projet.",
+          "Votre session n’est plus valide. Veuillez vous reconnecter."
         );
-        return;
-      }
+      } else if (error.response.status === 419) {
+        setErrorMessage(
+          "Jeton de sécurité expiré. Veuillez réessayer."
+        );
+      } else if (error.response.data?.errors) {
+        const flattened = Object.values(error.response.data.errors)
+          .flat()
+          .join(" ");
 
-      console.log("✅ PROJET CRÉÉ :", data);
-      setSuccess(true);
-      window.setTimeout(() => {
-        router.push("/dashboard/projets");
-      }, 1200);
-    } catch (error: any) {
-      console.error("❌ ERREUR CRÉATION PROJET :", error);
+        setErrorMessage(flattened || "Erreur de validation.");
+      } else {
+        setErrorMessage(
+          error.response.data?.message ||
+            "Une erreur est survenue lors de la création du projet."
+        );
+      }
+    } else {
       setErrorMessage(
-        error.message ||
-          "Une erreur est survenue lors de la création du projet.",
+        error.message || "Une erreur est survenue lors de la création."
       );
-    } finally {
-      setIsSubmitting(false);
     }
-  };
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   /* =======================================================
      RENDU
@@ -769,8 +766,17 @@ export default function NouveauProjetPage() {
                   disabled:opacity-60
                 "
               >
-                <Check size={15} />
-                {isSubmitting ? "Création..." : "Créer le projet"}
+                {isSubmitting ? (
+                  <>
+                    <Loader2 size={15} className="animate-spin" />
+                    Création...
+                  </>
+                ) : (
+                  <>
+                    <Check size={15} />
+                    Créer le projet
+                  </>
+                )}
               </button>
             </div>
           </div>
@@ -814,11 +820,11 @@ export default function NouveauProjetPage() {
                 <Check size={25} />
               </div>
 
-              <h3 className="mt-4 text-lg font-black">Projet créé !</h3>
+              <h3 className="mt-4 text-lg font-black">Projet créé</h3>
 
-              <p className="mt-2 text-xs leading-relaxed text-slate-400">
+              <p className="mt-2 text-xs leading-relaxed text-slate-500">
                 Le projet <strong className="text-slate-700">{name}</strong> a
-                été créé avec succès.
+                bien été ajouté à votre liste.
               </p>
 
               <button

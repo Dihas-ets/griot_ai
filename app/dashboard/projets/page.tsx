@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import {
   Plus,
   Search,
@@ -45,104 +45,114 @@ type Project = {
 };
 
 /* =========================================================
-   DONNÉES
-========================================================= */
-
-const initialProjects: Project[] = [
-  {
-    id: 1,
-    name: "Presta",
-    description:
-      "Communication et création de contenu pour la plateforme Presta.",
-    status: "Actif",
-    publications: 24,
-    scheduled: 6,
-    media: 38,
-    members: 4,
-    createdAt: "10 juin 2026",
-    image: "/presta.png",
-  },
-  {
-    id: 2,
-    name: "Diha's Agency",
-    description:
-      "Contenus marketing et communication digitale de l'agence.",
-    status: "Actif",
-    publications: 18,
-    scheduled: 4,
-    media: 26,
-    members: 3,
-    createdAt: "18 juin 2026",
-    image: "/dihas.png",
-  },
-  {
-    id: 3,
-    name: "Fofana Voyage",
-    description:
-      "Publications et campagnes dédiées aux services de voyage.",
-    status: "Actif",
-    publications: 12,
-    scheduled: 3,
-    media: 21,
-    members: 2,
-    createdAt: "25 juin 2026",
-    image: "/fofana.png",
-  },
-  {
-    id: 4,
-    name: "Islam Pilier",
-    description:
-      "Communication digitale et contenus informatifs de Clinico.",
-    status: "En pause",
-    publications: 8,
-    scheduled: 1,
-    media: 15,
-    members: 2,
-    createdAt: "02 juillet 2026",
-    image: "/islam_pilier.png",
-  },
-  {
-    id: 5,
-    name: "Livro",
-    description:
-      "Contenus promotionnels pour la plateforme de livraison Livro.",
-    status: "Actif",
-    publications: 15,
-    scheduled: 5,
-    media: 29,
-    members: 3,
-    createdAt: "08 juillet 2026",
-    image: "/livro.png",
-  },
-  {
-    id: 6,
-    name: "Ancien projet",
-    description:
-      "Projet archivé contenant les anciennes publications.",
-    status: "Archivé",
-    publications: 31,
-    scheduled: 0,
-    media: 44,
-    members: 1,
-    createdAt: "12 mai 2026",
-    image: "/aif.png",
-  },
-];
-
-/* =========================================================
    PAGE
 ========================================================= */
 
 export default function ProjetsPage() {
-  const [projects, setProjects] =
-    useState<Project[]>(initialProjects);
+  const searchParams = useSearchParams();
+  const [projects, setProjects] = useState<Project[]>([]);
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("Tous");
   const [view, setView] = useState<"grid" | "list">("grid");
+  const [sessionMessage, setSessionMessage] = useState("");
 
-  const [openMenu, setOpenMenu] =
-    useState<number | null>(null);
+  const [openMenu, setOpenMenu] = useState<number | null>(null);
+
+  useEffect(() => {
+    const loadProjects = async () => {
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/projects`,
+          {
+            credentials: "include",
+            headers: {
+              Accept: "application/json",
+            },
+          },
+        );
+
+        if (response.status === 401) {
+          setSessionMessage(
+            "Votre session est absente ou invalide. Veuillez vous reconnecter.",
+          );
+          setProjects([]);
+          return;
+        }
+
+        setSessionMessage("");
+
+        if (!response.ok) {
+          throw new Error("Impossible de charger les projets");
+        }
+
+        const data = await response.json();
+        const baseProjects = Array.isArray(data.projects)
+          ? data.projects.map((project: any) => ({
+              id: Number(project.id),
+              name: project.name ?? "Projet sans nom",
+              description: project.description ?? "",
+              status: ["Actif", "En pause", "Archivé"].includes(project.status)
+                ? project.status
+                : "Actif",
+              publications: Number(project.publications ?? 0),
+              scheduled: Number(project.scheduled ?? 0),
+              media: Number(project.media ?? 0),
+              members: Number(project.members ?? 1),
+              createdAt: project.created_at
+                ? new Date(project.created_at).toLocaleDateString("fr-FR", {
+                    day: "2-digit",
+                    month: "long",
+                    year: "numeric",
+                  })
+                : "aujourd'hui",
+              image: project.image || "/placeholder-project.png",
+            }))
+          : [];
+
+        const pendingProject = localStorage.getItem("lastCreatedProject");
+        if (pendingProject) {
+          try {
+            const parsed = JSON.parse(pendingProject) as any;
+            const pendingMapped = {
+              id: Number(parsed.id ?? Date.now()),
+              name: parsed.name ?? "Projet sans nom",
+              description: parsed.description ?? "",
+              status: ["Actif", "En pause", "Archivé"].includes(parsed.status)
+                ? parsed.status
+                : "Actif",
+              publications: Number(parsed.publications ?? 0),
+              scheduled: Number(parsed.scheduled ?? 0),
+              media: Number(parsed.media ?? 0),
+              members: Number(parsed.members ?? 1),
+              createdAt: "aujourd'hui",
+              image: parsed.image || "/placeholder-project.png",
+            };
+
+            const exists = baseProjects.some(
+              (project: { id: number }) => project.id === pendingMapped.id,
+            );
+            if (!exists) {
+              setProjects([pendingMapped, ...baseProjects]);
+            } else {
+              setProjects(baseProjects);
+            }
+            localStorage.removeItem("lastCreatedProject");
+            return;
+          } catch {
+            localStorage.removeItem("lastCreatedProject");
+          }
+        }
+
+        setProjects(baseProjects);
+      } catch (error) {
+        console.error("Erreur lors du chargement des projets", error);
+        setProjects([]);
+      }
+    };
+
+    loadProjects();
+  }, [searchParams]);
 
   /* =======================================================
      FILTRAGE
@@ -154,13 +164,10 @@ export default function ProjetsPage() {
 
       const matchesSearch =
         project.name.toLowerCase().includes(searchValue) ||
-        project.description
-          .toLowerCase()
-          .includes(searchValue);
+        project.description.toLowerCase().includes(searchValue);
 
       const matchesStatus =
-        statusFilter === "Tous" ||
-        project.status === statusFilter;
+        statusFilter === "Tous" || project.status === statusFilter;
 
       return matchesSearch && matchesStatus;
     });
@@ -173,17 +180,17 @@ export default function ProjetsPage() {
   const totalProjects = projects.length;
 
   const activeProjects = projects.filter(
-    (project) => project.status === "Actif"
+    (project) => project.status === "Actif",
   ).length;
 
   const totalPublications = projects.reduce(
     (total, project) => total + project.publications,
-    0
+    0,
   );
 
   const totalMedia = projects.reduce(
     (total, project) => total + project.media,
-    0
+    0,
   );
 
   /* =======================================================
@@ -191,21 +198,17 @@ export default function ProjetsPage() {
   ======================================================= */
 
   const deleteProject = (id: number) => {
-    const project = projects.find(
-      (item) => item.id === id
-    );
+    const project = projects.find((item) => item.id === id);
 
     if (!project) return;
 
     const confirmed = window.confirm(
-      `Voulez-vous vraiment supprimer le projet "${project.name}" ?`
+      `Voulez-vous vraiment supprimer le projet "${project.name}" ?`,
     );
 
     if (!confirmed) return;
 
-    setProjects((current) =>
-      current.filter((item) => item.id !== id)
-    );
+    setProjects((current) => current.filter((item) => item.id !== id));
 
     setOpenMenu(null);
   };
@@ -221,12 +224,9 @@ export default function ProjetsPage() {
 
         return {
           ...project,
-          status:
-            project.status === "Archivé"
-              ? "Actif"
-              : "Archivé",
+          status: project.status === "Archivé" ? "Actif" : "Archivé",
         };
-      })
+      }),
     );
 
     setOpenMenu(null);
@@ -261,9 +261,7 @@ export default function ProjetsPage() {
               Organisation
             </p>
 
-            <h1 className="text-lg font-black sm:text-xl">
-              Projets
-            </h1>
+            <h1 className="text-lg font-black sm:text-xl">Projets</h1>
           </div>
 
           {/* DROITE */}
@@ -284,13 +282,9 @@ export default function ProjetsPage() {
           >
             <Plus size={15} />
 
-            <span className="hidden sm:inline">
-              Nouveau projet
-            </span>
+            <span className="hidden sm:inline">Nouveau projet</span>
 
-            <span className="sm:hidden">
-              Nouveau
-            </span>
+            <span className="sm:hidden">Nouveau</span>
           </Link>
         </div>
       </header>
@@ -300,17 +294,20 @@ export default function ProjetsPage() {
       ===================================================== */}
 
       <main className="mx-auto max-w-[1700px] p-4 sm:p-6 lg:p-8">
+        {sessionMessage && (
+          <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-medium text-amber-700">
+            {sessionMessage}
+          </div>
+        )}
+
         {/* INTRO */}
 
         <div className="mb-6">
-          <h2 className="text-xl font-black sm:text-2xl">
-            Mes projets
-          </h2>
+          <h2 className="text-xl font-black sm:text-2xl">Mes projets</h2>
 
           <p className="mt-1 max-w-2xl text-xs leading-relaxed text-slate-400">
-            Organisez vos contenus, publications, médias et
-            réseaux sociaux par projet pour garder une
-            communication claire et bien structurée.
+            Organisez vos contenus, publications, médias et réseaux sociaux par
+            projet pour garder une communication claire et bien structurée.
           </p>
         </div>
 
@@ -365,9 +362,7 @@ export default function ProjetsPage() {
               <input
                 type="text"
                 value={search}
-                onChange={(e) =>
-                  setSearch(e.target.value)
-                }
+                onChange={(e) => setSearch(e.target.value)}
                 placeholder="Rechercher un projet..."
                 className="
                   w-full rounded-xl
@@ -392,9 +387,7 @@ export default function ProjetsPage() {
               <div className="relative">
                 <select
                   value={statusFilter}
-                  onChange={(e) =>
-                    setStatusFilter(e.target.value)
-                  }
+                  onChange={(e) => setStatusFilter(e.target.value)}
                   className="
                     appearance-none
                     rounded-xl
@@ -540,19 +533,14 @@ export default function ProjetsPage() {
                 rounded-2xl bg-slate-100
               "
             >
-              <FolderOpen
-                size={24}
-                className="text-slate-400"
-              />
+              <FolderOpen size={24} className="text-slate-400" />
             </div>
 
-            <h3 className="mt-4 text-sm font-black">
-              Aucun projet trouvé
-            </h3>
+            <h3 className="mt-4 text-sm font-black">Aucun projet trouvé</h3>
 
             <p className="mx-auto mt-1 max-w-sm text-xs text-slate-400">
-              Aucun projet ne correspond à votre recherche ou
-              aux filtres sélectionnés.
+              Aucun projet ne correspond à votre recherche ou aux filtres
+              sélectionnés.
             </p>
 
             <button
@@ -607,9 +595,8 @@ export default function ProjetsPage() {
               </h3>
 
               <p className="mt-1 max-w-xl text-[10px] leading-relaxed text-slate-500">
-                Créez un projet pour chaque activité, marque
-                ou client afin de gérer facilement vos
-                publications, médias et campagnes.
+                Créez un projet pour chaque activité, marque ou client afin de
+                gérer facilement vos publications, médias et campagnes.
               </p>
             </div>
           </div>
@@ -667,9 +654,7 @@ function StatCard({
           {icon}
         </div>
 
-        <span className="text-xl font-black text-slate-800">
-          {value}
-        </span>
+        <span className="text-xl font-black text-slate-800">{value}</span>
       </div>
 
       <p
@@ -699,9 +684,7 @@ function ProjectCard({
 }: {
   project: Project;
   openMenu: number | null;
-  setOpenMenu: React.Dispatch<
-    React.SetStateAction<number | null>
-  >;
+  setOpenMenu: React.Dispatch<React.SetStateAction<number | null>>;
   onDelete: (id: number) => void;
   onArchive: (id: number) => void;
 }) {
@@ -734,16 +717,11 @@ function ProjectCard({
           bg-slate-100
         "
       >
-        <Image
+        <img
           src={project.image}
           alt={`Image du projet ${project.name}`}
-          fill
-          sizes="
-            (max-width: 768px) 100vw,
-            (max-width: 1280px) 50vw,
-            33vw
-          "
           className="
+            h-full w-full
             object-contain
             object-center
             p-0
@@ -774,11 +752,7 @@ function ProjectCard({
           <button
             type="button"
             aria-label={`Actions du projet ${project.name}`}
-            onClick={() =>
-              setOpenMenu(
-                isMenuOpen ? null : project.id
-              )
-            }
+            onClick={() => setOpenMenu(isMenuOpen ? null : project.id)}
             className="
               flex h-9 w-9
               items-center justify-center
@@ -827,9 +801,7 @@ function ProjectCard({
                 type="button"
                 onClick={() => {
                   setOpenMenu(null);
-                  alert(
-                    `Modification du projet "${project.name}"`
-                  );
+                  alert(`Modification du projet "${project.name}"`);
                 }}
                 className="
                   flex w-full items-center gap-2
@@ -931,20 +903,11 @@ function ProjectCard({
             py-3
           "
         >
-          <ProjectStat
-            value={project.publications}
-            label="Posts"
-          />
+          <ProjectStat value={project.publications} label="Posts" />
 
-          <ProjectStat
-            value={project.scheduled}
-            label="Programmés"
-          />
+          <ProjectStat value={project.scheduled} label="Programmés" />
 
-          <ProjectStat
-            value={project.media}
-            label="Médias"
-          />
+          <ProjectStat value={project.media} label="Médias" />
         </div>
 
         {/* INFOS */}
@@ -1001,11 +964,7 @@ function ProjectCard({
           <button
             type="button"
             aria-label={`Modifier ${project.name}`}
-            onClick={() =>
-              alert(
-                `Modification du projet "${project.name}"`
-              )
-            }
+            onClick={() => alert(`Modification du projet "${project.name}"`)}
             className="
               flex h-9 w-9
               items-center justify-center
@@ -1058,9 +1017,7 @@ function ProjectListItem({
 }: {
   project: Project;
   openMenu: number | null;
-  setOpenMenu: React.Dispatch<
-    React.SetStateAction<number | null>
-  >;
+  setOpenMenu: React.Dispatch<React.SetStateAction<number | null>>;
   onDelete: (id: number) => void;
   onArchive: (id: number) => void;
 }) {
@@ -1092,20 +1049,16 @@ function ProjectListItem({
             bg-slate-100
           "
         >
-          <Image
+          <img
             src={project.image}
             alt={`Image du projet ${project.name}`}
-            fill
-            sizes="56px"
-            className="object-contain"
+            className="h-full w-full object-contain"
           />
         </div>
 
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="truncate text-sm font-black">
-              {project.name}
-            </h3>
+            <h3 className="truncate text-sm font-black">{project.name}</h3>
 
             <StatusBadge status={project.status} />
           </div>
@@ -1122,9 +1075,7 @@ function ProjectListItem({
         <FileText size={14} />
 
         <span>
-          <strong className="text-slate-700">
-            {project.publications}
-          </strong>{" "}
+          <strong className="text-slate-700">{project.publications}</strong>{" "}
           publications
         </span>
       </div>
@@ -1135,10 +1086,7 @@ function ProjectListItem({
         <ImageIcon size={14} />
 
         <span>
-          <strong className="text-slate-700">
-            {project.media}
-          </strong>{" "}
-          médias
+          <strong className="text-slate-700">{project.media}</strong> médias
         </span>
       </div>
 
@@ -1158,11 +1106,7 @@ function ProjectListItem({
       <div className="relative flex gap-1">
         <button
           type="button"
-          onClick={() =>
-            setOpenMenu(
-              isMenuOpen ? null : project.id
-            )
-          }
+          onClick={() => setOpenMenu(isMenuOpen ? null : project.id)}
           className="
             flex h-8 w-8
             items-center justify-center
@@ -1206,9 +1150,7 @@ function ProjectListItem({
               type="button"
               onClick={() => {
                 setOpenMenu(null);
-                alert(
-                  `Modification du projet "${project.name}"`
-                );
+                alert(`Modification du projet "${project.name}"`);
               }}
               className="
                 flex w-full items-center gap-2
@@ -1262,22 +1204,12 @@ function ProjectListItem({
    PROJECT STAT
 ========================================================= */
 
-function ProjectStat({
-  value,
-  label,
-}: {
-  value: number;
-  label: string;
-}) {
+function ProjectStat({ value, label }: { value: number; label: string }) {
   return (
     <div className="text-center">
-      <p className="text-sm font-black text-slate-800">
-        {value}
-      </p>
+      <p className="text-sm font-black text-slate-800">{value}</p>
 
-      <p className="mt-0.5 text-[8px] font-medium text-slate-400">
-        {label}
-      </p>
+      <p className="mt-0.5 text-[8px] font-medium text-slate-400">{label}</p>
     </div>
   );
 }
@@ -1286,28 +1218,21 @@ function ProjectStat({
    STATUS BADGE
 ========================================================= */
 
-function StatusBadge({
-  status,
-}: {
-  status: ProjectStatus;
-}) {
+function StatusBadge({ status }: { status: ProjectStatus }) {
   const config = {
     Actif: {
       icon: <CheckCircle2 size={11} />,
-      className:
-        "bg-emerald-50 text-emerald-600",
+      className: "bg-emerald-50 text-emerald-600",
     },
 
     "En pause": {
       icon: <Clock3 size={11} />,
-      className:
-        "bg-orange-50 text-orange-600",
+      className: "bg-orange-50 text-orange-600",
     },
 
     Archivé: {
       icon: <Archive size={11} />,
-      className:
-        "bg-slate-100 text-slate-500",
+      className: "bg-slate-100 text-slate-500",
     },
   };
 
