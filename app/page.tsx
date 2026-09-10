@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect  } from "react";
-
+import Link from "next/link";;
+import axios from "@/lib/axios";
 import Navbar from "./component/Navbar";
 import Footer from "./component/Footer";
 import Orbit from "./component/Orbit";
@@ -12,6 +13,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles,
   Share2,
+  Loader2 ,
   Calendar,
   BarChart3,
   Users,
@@ -1117,53 +1119,110 @@ const FeatureCard = ({
   </motion.div>
 );
 
-const PricingCard = ({ plan, featured = false }: any) => (
-  <motion.div
-    initial={{ opacity: 0, scale: 0.95 }}
-    whileInView={{ opacity: 1, scale: 1 }}
-    viewport={{ once: true }}
-    className={`p-6 sm:p-8 md:p-10 rounded-3xl sm:rounded-[3rem] border transition-all flex flex-col h-full ${
-      featured 
-      ? 'bg-white border-red-light shadow-2xl shadow-red-light/15 lg:-translate-y-4 z-10' 
-      : 'bg-white border-slate-200 shadow-sm'
-    }`}
-  >
-    {featured && (
-      <div className="bg-red-light text-white text-[10px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-full w-fit mx-auto -mt-10 sm:-mt-14 mb-6 sm:mb-8 shadow-md">
-        Plus Populaire
-      </div>
-    )}
-    <span className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-[0.2em] mb-4 sm:mb-6">{plan.name}</span>
-    <div className="flex items-baseline gap-1 mb-2">
-      <span className="text-4xl sm:text-5xl font-black text-slate-900">{plan.price}€</span>
-      <span className="text-slate-500 font-medium text-xs sm:text-sm">/mois</span>
-    </div>
-    <p className="text-xs sm:text-sm text-slate-500 mb-6 sm:mb-8 font-medium italic">{plan.tagline}</p>
-    <div className="space-y-3 sm:space-y-4 mb-8 sm:mb-12 flex-grow">
-      {plan.features.map((f: string, i: number) => (
-        <div key={i} className="flex items-center gap-3 text-xs sm:text-sm font-semibold text-slate-700">
-          <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center shrink-0 ${featured ? 'bg-red-light text-white' : 'bg-red-100 text-red-light'}`}>
-            <Check size={12} />
-          </div>
-          <span>{f}</span>
-        </div>
-      ))}
-    </div>
-    <button className={`w-full py-3.5 sm:py-4 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-bold transition-all active:scale-95 ${
-      featured 
-      ? 'bg-red-light text-white hover:bg-red-light shadow-lg shadow-red-light/20' 
-      : 'bg-slate-100 text-slate-900 hover:bg-slate-200'
-    }`}>
-      Choisir ce plan
-    </button>
-  </motion.div>
-);
 
+
+type Plan = {
+  id: number;
+  nom: string;
+  description: string;
+  prix: number;
+  devise: string;
+  duree: number;
+  duree_unite: "jour" | "mois" | "annee";
+  features: string[];
+  est_gratuit: boolean;
+};
+
+function dureeLabel(unite: string) {
+  return unite === "jour" ? "jour" : unite === "annee" ? "an" : "mois";
+}
+
+function PricingCard({ plan, featured = false }: { plan: Plan; featured?: boolean }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      whileInView={{ opacity: 1, scale: 1 }}
+      viewport={{ once: true }}
+      className={`p-6 sm:p-8 md:p-10 rounded-3xl sm:rounded-[3rem] border transition-all flex flex-col h-full ${
+        featured
+          ? "bg-white border-red-light shadow-2xl shadow-red-light/15 lg:-translate-y-4 z-10"
+          : "bg-white border-slate-200 shadow-sm"
+      }`}
+    >
+      {featured && (
+        <div className="bg-red-light text-white text-[10px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-full w-fit mx-auto -mt-10 sm:-mt-14 mb-6 sm:mb-8 shadow-md">
+          Plus Populaire
+        </div>
+      )}
+
+      <span className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-[0.2em] mb-4 sm:mb-6">
+        {plan.nom}
+      </span>
+
+      <div className="flex items-baseline gap-1 mb-2">
+        <span className="text-4xl sm:text-5xl font-black text-slate-900">
+          {plan.est_gratuit ? "0" : plan.prix}€
+        </span>
+        <span className="text-slate-500 font-medium text-xs sm:text-sm">
+          /{plan.duree > 1 ? `${plan.duree} ` : ""}{dureeLabel(plan.duree_unite)}
+          {plan.duree > 1 ? "s" : ""}
+        </span>
+      </div>
+
+      <p className="text-xs sm:text-sm text-slate-500 mb-6 sm:mb-8 font-medium italic">
+        {plan.description}
+      </p>
+
+      <div className="space-y-3 sm:space-y-4 mb-8 sm:mb-12 flex-grow">
+        {plan.features?.map((f: string, i: number) => (
+          <div key={i} className="flex items-center gap-3 text-xs sm:text-sm font-semibold text-slate-700">
+            <div
+              className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center shrink-0 ${
+                featured ? "bg-red-light text-white" : "bg-red-100 text-red-light"
+              }`}
+            >
+              <Check size={12} />
+            </div>
+            <span>{f}</span>
+          </div>
+        ))}
+      </div>
+
+      <Link
+        href={`/auth/register?plan=${plan.id}`}
+        className={`w-full py-3.5 sm:py-4 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-bold transition-all active:scale-95 text-center ${
+          featured
+            ? "bg-red-light text-white hover:bg-red-700 shadow-lg shadow-red-light/20"
+            : "bg-slate-100 text-slate-900 hover:bg-slate-200"
+        }`}
+      >
+        Choisir ce plan
+      </Link>
+    </motion.div>
+  );
+}
 
 
 // --- PAGE PRINCIPALE ---
 
 export default function DeepLandingPage() {
+   const [plans, setPlans] = useState<Plan[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadPlans = async () => {
+      try {
+        const response = await axios.get("/api/plans?devise=EUR");
+        setPlans(response.data.plans ?? []);
+      } catch (error) {
+        console.error("Erreur chargement des plans :", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadPlans();
+  }, []);
 const nodes = [
   { src: "/facebook.png", x: 0, y: -270 },
   { src: "/instagram.png", x: 190, y: -180 },
@@ -1874,53 +1933,27 @@ desc="Dites adieu au jonglage entre vos plateformes de réseaux sociaux. Griot A
 </section>
 
       {/* --- PRICING SECTION --- */}
-      <section id="pricing" className="py-20 sm:py-32 bg-white border-t border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <SectionHeader 
-            badge="Plans & Tarifs"
-            title="Des offres adaptées à chaque étape de votre croissance"
-            desc="Commencez gratuitement et faites évoluer vos accès selon vos besoins."
-          />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 max-w-6xl mx-auto items-stretch">
-            <PricingCard plan={{
-              name: "particulier",
-              price: "29",
-              tagline: "Idéal pour les créateurs et freelances",
-              features: [
-                "1 espace de travail dédié",
-                "Jusqu'à 5 comptes sociaux",
-                "Briefing texte & image par IA",
-                "Sélection multi-comptes",
-                "Publication automatique"
-              ]
-            }} />
-            <PricingCard featured={true} plan={{
-              name: "Professionel",
-              price: "59",
-              tagline: "Le choix incontournable pour les marques",
-              features: [
-                "Espaces de travail illimités",
-                "Comptes sociaux illimités",
-                "IA Prioritaire pour vos scripts",
-                "Module d'analytics avancé",
-                "Support prioritaire 7j/7"
-              ]
-            }} />
-            <PricingCard plan={{
-              name: "Agence",
-              price: "149",
-              tagline: "Conçu pour les équipes et agences marketing",
-              features: [
-                "Toutes les options Pro incluses",
-                "Accès équipe (10 collaborateurs)",
-                "Workflow de validation client",
-                "Gestion fine des comptes",
-                "Accompagnement dédié"
-              ]
-            }} />
+       <section id="pricing" className="py-20 sm:py-32 bg-white border-t border-slate-200">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <SectionHeader
+          badge="Plans & Tarifs"
+          title="Des offres adaptées à chaque étape de votre croissance"
+          desc="Commencez gratuitement et faites évoluer vos accès selon vos besoins."
+        />
+
+        {loading ? (
+          <div className="flex justify-center py-16">
+            <Loader2 className="animate-spin text-red-light" size={28} />
           </div>
-        </div>
-      </section>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 max-w-6xl mx-auto items-stretch">
+            {plans.map((plan, index) => (
+              <PricingCard key={plan.id} plan={plan} featured={index === 1} />
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
 
       {/* --- TESTIMONIALS --- */}
       <section className="py-20 sm:py-32 bg-slate-50 border-t border-slate-200">

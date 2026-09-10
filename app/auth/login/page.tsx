@@ -62,7 +62,7 @@ export default function LoginPage() {
         souscription?.statut === "actif" &&
         (!souscription.date_fin || new Date(souscription.date_fin) > new Date());
 
-      window.location.href = estActive ? "/dashboard" : "/abonnement";
+      window.location.href = estActive ? "/dashboard" : "/auth/abonnement";
     } catch (error: any) {
       console.error("Erreur login :", error);
 

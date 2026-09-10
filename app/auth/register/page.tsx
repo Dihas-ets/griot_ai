@@ -1,6 +1,7 @@
 "use client";
 
 import axios from "@/lib/axios";
+
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { User, Mail, Lock, ArrowRight, ChevronLeft, Rocket } from "lucide-react";
