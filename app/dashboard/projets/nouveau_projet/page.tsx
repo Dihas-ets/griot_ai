@@ -64,91 +64,90 @@ export default function NouveauProjetPage() {
      SUBMIT (Version corrigée avec Axios)
   ======================================================= */
 
-const handleSubmit = async (event: React.FormEvent) => {
-  event.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
 
-  if (!name.trim()) {
-    setErrorMessage("Veuillez renseigner le nom du projet.");
-    return;
-  }
-
-  setErrorMessage("");
-  setIsSubmitting(true);
-
-  try {
-    // 1. CSRF
-    console.log("➡️ 1 - Demande CSRF");
-    await axios.get("/sanctum/csrf-cookie");
-    console.log("✅ 1 - CSRF OK");
-
-    // 2. Vérifier la session
-    console.log("➡️ 2 - Vérification utilisateur");
-    const me = await axios.get("/api/user");
-    console.log("✅ 2 - UTILISATEUR :", me.data);
-
-    // 3. Créer le projet
-    console.log("➡️ 3 - Création projet");
-
-    const response = await axios.post("/api/projects", {
-      name: name.trim(),
-      description: description.trim(),
-      status,
-      members: Number(members) || 1,
-    });
-
-    console.log("✅ 3 - PROJET CRÉÉ :", response.data);
-
-    const createdProject = response.data?.project;
-
-    if (createdProject) {
-      localStorage.setItem(
-        "lastCreatedProject",
-        JSON.stringify(createdProject)
-      );
+    if (!name.trim()) {
+      setErrorMessage("Veuillez renseigner le nom du projet.");
+      return;
     }
 
-    setSuccess(true);
+    setErrorMessage("");
+    setIsSubmitting(true);
 
-    window.setTimeout(() => {
-      router.push("/dashboard/projets?created=1");
-    }, 1200);
+    try {
+        // 1. CSRF
+      console.log("➡️ 1 - Demande CSRF");
+      await axios.get("/sanctum/csrf-cookie");
+      console.log("✅ 1 - CSRF OK");
 
-  } catch (error: any) {
-    console.error("❌ ERREUR :", error);
+      // 2. Vérifier la session
+      console.log("➡️ 2 - Vérification utilisateur");
+      const me = await axios.get("/api/user");
+      console.log("✅ 2 - UTILISATEUR :", me.data);
 
-    if (error.response) {
-      console.error("❌ STATUS :", error.response.status);
-      console.error("❌ DATA :", error.response.data);
+      // 3. Créer le projet
+      console.log("➡️ 3 - Création projet");
 
-      if (error.response.status === 401) {
-        setErrorMessage(
-          "Votre session n’est plus valide. Veuillez vous reconnecter."
-        );
-      } else if (error.response.status === 419) {
-        setErrorMessage(
-          "Jeton de sécurité expiré. Veuillez réessayer."
-        );
-      } else if (error.response.data?.errors) {
-        const flattened = Object.values(error.response.data.errors)
-          .flat()
-          .join(" ");
+      const formData = new FormData();
+      formData.append("name", name.trim());
+      formData.append("description", description.trim());
+      formData.append("status", status);
+      formData.append("members", String(Number(members) || 1));
+      if (imageFile) formData.append("image", imageFile);
 
-        setErrorMessage(flattened || "Erreur de validation.");
-      } else {
-        setErrorMessage(
-          error.response.data?.message ||
-            "Une erreur est survenue lors de la création du projet."
+      const response = await axios.post("/api/projects", formData);
+
+      console.log("✅ 3 - PROJET CRÉÉ :", response.data);
+
+      const createdProject = response.data?.project;
+
+      if (createdProject) {
+        localStorage.setItem(
+          "lastCreatedProject",
+          JSON.stringify(createdProject),
         );
       }
-    } else {
-      setErrorMessage(
-        error.message || "Une erreur est survenue lors de la création."
-      );
+
+      setSuccess(true);
+
+      window.setTimeout(() => {
+        router.push("/dashboard/projets?created=1");
+      }, 1200);
+    } catch (error: any) {
+      console.error("❌ ERREUR :", error);
+
+      if (error.response) {
+        console.error("❌ STATUS :", error.response.status);
+        console.error("❌ DATA :", error.response.data);
+
+        if (error.response.status === 401) {
+          setErrorMessage(
+            "Votre session n’est plus valide. Veuillez vous reconnecter.",
+          );
+        } else if (error.response.status === 419) {
+          setErrorMessage("Jeton de sécurité expiré. Veuillez réessayer.");
+        } else if (error.response.data?.errors) {
+          const flattened = Object.values(error.response.data.errors)
+            .flat()
+            .join(" ");
+
+          setErrorMessage(flattened || "Erreur de validation.");
+        } else {
+          setErrorMessage(
+            error.response.data?.message ||
+              "Une erreur est survenue lors de la création du projet.",
+          );
+        }
+      } else {
+        setErrorMessage(
+          error.message || "Une erreur est survenue lors de la création.",
+        );
+      }
+    } finally {
+      setIsSubmitting(false);
     }
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+  };
 
   /* =======================================================
      RENDU

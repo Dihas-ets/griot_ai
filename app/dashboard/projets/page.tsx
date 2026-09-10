@@ -106,7 +106,14 @@ export default function ProjetsPage() {
                     year: "numeric",
                   })
                 : "aujourd'hui",
-              image: project.image || "/placeholder-project.png",
+              image:
+                project.image &&
+                (project.image.startsWith("http") ||
+                  project.image.startsWith("data:"))
+                  ? project.image
+                  : project.image
+                    ? `${process.env.NEXT_PUBLIC_BACKEND_URL}${project.image}`
+                    : "/placeholder-project.png",
             }))
           : [];
 
@@ -126,7 +133,14 @@ export default function ProjetsPage() {
               media: Number(parsed.media ?? 0),
               members: Number(parsed.members ?? 1),
               createdAt: "aujourd'hui",
-              image: parsed.image || "/placeholder-project.png",
+              image:
+                parsed.image &&
+                (parsed.image.startsWith("http") ||
+                  parsed.image.startsWith("data:"))
+                  ? parsed.image
+                  : parsed.image
+                    ? `${process.env.NEXT_PUBLIC_BACKEND_URL}${parsed.image}`
+                    : "/placeholder-project.png",
             };
 
             const exists = baseProjects.some(
