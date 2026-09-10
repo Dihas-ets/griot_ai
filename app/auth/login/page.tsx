@@ -56,26 +56,23 @@ export default function LoginPage() {
 
       console.log("Connexion réussie :", response.data);
 
-      const check = await axios.get("/api/souscriptions/current");
-      const souscription = check.data?.souscription;
-      const estActive =
-        souscription?.statut === "actif" &&
-        (!souscription.date_fin || new Date(souscription.date_fin) > new Date());
+    const check = await axios.get("/api/souscriptions/current");
+const souscription = check.data?.souscription;
+const estActive =
+  souscription?.statut === "actif" &&
+  (!souscription.date_fin || new Date(souscription.date_fin) > new Date());
 
-      window.location.href = estActive ? "/dashboard" : "/auth/abonnement";
-    } catch (error: any) {
-      console.error("Erreur login :", error);
+if (estActive) {
+  // Abonnement actif → Dashboard
+  window.location.href = "/dashboard";
+} else if (souscription?.statut === "en_attente") {
+  // Souscription en attente → Page d'attente
+  window.location.href = "/auth/attente";
+} else {
+  // Aucun abonnement → Page abonnement
+  window.location.href = "/auth/abonnement";
+}
 
-      if (error.response?.status === 401) {
-        setErrorMessage("Email ou mot de passe incorrect.");
-      } else if (error.response?.status === 419) {
-        setErrorMessage("Session expirée. Veuillez réessayer.");
-      } else {
-        setErrorMessage(
-          error.response?.data?.message ||
-            "Une erreur est survenue lors de la connexion.",
-        );
-      }
     } finally {
       setLoading(false);
     }
