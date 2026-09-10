@@ -49,15 +49,20 @@ export default function LoginPage() {
     try {
       await axios.get("/sanctum/csrf-cookie");
 
-      const response = await axios.post("/api/login", {
+            const response = await axios.post("/api/login", {
         email,
         password,
       });
 
       console.log("Connexion réussie :", response.data);
 
-      // Pour tester :
-      window.location.href = "/dashboard";
+      const check = await axios.get("/api/souscriptions/current");
+      const souscription = check.data?.souscription;
+      const estActive =
+        souscription?.statut === "actif" &&
+        (!souscription.date_fin || new Date(souscription.date_fin) > new Date());
+
+      window.location.href = estActive ? "/dashboard" : "/abonnement";
     } catch (error: any) {
       console.error("Erreur login :", error);
 

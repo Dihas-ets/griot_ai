@@ -48,7 +48,7 @@ const [loading, setLoading] = useState(false);
 
         // 3. Redirection vers la connexion
         setTimeout(() => {
-            window.location.href = "/auth/login";
+            window.location.href = "/auth/abonnement";
         }, 1000);
 
     } catch (error: any) {
