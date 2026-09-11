@@ -1,6 +1,7 @@
 "use client";
 
 import axios from "@/lib/axios";
+import { useSearchParams } from "next/navigation";
 
 import { motion } from "framer-motion";
 import { useState } from "react";
@@ -19,6 +20,9 @@ const GoogleIcon = () => (
 
 
 export default function RegisterPage() {
+  // ...
+const searchParams = useSearchParams();
+const planId = searchParams.get("plan");
   const [errorMessage, setErrorMessage] = useState("");
 const [successMessage, setSuccessMessage] = useState("");
 const [loading, setLoading] = useState(false);
@@ -43,14 +47,21 @@ const [loading, setLoading] = useState(false);
             password,
         });
 
-        console.log("Inscription réussie :", response.data);
+       console.log("Inscription réussie :", response.data);
 
-        setSuccessMessage("Compte créé avec succès !");
+setSuccessMessage("Compte créé avec succès !");
 
-        // 3. Redirection vers la connexion
-        setTimeout(() => {
-            window.location.href = "/auth/abonnement";
-        }, 1000);
+const isAdmin = response.data?.user?.role === "admin";
+
+setTimeout(() => {
+  if (isAdmin) {
+    window.location.href = "/admin/dashboard";
+  } else if (planId) {
+    window.location.href = `/auth/abonnement/valider?plan=${planId}`;
+  } else {
+    window.location.href = "/auth/abonnement";
+  }
+}, 1000);
 
     } catch (error: any) {
         console.error("Erreur inscription :", error);

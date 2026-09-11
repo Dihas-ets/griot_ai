@@ -49,30 +49,29 @@ export default function LoginPage() {
     try {
       await axios.get("/sanctum/csrf-cookie");
 
-            const response = await axios.post("/api/login", {
-        email,
-        password,
-      });
+            const response = await axios.post("/api/login", { email, password });
 
-      console.log("Connexion réussie :", response.data);
+console.log("Connexion réussie :", response.data);
 
-    const check = await axios.get("/api/souscriptions/current");
-const souscription = check.data?.souscription;
-const estActive =
-  souscription?.statut === "actif" &&
-  (!souscription.date_fin || new Date(souscription.date_fin) > new Date());
+const isAdmin = response.data?.user?.role === "admin";
 
-if (estActive) {
-  // Abonnement actif → Dashboard
-  window.location.href = "/dashboard";
-} else if (souscription?.statut === "en_attente") {
-  // Souscription en attente → Page d'attente
-  window.location.href = "/auth/attente";
+if (isAdmin) {
+  window.location.href = "/admin/dashboard"; // ou /dashboard si pas encore de back-office séparé
 } else {
-  // Aucun abonnement → Page abonnement
-  window.location.href = "/auth/abonnement";
-}
+  const check = await axios.get("/api/souscriptions/current");
+  const souscription = check.data?.souscription;
+  const estActive =
+    souscription?.statut === "actif" &&
+    (!souscription.date_fin || new Date(souscription.date_fin) > new Date());
 
+  if (estActive) {
+    window.location.href = "/dashboard";
+  } else if (souscription?.statut === "en_attente") {
+    window.location.href = "/auth/attente";
+  } else {
+    window.location.href = "/auth/abonnement";
+  }
+}
     } finally {
       setLoading(false);
     }

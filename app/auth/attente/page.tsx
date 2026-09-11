@@ -37,6 +37,16 @@ export default function AbonnementAttentePage() {
           <LogOut size={14} />
           Se déconnecter
         </button>
+        {/* Phase de test uniquement — à retirer en production */}
+<button
+  type="button"
+  onClick={() => {
+    window.location.href = "/dashboard";
+  }}
+  className="w-full mt-3 py-3 text-[11px] font-bold text-slate-400 hover:text-slate-600 underline underline-offset-4 text-center"
+>
+  Accéder directement au tableau de bord (test)
+</button>
       </div>
     </div>
   );
