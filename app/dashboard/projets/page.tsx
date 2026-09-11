@@ -945,74 +945,109 @@ function ProjectCard({
           </span>
         </div>
 
-        {/* ACTIONS BAS */}
+{/* ACTIONS BAS */}
 
-        <div
-          className="
-            mt-4 flex gap-2
-            border-t border-slate-100
-            pt-4
-          "
-        >
-          <Link
-            href="/dashboard/publications"
-            className="
-              flex flex-1
-              items-center
-              justify-center
-              gap-2
-              rounded-xl
-              bg-slate-50
-              py-2.5
-              text-[10px]
-              font-bold
-              text-slate-600
-              transition
-              hover:bg-slate-100
-            "
-          >
-            <Eye size={13} />
-            Voir
-          </Link>
+<div
+  className="
+    mt-4
+    flex gap-2
+    border-t border-slate-100
+    pt-4
+  "
+>
+  <Link
+    href="/dashboard/publications"
+    className="
+      flex flex-1
+      items-center
+      justify-center
+      gap-2
+      rounded-xl
+      bg-slate-50
+      py-2.5
+      text-[10px]
+      font-bold
+      text-slate-600
+      transition
+      hover:bg-slate-100
+    "
+  >
+    <Eye size={13} />
+    Voir
+  </Link>
 
-          <button
-            type="button"
-            aria-label={`Modifier ${project.name}`}
-            onClick={() => alert(`Modification du projet "${project.name}"`)}
-            className="
-              flex h-9 w-9
-              items-center justify-center
-              rounded-xl
-              border border-slate-200
-              text-slate-400
-              transition
-              hover:border-red-200
-              hover:bg-red-50
-              hover:text-red-600
-            "
-          >
-            <Edit3 size={14} />
-          </button>
+  {/* CONNECTER LES RÉSEAUX */}
 
-          <button
-            type="button"
-            aria-label={`Supprimer ${project.name}`}
-            onClick={() => onDelete(project.id)}
-            className="
-              flex h-9 w-9
-              items-center justify-center
-              rounded-xl
-              border border-slate-200
-              text-slate-400
-              transition
-              hover:border-red-200
-              hover:bg-red-50
-              hover:text-red-600
-            "
-          >
-            <Trash2 size={14} />
-          </button>
-        </div>
+  <Link
+    href={`/dashboard/reseaux_sociaux?project=${project.id}`}
+    aria-label={`Connecter les réseaux de ${project.name}`}
+    className="
+      flex h-9
+      flex-1
+      items-center
+      justify-center
+      gap-2
+      rounded-xl
+      border border-red-200
+      bg-red-50
+      px-3
+      text-[10px]
+      font-bold
+      text-red-600
+      transition
+      hover:bg-red-100
+      hover:border-red-300
+    "
+  >
+    <ExternalLink size={13} />
+    Réseaux
+  </Link>
+
+  {/* MODIFIER */}
+
+  <button
+    type="button"
+    aria-label={`Modifier ${project.name}`}
+    onClick={() => alert(`Modification du projet "${project.name}"`)}
+    className="
+      flex h-9 w-9
+      shrink-0
+      items-center justify-center
+      rounded-xl
+      border border-slate-200
+      text-slate-400
+      transition
+      hover:border-red-200
+      hover:bg-red-50
+      hover:text-red-600
+    "
+  >
+    <Edit3 size={14} />
+  </button>
+
+  {/* SUPPRIMER */}
+
+  <button
+    type="button"
+    aria-label={`Supprimer ${project.name}`}
+    onClick={() => onDelete(project.id)}
+    className="
+      flex h-9 w-9
+      shrink-0
+      items-center justify-center
+      rounded-xl
+      border border-slate-200
+      text-slate-400
+      transition
+      hover:border-red-200
+      hover:bg-red-50
+      hover:text-red-600
+    "
+  >
+    <Trash2 size={14} />
+  </button>
+</div>
+
       </div>
     </article>
   );

@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   Plus,
   CheckCircle2,
@@ -26,6 +27,8 @@ import {
   siGoogle,
 } from "simple-icons";
 
+import axios from "@/lib/axios";
+
 /* =========================================================
    TYPES
 ========================================================= */
@@ -42,6 +45,18 @@ type SocialNetwork = {
   posts: number;
   views: string;
   icon: React.ReactNode;
+};
+
+type CompteSocial = {
+  id: number;
+  reseau: string;
+  compte_id: string;
+  nom_affichage: string | null;
+  nom_utilisateur: string | null;
+  avatar_url: string | null;
+  statut: "actif" | "expire" | "revoque";
+  token_expires_at: string | null;
+  created_at: string;
 };
 
 /* =========================================================
@@ -189,19 +204,19 @@ function GoogleIcon() {
 }
 
 /* =========================================================
-   DONNÉES
+   RÉSEAUX DISPONIBLES
 ========================================================= */
 
-const networks: SocialNetwork[] = [
+const availableNetworks: SocialNetwork[] = [
   {
     id: "facebook",
     name: "Facebook",
     description: "Publiez sur votre page Facebook",
-    username: "Presta Officiel",
-    status: "connected",
-    followers: "12,8K",
-    posts: 48,
-    views: "84,2K",
+    username: "—",
+    status: "disconnected",
+    followers: "—",
+    posts: 0,
+    views: "—",
     icon: <FacebookIcon />,
   },
 
@@ -209,11 +224,11 @@ const networks: SocialNetwork[] = [
     id: "instagram",
     name: "Instagram",
     description: "Partagez vos contenus Instagram",
-    username: "@presta_officiel",
-    status: "connected",
-    followers: "8,4K",
-    posts: 36,
-    views: "61,7K",
+    username: "—",
+    status: "disconnected",
+    followers: "—",
+    posts: 0,
+    views: "—",
     icon: <InstagramIcon />,
   },
 
@@ -221,11 +236,11 @@ const networks: SocialNetwork[] = [
     id: "linkedin",
     name: "LinkedIn",
     description: "Développez votre présence professionnelle",
-    username: "Presta SARL",
-    status: "connected",
-    followers: "3,2K",
-    posts: 24,
-    views: "29,5K",
+    username: "—",
+    status: "disconnected",
+    followers: "—",
+    posts: 0,
+    views: "—",
     icon: <LinkedinIcon />,
   },
 
@@ -233,11 +248,11 @@ const networks: SocialNetwork[] = [
     id: "tiktok",
     name: "TikTok",
     description: "Publiez vos vidéos courtes",
-    username: "@presta_officiel",
-    status: "attention",
-    followers: "5,7K",
-    posts: 19,
-    views: "42,8K",
+    username: "—",
+    status: "disconnected",
+    followers: "—",
+    posts: 0,
+    views: "—",
     icon: <TikTokIcon />,
   },
 
@@ -245,11 +260,11 @@ const networks: SocialNetwork[] = [
     id: "google",
     name: "Google Business",
     description: "Gérez votre présence Google",
-    username: "Presta SARL",
-    status: "connected",
-    followers: "1,8K",
-    posts: 15,
-    views: "18,4K",
+    username: "—",
+    status: "disconnected",
+    followers: "—",
+    posts: 0,
+    views: "—",
     icon: <GoogleIcon />,
   },
 
@@ -257,7 +272,7 @@ const networks: SocialNetwork[] = [
     id: "x",
     name: "X",
     description: "Partagez vos actualités sur X",
-    username: "@presta_officiel",
+    username: "—",
     status: "disconnected",
     followers: "—",
     posts: 0,
@@ -271,11 +286,89 @@ const networks: SocialNetwork[] = [
 ========================================================= */
 
 export default function ReseauxSociauxPage() {
+  const searchParams = useSearchParams();
+
   const [search, setSearch] = useState("");
+  const [comptesSociaux, setComptesSociaux] = useState<CompteSocial[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const projectId = searchParams.get("project");
+
+  /* =========================================================
+     CHARGER LES COMPTES DU PROJET
+  ========================================================= */
+
+  useEffect(() => {
+    if (!projectId) {
+      setComptesSociaux([]);
+      return;
+    }
+
+    const chargerComptesSociaux = async () => {
+      try {
+        setLoading(true);
+
+        const response = await axios.get(
+          `/api/projects/${projectId}/comptes-sociaux`,
+          {
+            withCredentials: true,
+          }
+        );
+
+        setComptesSociaux(response.data.comptes ?? []);
+      } catch (error) {
+        console.error(
+          "Erreur lors du chargement des comptes sociaux :",
+          error
+        );
+
+        setComptesSociaux([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    chargerComptesSociaux();
+  }, [projectId]);
+
+  /* =========================================================
+     TRANSFORMER LES DONNÉES BACKEND EN CARTES
+  ========================================================= */
+
+  const networks: SocialNetwork[] = availableNetworks.map((network) => {
+    const compte = comptesSociaux.find(
+      (item) => item.reseau === network.id
+    );
+
+    if (!compte) {
+      return network;
+    }
+
+    return {
+      ...network,
+      username:
+        compte.nom_utilisateur ||
+        compte.nom_affichage ||
+        "Compte connecté",
+
+      status:
+        compte.statut === "actif"
+          ? "connected"
+          : "attention",
+    };
+  });
+
+  /* =========================================================
+     FILTRE RECHERCHE
+  ========================================================= */
 
   const filteredNetworks = networks.filter((network) =>
     network.name.toLowerCase().includes(search.toLowerCase())
   );
+
+  /* =========================================================
+     STATISTIQUES
+  ========================================================= */
 
   const connectedCount = networks.filter(
     (network) => network.status === "connected"
@@ -285,7 +378,7 @@ export default function ReseauxSociauxPage() {
     (network) => network.status === "attention"
   ).length;
 
-  const totalFollowers = "32,1K";
+  const totalFollowers = "—";
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -356,9 +449,22 @@ export default function ReseauxSociauxPage() {
                 quitter Griot AI.
               </p>
 
+              {projectId && (
+                <div className="mt-4 inline-flex items-center gap-2 rounded-xl border border-red-100 bg-red-50 px-3 py-2">
+                  <Link2 size={14} className="text-red-600" />
+
+                  <span className="text-[10px] font-bold text-red-700">
+                    Réseaux sociaux du projet #{projectId}
+                  </span>
+                </div>
+              )}
+
             </div>
 
-            <button className="flex w-fit items-center gap-2 rounded-xl bg-red-600 px-4 py-3 text-[10px] font-black uppercase tracking-wide text-white shadow-lg shadow-red-600/20 transition hover:bg-red-700">
+            <button
+              type="button"
+              className="flex w-fit items-center gap-2 rounded-xl bg-red-600 px-4 py-3 text-[10px] font-black uppercase tracking-wide text-white shadow-lg shadow-red-600/20 transition hover:bg-red-700"
+            >
               <Plus size={15} />
               Ajouter un réseau
             </button>
@@ -384,14 +490,18 @@ export default function ReseauxSociauxPage() {
             icon={<Users size={18} />}
             label="Audience totale"
             value={totalFollowers}
-            description="+8,4% ce mois"
+            description={
+              projectId
+                ? "Données du projet"
+                : "Sélectionnez un projet"
+            }
           />
 
           <StatCard
             icon={<Eye size={18} />}
             label="Vues ce mois"
-            value="236,6K"
-            description="+12,7% ce mois"
+            value="—"
+            description="Données à venir"
           />
 
           <StatCard
@@ -442,6 +552,16 @@ export default function ReseauxSociauxPage() {
         </section>
 
         {/* =====================================================
+            CHARGEMENT
+        ===================================================== */}
+
+        {loading && projectId && (
+          <div className="mb-4 rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-semibold text-slate-500">
+            Chargement des réseaux du projet...
+          </div>
+        )}
+
+        {/* =====================================================
             RÉSEAUX
         ===================================================== */}
 
@@ -451,6 +571,7 @@ export default function ReseauxSociauxPage() {
             <NetworkCard
               key={network.id}
               network={network}
+              projectId={projectId}
             />
           ))}
 
@@ -485,7 +606,10 @@ export default function ReseauxSociauxPage() {
 
             </div>
 
-            <button className="flex items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-3 text-[10px] font-black uppercase tracking-wide text-white shadow-lg shadow-red-600/20 transition hover:bg-red-700">
+            <button
+              type="button"
+              className="flex items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-3 text-[10px] font-black uppercase tracking-wide text-white shadow-lg shadow-red-600/20 transition hover:bg-red-700"
+            >
               <Plus size={15} />
               Ajouter un réseau
             </button>
@@ -520,7 +644,10 @@ export default function ReseauxSociauxPage() {
 
             </div>
 
-            <button className="flex items-center gap-2 text-[10px] font-bold text-slate-500 transition hover:text-red-600">
+            <button
+              type="button"
+              className="flex items-center gap-2 text-[10px] font-bold text-slate-500 transition hover:text-red-600"
+            >
               En savoir plus
               <ChevronRight size={14} />
             </button>
@@ -604,8 +731,10 @@ function StatCard({
 
 function NetworkCard({
   network,
+  projectId,
 }: {
   network: SocialNetwork;
+  projectId: string | null;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -640,6 +769,7 @@ function NetworkCard({
         <div className="relative">
 
           <button
+            type="button"
             onClick={() => setMenuOpen(!menuOpen)}
             className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
             aria-label="Options"
@@ -650,12 +780,18 @@ function NetworkCard({
           {menuOpen && (
             <div className="absolute right-0 top-9 z-20 w-40 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-xl">
 
-              <button className="flex w-full items-center gap-2 px-3 py-2 text-left text-[10px] font-semibold text-slate-600 hover:bg-slate-50">
+              <button
+                type="button"
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-[10px] font-semibold text-slate-600 hover:bg-slate-50"
+              >
                 <Settings2 size={13} />
                 Paramètres
               </button>
 
-              <button className="flex w-full items-center gap-2 px-3 py-2 text-left text-[10px] font-semibold text-slate-600 hover:bg-slate-50">
+              <button
+                type="button"
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-[10px] font-semibold text-slate-600 hover:bg-slate-50"
+              >
                 <RefreshCw size={13} />
                 Actualiser
               </button>
@@ -743,25 +879,56 @@ function NetworkCard({
 
         {isConnected ? (
           <>
-            <button className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 py-2.5 text-[10px] font-bold text-slate-600 transition hover:bg-slate-50">
+            <button
+              type="button"
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 py-2.5 text-[10px] font-bold text-slate-600 transition hover:bg-slate-50"
+            >
               <Settings2 size={14} />
               Gérer le compte
             </button>
 
-            <button className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600">
+            <button
+              type="button"
+              className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+            >
               <RefreshCw size={14} />
             </button>
           </>
         ) : needsAttention ? (
-          <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 py-2.5 text-[10px] font-black text-white transition hover:bg-amber-600">
+          <button
+            type="button"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 py-2.5 text-[10px] font-black text-white transition hover:bg-amber-600"
+          >
             <RefreshCw size={14} />
             Reconnecter le compte
           </button>
         ) : (
-          <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 py-2.5 text-[10px] font-black text-white shadow-md shadow-red-600/15 transition hover:bg-red-700">
-            <Link2 size={14} />
-            Connecter ce réseau
-          </button>
+          <>
+            {network.id === "tiktok" && projectId ? (
+              <button
+                type="button"
+                onClick={() => {
+                  window.location.href =
+                    `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/tiktok/redirect/${projectId}`;
+                }}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 py-2.5 text-[10px] font-black text-white shadow-md shadow-red-600/15 transition hover:bg-red-700"
+              >
+                <Link2 size={14} />
+                Connecter TikTok
+              </button>
+            ) : (
+              <button
+                type="button"
+                disabled={!projectId}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 py-2.5 text-[10px] font-black text-white shadow-md shadow-red-600/15 transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Link2 size={14} />
+                {projectId
+                  ? "Connecter ce réseau"
+                  : "Sélectionnez un projet"}
+              </button>
+            )}
+          </>
         )}
 
       </div>
