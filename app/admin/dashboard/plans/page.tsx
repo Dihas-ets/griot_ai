@@ -178,7 +178,6 @@ export default function AdminPlansPage() {
         </div>
       )}
 
-     ```tsx
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-sm overflow-y-auto">
           <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-8 shadow-2xl relative my-8">
