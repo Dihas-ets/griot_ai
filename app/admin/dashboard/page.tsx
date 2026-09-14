@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Users, Package, CheckCircle2, Clock3, Wallet, Loader2 } from "lucide-react";
+import {
+  Users,
+  Package,
+  CheckCircle2,
+  Clock3,
+  Wallet,
+  Loader2,
+} from "lucide-react";
 import axios from "@/lib/axios";
 
 type Stats = {
@@ -17,8 +24,13 @@ type Stats = {
     montant: number;
     devise: string;
     created_at: string;
-    user: { name: string; email: string };
-    plan: { nom: string };
+    user: {
+      name: string;
+      email: string;
+    };
+    plan: {
+      nom: string;
+    };
   }>;
 };
 
@@ -44,76 +56,335 @@ export default function AdminDashboardPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="animate-spin text-red-light" size={28} />
+        <Loader2
+          className="animate-spin text-red-light"
+          size={28}
+        />
       </div>
     );
   }
 
-  if (!stats) return <p className="text-sm text-slate-500">Impossible de charger les statistiques.</p>;
+  if (!stats) {
+    return (
+      <p className="text-sm text-slate-500">
+        Impossible de charger les statistiques.
+      </p>
+    );
+  }
 
   const cards = [
-    { label: "Utilisateurs", value: stats.utilisateurs_total, sub: `+${stats.utilisateurs_ce_mois} ce mois`, icon: Users },
-    { label: "Plans actifs", value: stats.plans_total, icon: Package },
-    { label: "Abonnements actifs", value: stats.souscriptions_actives, icon: CheckCircle2 },
-    { label: "En attente de validation", value: stats.souscriptions_en_attente, icon: Clock3, alert: stats.souscriptions_en_attente > 0 },
-    { label: "Revenu total (XOF)", value: stats.revenu_total.toLocaleString("fr-FR"), icon: Wallet },
+    {
+      label: "Utilisateurs",
+      value: stats.utilisateurs_total,
+      sub: `+${stats.utilisateurs_ce_mois} ce mois`,
+      icon: Users,
+    },
+    {
+      label: "Plans actifs",
+      value: stats.plans_total,
+      icon: Package,
+    },
+    {
+      label: "Abonnements actifs",
+      value: stats.souscriptions_actives,
+      icon: CheckCircle2,
+    },
+    {
+      label: "En attente de validation",
+      value: stats.souscriptions_en_attente,
+      icon: Clock3,
+      alert: stats.souscriptions_en_attente > 0,
+    },
+    {
+      label: "Revenu total (XOF)",
+      value: stats.revenu_total.toLocaleString("fr-FR"),
+      icon: Wallet,
+    },
   ];
 
   return (
-    <div>
-      <h1 className="text-2xl font-black text-slate-900 mb-1">Vue d'ensemble</h1>
-      <p className="text-sm text-slate-500 mb-8">Aperçu global de la plateforme Griot AI.</p>
+    <div className="w-full min-w-0">
+      {/* ========================================= */}
+      {/* HEADER */}
+      {/* ========================================= */}
 
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-10">
-        {cards.map((card) => (
-          <div
-            key={card.label}
-            className={`bg-white rounded-2xl border p-5 shadow-sm ${
-              card.alert ? "border-amber-300" : "border-slate-200"
-            }`}
-          >
-            <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 ${
-              card.alert ? "bg-amber-50 text-amber-600" : "bg-red-50 text-red-600"
-            }`}>
-              <card.icon size={16} />
-            </div>
-            <p className="text-xl font-black text-slate-900">{card.value}</p>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1">
-              {card.label}
-            </p>
-            {card.sub && <p className="text-[10px] text-slate-400 mt-0.5">{card.sub}</p>}
-          </div>
-        ))}
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-xl sm:text-2xl font-black text-slate-900 mb-1">
+          Vue d&apos;ensemble
+        </h1>
+
+        <p className="text-xs sm:text-sm text-slate-500">
+          Aperçu global de la plateforme Griot AI.
+        </p>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
-        <div className="p-5 border-b border-slate-100">
-          <h2 className="text-sm font-black text-slate-900">Dernières souscriptions</h2>
-        </div>
-        <div className="divide-y divide-slate-100">
-          {stats.dernieres_souscriptions.map((s) => (
-            <div key={s.id} className="p-4 flex items-center justify-between text-xs">
-              <div>
-                <p className="font-bold text-slate-800">{s.user?.name}</p>
-                <p className="text-slate-400">{s.user?.email}</p>
-              </div>
-              <div className="text-right">
-                <p className="font-bold text-slate-700">{s.plan?.nom}</p>
-                <p className="text-slate-400">{s.montant} {s.devise}</p>
-              </div>
-              <span
-                className={`px-2 py-1 rounded-lg text-[9px] font-bold ${
-                  s.statut === "actif"
-                    ? "bg-emerald-50 text-emerald-600"
-                    : s.statut === "en_attente"
-                    ? "bg-amber-50 text-amber-600"
-                    : "bg-slate-100 text-slate-500"
-                }`}
+      {/* ========================================= */}
+      {/* STATISTIQUES */}
+      {/* ========================================= */}
+
+      <div
+        className="
+          grid
+          grid-cols-1
+          min-[480px]:grid-cols-2
+          md:grid-cols-3
+          lg:grid-cols-4
+          xl:grid-cols-5
+          gap-3
+          sm:gap-4
+          mb-8
+          sm:mb-10
+        "
+      >
+        {cards.map((card) => {
+          const Icon = card.icon;
+
+          return (
+            <div
+              key={card.label}
+              className={`
+                bg-white
+                rounded-2xl
+                border
+                p-4
+                sm:p-5
+                shadow-sm
+                min-w-0
+                ${
+                  card.alert
+                    ? "border-amber-300"
+                    : "border-slate-200"
+                }
+              `}
+            >
+              {/* ICON */}
+              <div
+                className={`
+                  w-9
+                  h-9
+                  rounded-xl
+                  flex
+                  items-center
+                  justify-center
+                  mb-3
+                  ${
+                    card.alert
+                      ? "bg-amber-50 text-amber-600"
+                      : "bg-red-50 text-red-600"
+                  }
+                `}
               >
-                {s.statut}
-              </span>
+                <Icon size={16} />
+              </div>
+
+              {/* VALEUR */}
+              <p className="text-xl font-black text-slate-900 truncate">
+                {card.value}
+              </p>
+
+              {/* LABEL */}
+              <p
+                className="
+                  text-[10px]
+                  font-bold
+                  text-slate-400
+                  uppercase
+                  tracking-wider
+                  mt-1
+                  leading-tight
+                "
+              >
+                {card.label}
+              </p>
+
+              {/* SOUS-TEXTE */}
+              {card.sub && (
+                <p className="text-[10px] text-slate-400 mt-1">
+                  {card.sub}
+                </p>
+              )}
             </div>
-          ))}
+          );
+        })}
+      </div>
+
+      {/* ========================================= */}
+      {/* DERNIÈRES SOUSCRIPTIONS */}
+      {/* ========================================= */}
+
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        {/* TITRE */}
+        <div className="p-4 sm:p-5 border-b border-slate-100">
+          <h2 className="text-sm font-black text-slate-900">
+            Dernières souscriptions
+          </h2>
+        </div>
+
+        {/* ======================================= */}
+        {/* TABLEAU */}
+        {/* ======================================= */}
+
+        <div className="w-full overflow-x-auto">
+          <table className="w-full min-w-[700px] text-xs">
+            {/* EN-TÊTE */}
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-100">
+                <th
+                  className="
+                    w-[40%]
+                    px-5
+                    py-3
+                    text-left
+                    text-[10px]
+                    font-black
+                    uppercase
+                    tracking-wider
+                    text-slate-400
+                  "
+                >
+                  Utilisateur
+                </th>
+
+                <th
+                  className="
+                    w-[20%]
+                    px-5
+                    py-3
+                    text-left
+                    text-[10px]
+                    font-black
+                    uppercase
+                    tracking-wider
+                    text-slate-400
+                  "
+                >
+                  Plan
+                </th>
+
+                <th
+                  className="
+                    w-[20%]
+                    px-5
+                    py-3
+                    text-left
+                    text-[10px]
+                    font-black
+                    uppercase
+                    tracking-wider
+                    text-slate-400
+                  "
+                >
+                  Montant
+                </th>
+
+                <th
+                  className="
+                    w-[20%]
+                    px-5
+                    py-3
+                    text-right
+                    text-[10px]
+                    font-black
+                    uppercase
+                    tracking-wider
+                    text-slate-400
+                  "
+                >
+                  Statut
+                </th>
+              </tr>
+            </thead>
+
+            {/* CONTENU */}
+            <tbody className="divide-y divide-slate-100">
+              {stats.dernieres_souscriptions.map((s) => (
+                <tr
+                  key={s.id}
+                  className="hover:bg-slate-50/50 transition-colors"
+                >
+                  {/* ============================= */}
+                  {/* UTILISATEUR */}
+                  {/* ============================= */}
+
+                  <td className="px-5 py-4">
+                    <div className="min-w-0">
+                      <p className="font-bold text-slate-800 truncate max-w-[280px]">
+                        {s.user?.name || "Utilisateur inconnu"}
+                      </p>
+
+                      <p className="text-slate-400 mt-0.5 truncate max-w-[280px]">
+                        {s.user?.email || "-"}
+                      </p>
+                    </div>
+                  </td>
+
+                  {/* ============================= */}
+                  {/* PLAN */}
+                  {/* ============================= */}
+
+                  <td className="px-5 py-4 whitespace-nowrap">
+                    <p className="font-bold text-slate-700">
+                      {s.plan?.nom || "-"}
+                    </p>
+                  </td>
+
+                  {/* ============================= */}
+                  {/* MONTANT */}
+                  {/* ============================= */}
+
+                  <td className="px-5 py-4 whitespace-nowrap">
+                    <p className="font-bold text-slate-700">
+                      {s.montant.toLocaleString("fr-FR")} {s.devise}
+                    </p>
+                  </td>
+
+                  {/* ============================= */}
+                  {/* STATUT */}
+                  {/* ============================= */}
+
+                  <td className="px-5 py-4 text-right whitespace-nowrap">
+                    <span
+                      className={`
+                        inline-flex
+                        px-2.5
+                        py-1
+                        rounded-lg
+                        text-[9px]
+                        font-bold
+                        ${
+                          s.statut === "actif"
+                            ? "bg-emerald-50 text-emerald-600"
+                            : s.statut === "en_attente"
+                              ? "bg-amber-50 text-amber-600"
+                              : "bg-slate-100 text-slate-500"
+                        }
+                      `}
+                    >
+                      {s.statut}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+
+              {/* AUCUNE SOUSCRIPTION */}
+              {stats.dernieres_souscriptions.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={4}
+                    className="
+                      px-5
+                      py-10
+                      text-center
+                      text-xs
+                      text-slate-400
+                    "
+                  >
+                    Aucune souscription pour le moment.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

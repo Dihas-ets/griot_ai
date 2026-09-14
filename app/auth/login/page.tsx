@@ -3,7 +3,15 @@
 import axios from "@/lib/axios";
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { Mail, Lock, ArrowRight, ChevronLeft, Sparkles } from "lucide-react";
+import {
+  Mail,
+  Lock,
+  ArrowRight,
+  ChevronLeft,
+  Sparkles,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import Link from "next/link";
 
 // Composant icône Google Simple
@@ -39,6 +47,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -49,33 +58,43 @@ export default function LoginPage() {
     try {
       await axios.get("/sanctum/csrf-cookie");
 
-            const response = await axios.post("/api/login", { email, password });
+      const response = await axios.post("/api/login", { email, password });
 
-console.log("Connexion réussie :", response.data);
+      console.log("Connexion réussie :", response.data);
 
-const isAdmin = response.data?.user?.role === "admin";
+      const isAdmin = response.data?.user?.role === "admin";
 
-if (isAdmin) {
-  window.location.href = "/admin/dashboard"; // ou /dashboard si pas encore de back-office séparé
-} else {
-  const check = await axios.get("/api/souscriptions/current");
-  const souscription = check.data?.souscription;
-  const estActive =
-    souscription?.statut === "actif" &&
-    (!souscription.date_fin || new Date(souscription.date_fin) > new Date());
+      if (isAdmin) {
+        window.location.href = "/admin/dashboard";
+      } else {
+        const check = await axios.get("/api/souscriptions/current");
+        const souscription = check.data?.souscription;
 
-  if (estActive) {
-    window.location.href = "/dashboard";
-  } else if (souscription?.statut === "en_attente") {
-    window.location.href = "/auth/attente";
-  } else {
-    window.location.href = "/auth/abonnement";
-  }
-}
+        const estActive =
+          souscription?.statut === "actif" &&
+          (!souscription.date_fin ||
+            new Date(souscription.date_fin) > new Date());
+
+        if (estActive) {
+          window.location.href = "/dashboard";
+        } else if (souscription?.statut === "en_attente") {
+          window.location.href = "/auth/attente";
+        } else {
+          window.location.href = "/auth/abonnement";
+        }
+      }
+    } catch (error: any) {
+      console.error("Erreur de connexion :", error);
+
+      setErrorMessage(
+        error?.response?.data?.message ||
+          "Adresse e-mail ou mot de passe incorrect.",
+      );
     } finally {
       setLoading(false);
     }
   };
+
   return (
     <div className="relative min-h-screen w-full bg-slate-50 flex items-center justify-center p-4 overflow-hidden">
       <div className="absolute inset-0 pointer-events-none">
@@ -102,9 +121,11 @@ if (isAdmin) {
               alt="Griot AI"
               className="w-20 h-auto mb-6"
             />
+
             <h1 className="text-3xl font-black text-slate-900 tracking-tighter mb-2">
               Bon retour.
             </h1>
+
             <p className="text-slate-500 font-medium text-sm">
               Le Griot est prêt à rédiger vos prochains succès.
             </p>
@@ -115,11 +136,13 @@ if (isAdmin) {
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">
                 Email
               </label>
+
               <div className="relative">
                 <Mail
                   className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
                   size={18}
                 />
+
                 <input
                   type="email"
                   placeholder="nom@exemple.com"
@@ -135,6 +158,7 @@ if (isAdmin) {
                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                   Mot de passe
                 </label>
+
                 <button
                   type="button"
                   className="text-[10px] font-bold text-red-light uppercase tracking-widest"
@@ -142,25 +166,42 @@ if (isAdmin) {
                   Oublié ?
                 </button>
               </div>
+
               <div className="relative">
                 <Lock
                   className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
                   size={18}
                 />
+
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-12 pr-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:border-red-light focus:ring-4 focus:ring-red-500/5 outline-none transition-all font-medium"
+                  className="w-full pl-12 pr-14 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:border-red-light focus:ring-4 focus:ring-red-500/5 outline-none transition-all font-medium"
                 />
+
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                  aria-label={
+                    showPassword
+                      ? "Masquer le mot de passe"
+                      : "Afficher le mot de passe"
+                  }
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
             </div>
+
             {errorMessage && (
               <div className="rounded-2xl bg-red-50 border border-red-100 px-4 py-3 text-sm font-medium text-red-600">
                 {errorMessage}
               </div>
             )}
+
             <button
               type="submit"
               disabled={loading}
@@ -175,6 +216,7 @@ if (isAdmin) {
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-slate-100"></div>
             </div>
+
             <span className="relative px-4 bg-white text-[10px] font-black text-slate-400 uppercase tracking-widest">
               Ou
             </span>
@@ -205,12 +247,15 @@ if (isAdmin) {
 
         <div className="hidden md:flex w-1/2 bg-slate-900 relative items-center justify-center p-12 overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-red-light/20 blur-[100px] rounded-full" />
+
           <div className="relative z-10 text-center">
             <Sparkles className="text-red-light w-12 h-12 mx-auto mb-6 animate-pulse" />
+
             <h2 className="text-4xl font-black text-white tracking-tighter leading-tight mb-4">
-              L'IA qui écrit <br />
+              L&apos;IA qui écrit <br />
               pour vous.
             </h2>
+
             <p className="text-slate-400 font-medium">
               Gagnez 15h par semaine en automatisant vos scripts et vos
               publications.
