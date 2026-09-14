@@ -291,6 +291,7 @@ export default function ReseauxSociauxPage() {
   const [search, setSearch] = useState("");
   const [comptesSociaux, setComptesSociaux] = useState<CompteSocial[]>([]);
   const [loading, setLoading] = useState(false);
+  const [showAddNetwork, setShowAddNetwork] = useState(false);
 
   const projectId = searchParams.get("project");
 
@@ -449,25 +450,16 @@ export default function ReseauxSociauxPage() {
                 quitter Griot AI.
               </p>
 
-              {projectId && (
-                <div className="mt-4 inline-flex items-center gap-2 rounded-xl border border-red-100 bg-red-50 px-3 py-2">
-                  <Link2 size={14} className="text-red-600" />
-
-                  <span className="text-[10px] font-bold text-red-700">
-                    Réseaux sociaux du projet #{projectId}
-                  </span>
-                </div>
-              )}
-
             </div>
 
-            <button
-              type="button"
-              className="flex w-fit items-center gap-2 rounded-xl bg-red-600 px-4 py-3 text-[10px] font-black uppercase tracking-wide text-white shadow-lg shadow-red-600/20 transition hover:bg-red-700"
-            >
-              <Plus size={15} />
-              Ajouter un réseau
-            </button>
+           <button
+  type="button"
+  onClick={() => setShowAddNetwork(true)}
+  className="flex w-fit items-center gap-2 rounded-xl bg-red-600 px-4 py-3 text-[10px] font-black uppercase tracking-wide text-white shadow-lg shadow-red-600/20 transition hover:bg-red-700"
+>
+  <Plus size={15} />
+  Ajouter un réseau
+</button>
 
           </div>
 
@@ -606,13 +598,14 @@ export default function ReseauxSociauxPage() {
 
             </div>
 
-            <button
-              type="button"
-              className="flex items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-3 text-[10px] font-black uppercase tracking-wide text-white shadow-lg shadow-red-600/20 transition hover:bg-red-700"
-            >
-              <Plus size={15} />
-              Ajouter un réseau
-            </button>
+          <button
+  type="button"
+  onClick={() => setShowAddNetwork(true)}
+  className="flex items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-3 text-[10px] font-black uppercase tracking-wide text-white shadow-lg shadow-red-600/20 transition hover:bg-red-700"
+>
+  <Plus size={15} />
+  Ajouter un réseau
+</button>
 
           </div>
 
@@ -644,17 +637,122 @@ export default function ReseauxSociauxPage() {
 
             </div>
 
-            <button
-              type="button"
-              className="flex items-center gap-2 text-[10px] font-bold text-slate-500 transition hover:text-red-600"
-            >
-              En savoir plus
-              <ChevronRight size={14} />
-            </button>
-
           </div>
 
-        </section>
+            </section>
+
+        {/* =====================================================
+            MODALE AJOUTER UN RÉSEAU
+        ===================================================== */}
+
+        {showAddNetwork && (
+          <div
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm"
+            onClick={() => setShowAddNetwork(false)}
+          >
+            <div
+              className="w-full max-w-lg overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+
+              {/* HEADER */}
+
+              <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+
+                <div>
+                  <h3 className="text-sm font-black text-slate-900">
+                    Ajouter un réseau
+                  </h3>
+
+                  <p className="mt-1 text-[10px] text-slate-400">
+                    Choisissez le réseau social que vous souhaitez connecter.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowAddNetwork(false)}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-lg font-bold text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                  aria-label="Fermer"
+                >
+                  ×
+                </button>
+
+              </div>
+
+              {/* RÉSEAUX */}
+
+              <div className="grid grid-cols-1 gap-3 p-5 sm:grid-cols-2">
+
+                {availableNetworks.map((network) => (
+
+                  <button
+                    key={network.id}
+                    type="button"
+                    disabled={!projectId}
+                    onClick={() => {
+
+                      if (!projectId) {
+                        return;
+                      }
+
+                      if (network.id === "tiktok") {
+                        setShowAddNetwork(false);
+
+                        window.location.href =
+                          `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/tiktok/redirect/${projectId}`;
+
+                        return;
+                      }
+
+                      alert(
+                        `La connexion ${network.name} sera bientôt disponible.`
+                      );
+                    }}
+                    className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 text-left transition hover:border-red-200 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+
+                    {network.icon}
+
+                    <div className="min-w-0 flex-1">
+
+                      <p className="text-xs font-black text-slate-900">
+                        {network.name}
+                      </p>
+
+                      <p className="mt-0.5 truncate text-[9px] text-slate-400">
+                        {network.description}
+                      </p>
+
+                    </div>
+
+                    <ChevronRight
+                      size={15}
+                      className="shrink-0 text-slate-400"
+                    />
+
+                  </button>
+
+                ))}
+
+              </div>
+
+              {/* PAS DE PROJET */}
+
+              {!projectId && (
+                <div className="border-t border-slate-100 bg-amber-50 px-5 py-3">
+
+                  <p className="text-[10px] font-semibold text-amber-700">
+                    Vous devez d'abord sélectionner un projet avant de
+                    connecter un réseau social.
+                  </p>
+
+                </div>
+              )}
+
+            </div>
+          </div>
+        )}
 
       </main>
 
@@ -936,6 +1034,7 @@ function NetworkCard({
     </article>
   );
 }
+
 
 /* =========================================================
    MINI STAT

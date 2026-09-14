@@ -1,6 +1,11 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+
 import {
   Bell,
   ChevronDown,
@@ -60,14 +65,60 @@ type PostContent = {
   image: string | null;
 };
 
+type StoredTemplate = {
+  id: number;
+  title: string;
+  description: string;
+  category: string;
+  platform: string;
+  image: string | null;
+  color: string;
+  favorite: boolean;
+  archived: boolean;
+  content: string;
+};
+
+type PublicationStatus =
+  | "Publiée"
+  | "Programmée"
+  | "Brouillon"
+  | "Échec";
+
+type PublicationNetwork =
+  | "Facebook"
+  | "Instagram"
+  | "LinkedIn"
+  | "TikTok"
+  | "Google Business"
+  | "X";
+
+type StoredPublication = {
+  id: number;
+  title: string;
+  content: string;
+  network: PublicationNetwork;
+  status: PublicationStatus;
+  date: string;
+  time: string;
+  image?: string | null;
+  projectId?: string;
+  projectName?: string;
+  createdAt?: number;
+};
+
 /* =========================================================
    ICÔNES RÉSEAUX SOCIAUX
 ========================================================= */
 
-const FacebookIcon = () => (
+const FacebookIcon = ({
+  size = 20,
+}: {
+  size?: number;
+}) => (
   <svg
     viewBox="0 0 24 24"
-    className="h-5 w-5"
+    width={size}
+    height={size}
     aria-hidden="true"
   >
     <path
@@ -77,10 +128,15 @@ const FacebookIcon = () => (
   </svg>
 );
 
-const InstagramIcon = () => (
+const InstagramIcon = ({
+  size = 20,
+}: {
+  size?: number;
+}) => (
   <svg
     viewBox="0 0 24 24"
-    className="h-5 w-5"
+    width={size}
+    height={size}
     aria-hidden="true"
   >
     <defs>
@@ -91,11 +147,26 @@ const InstagramIcon = () => (
         x2="100%"
         y2="0%"
       >
-        <stop offset="0%" stopColor="#FFDC80" />
-        <stop offset="25%" stopColor="#FCAF45" />
-        <stop offset="50%" stopColor="#F77737" />
-        <stop offset="75%" stopColor="#E1306C" />
-        <stop offset="100%" stopColor="#833AB4" />
+        <stop
+          offset="0%"
+          stopColor="#FFDC80"
+        />
+        <stop
+          offset="25%"
+          stopColor="#FCAF45"
+        />
+        <stop
+          offset="50%"
+          stopColor="#F77737"
+        />
+        <stop
+          offset="75%"
+          stopColor="#E1306C"
+        />
+        <stop
+          offset="100%"
+          stopColor="#833AB4"
+        />
       </linearGradient>
     </defs>
 
@@ -128,10 +199,15 @@ const InstagramIcon = () => (
   </svg>
 );
 
-const LinkedinIcon = () => (
+const LinkedinIcon = ({
+  size = 20,
+}: {
+  size?: number;
+}) => (
   <svg
     viewBox="0 0 24 24"
-    className="h-5 w-5"
+    width={size}
+    height={size}
     aria-hidden="true"
   >
     <path
@@ -141,10 +217,15 @@ const LinkedinIcon = () => (
   </svg>
 );
 
-const TikTokIcon = () => (
+const TikTokIcon = ({
+  size = 20,
+}: {
+  size?: number;
+}) => (
   <svg
     viewBox="0 0 24 24"
-    className="h-5 w-5"
+    width={size}
+    height={size}
     aria-hidden="true"
   >
     <path
@@ -154,10 +235,15 @@ const TikTokIcon = () => (
   </svg>
 );
 
-const GoogleBusinessIcon = () => (
+const GoogleBusinessIcon = ({
+  size = 20,
+}: {
+  size?: number;
+}) => (
   <svg
     viewBox="0 0 24 24"
-    className="h-5 w-5"
+    width={size}
+    height={size}
     aria-hidden="true"
   >
     <path
@@ -183,7 +269,7 @@ const GoogleBusinessIcon = () => (
 );
 
 /* =========================================================
-   RÉSEAUX PAR PROJET
+   RÉSEAUX
 ========================================================= */
 
 const prestaNetworks: SocialNetwork[] = [
@@ -307,29 +393,26 @@ const projects: Project[] = [
     color: "bg-red-dark",
     networks: prestaNetworks,
   },
-
   {
     id: "dihas-agency",
     name: "Diha's Agency",
-   sector: "Communication & Marketing",
+    sector: "Communication & Marketing",
     initials: "DA",
     color: "bg-slate-800",
     networks: dihasNetworks,
   },
-
   {
     id: "fofana-voyage",
     name: "Fofana Voyage",
-   sector: "Voyage & Transport",
+    sector: "Voyage & Transport",
     initials: "FV",
     color: "bg-emerald-600",
     networks: fofanaNetworks,
   },
-
   {
     id: "clinico",
     name: "Clinico",
-   sector: "Santé",
+    sector: "Santé",
     initials: "C",
     color: "bg-blue-600",
     networks: clinicoNetworks,
@@ -354,12 +437,104 @@ Rejoignez notre formation Flutter 100% pratique avec des projets concrets.
 #Mobile #Presta`;
 
 /* =========================================================
+   UTILITAIRES
+========================================================= */
+
+function formatDateForInput(
+  date: string
+) {
+  if (!date) {
+    return "";
+  }
+
+  const parts =
+    date.split("/");
+
+  if (parts.length !== 3) {
+    return "";
+  }
+
+  return `${parts[2]}-${parts[1]}-${parts[0]}`;
+}
+
+function formatDateForDisplay(
+  date: string
+) {
+  if (!date) {
+    return "";
+  }
+
+  const parts =
+    date.split("-");
+
+  if (parts.length !== 3) {
+    return "";
+  }
+
+  return `${parts[2]}/${parts[1]}/${parts[0]}`;
+}
+
+function getPublicationNetworkName(
+  networkId: string
+): PublicationNetwork {
+  switch (networkId) {
+    case "facebook":
+      return "Facebook";
+
+    case "instagram":
+      return "Instagram";
+
+    case "linkedin":
+      return "LinkedIn";
+
+    case "tiktok":
+      return "TikTok";
+
+    case "google":
+      return "Google Business";
+
+    case "x":
+      return "X";
+
+    default:
+      return "Facebook";
+  }
+}
+
+function getNetworkIdFromPublication(
+  network: PublicationNetwork
+) {
+  switch (network) {
+    case "Facebook":
+      return "facebook";
+
+    case "Instagram":
+      return "instagram";
+
+    case "LinkedIn":
+      return "linkedin";
+
+    case "TikTok":
+      return "tiktok";
+
+    case "Google Business":
+      return "google";
+
+    case "X":
+      return "x";
+
+    default:
+      return "facebook";
+  }
+}
+
+/* =========================================================
    PAGE
 ========================================================= */
 
 export default function CreatePublicationPage() {
   /* =======================================================
-     PROJET ACTUEL
+     PROJET
   ======================================================= */
 
   const [activeProjectId, setActiveProjectId] =
@@ -370,132 +545,826 @@ export default function CreatePublicationPage() {
 
   const activeProject =
     projects.find(
-      (project) => project.id === activeProjectId
+      (project) =>
+        project.id ===
+        activeProjectId
     ) ?? projects[0];
 
   /* =======================================================
-     RÉSEAUX DU PROJET ACTUEL
+     RÉSEAUX
   ======================================================= */
 
   const [selectedNetworks, setSelectedNetworks] =
     useState<string[]>(
-      prestaNetworks.map((network) => network.id)
+      prestaNetworks.map(
+        (network) => network.id
+      )
     );
 
   /* =======================================================
-     MODE DE PUBLICATION
+     MODE
   ======================================================= */
 
-  const [publishMode, setPublishMode] = useState<
-    "now" | "schedule" | "draft"
-  >("now");
+  const [publishMode, setPublishMode] =
+    useState<
+      "now" | "schedule" | "draft"
+    >("now");
 
   /* =======================================================
      IDÉE
   ======================================================= */
 
-  const [idea, setIdea] = useState(
-    "Promouvoir notre nouvelle formation Flutter destinée aux débutants. La formation commence le 15 juillet 2026, 100% pratique avec projets."
-  );
+  const [idea, setIdea] =
+    useState(
+      "Promouvoir notre nouvelle formation Flutter destinée aux débutants. La formation commence le 15 juillet 2026, 100% pratique avec projets."
+    );
 
   /* =======================================================
-     CONTENU DES POSTS
+     MODÈLE UTILISÉ
   ======================================================= */
 
-  const [posts, setPosts] = useState<
-    Record<string, PostContent>
-  >({
-    facebook: {
-      text: defaultPostText,
-      image: "/flutter.png",
-    },
-
-    instagram: {
-      text: defaultPostText,
-      image: "/flutter.png",
-    },
-
-    linkedin: {
-      text: defaultPostText,
-      image: "/flutter.png",
-    },
-
-    tiktok: {
-      text: defaultPostText,
-      image: "/flutter.png",
-    },
-
-    google: {
-      text: defaultPostText,
-      image: "/flutter.png",
-    },
-  });
+  const [usedTemplate, setUsedTemplate] =
+    useState<StoredTemplate | null>(
+      null
+    );
 
   /* =======================================================
-     CHANGEMENT DE PROJET
+     PUBLICATION EN COURS D'ÉDITION
   ======================================================= */
 
-  const handleProjectChange = (project: Project) => {
-    setActiveProjectId(project.id);
+  const [editingPublicationId, setEditingPublicationId] =
+    useState<number | null>(null);
 
-    /*
-      On sélectionne automatiquement les réseaux
-      connectés au nouveau projet.
-    */
+  /* =======================================================
+     TITRE
+  ======================================================= */
+
+  const [publicationTitle, setPublicationTitle] =
+    useState(
+      "Nouvelle publication"
+    );
+
+  /* =======================================================
+     DATE
+  ======================================================= */
+
+  const [scheduledDate, setScheduledDate] =
+    useState("17/07/2026");
+
+  /* =======================================================
+     HEURE
+  ======================================================= */
+
+  const [scheduledTime, setScheduledTime] =
+    useState("18:00");
+
+  /* =======================================================
+     SAUVEGARDE
+  ======================================================= */
+
+  const [saving, setSaving] =
+    useState(false);
+
+  /* =======================================================
+     POSTS
+  ======================================================= */
+
+  const [posts, setPosts] =
+    useState<
+      Record<string, PostContent>
+    >({
+      facebook: {
+        text: defaultPostText,
+        image: "/flutter.png",
+      },
+
+      instagram: {
+        text: defaultPostText,
+        image: "/flutter.png",
+      },
+
+      linkedin: {
+        text: defaultPostText,
+        image: "/flutter.png",
+      },
+
+      tiktok: {
+        text: defaultPostText,
+        image: "/flutter.png",
+      },
+
+      google: {
+        text: defaultPostText,
+        image: "/flutter.png",
+      },
+    });
+
+  /* =======================================================
+     CHARGEMENT MODÈLE / PUBLICATION
+  ======================================================= */
+
+  useEffect(() => {
+    const params =
+      new URLSearchParams(
+        window.location.search
+      );
+
+    const templateId =
+      params.get("template");
+
+    const publicationId =
+      params.get("publication");
+
+    /* =====================================================
+       PUBLICATION EXISTANTE
+    ===================================================== */
+
+    if (publicationId) {
+      const stored =
+        window.localStorage.getItem(
+          "griot_publications"
+        );
+
+      if (!stored) {
+        return;
+      }
+
+      try {
+        const publications =
+          JSON.parse(
+            stored
+          ) as StoredPublication[];
+
+        const publication =
+          publications.find(
+            (item) =>
+              String(item.id) ===
+              String(publicationId)
+          );
+
+        if (!publication) {
+          console.warn(
+            "Publication introuvable :",
+            publicationId
+          );
+
+          return;
+        }
+
+        setEditingPublicationId(
+          publication.id
+        );
+
+        setPublicationTitle(
+          publication.title ||
+            "Nouvelle publication"
+        );
+
+        setScheduledDate(
+          publication.date ||
+            "17/07/2026"
+        );
+
+        setScheduledTime(
+          publication.time ||
+            "18:00"
+        );
+
+        /* =============================================
+           PROJET
+        ============================================= */
+
+        if (
+          publication.projectId
+        ) {
+          const projectExists =
+            projects.some(
+              (project) =>
+                project.id ===
+                publication.projectId
+            );
+
+          if (projectExists) {
+            setActiveProjectId(
+              publication.projectId
+            );
+          }
+        }
+
+        /* =============================================
+           MODE
+        ============================================= */
+
+        if (
+          publication.status ===
+          "Programmée"
+        ) {
+          setPublishMode(
+            "schedule"
+          );
+        } else if (
+          publication.status ===
+          "Brouillon"
+        ) {
+          setPublishMode(
+            "draft"
+          );
+        } else {
+          setPublishMode("now");
+        }
+
+        /* =============================================
+           RÉSEAU
+        ============================================= */
+
+        const networkId =
+          getNetworkIdFromPublication(
+            publication.network
+          );
+
+        setSelectedNetworks([
+          networkId,
+        ]);
+
+        /* =============================================
+           CONTENU
+        ============================================= */
+
+        setIdea(
+          publication.content ||
+            ""
+        );
+
+        setPosts(
+          (current) => ({
+            ...current,
+
+            [networkId]: {
+              text:
+                publication.content ||
+                "",
+              image:
+                publication.image ??
+                null,
+            },
+          })
+        );
+
+        return;
+      } catch (error) {
+        console.error(
+          "Erreur lors du chargement de la publication :",
+          error
+        );
+
+        return;
+      }
+    }
+
+    /* =====================================================
+       MODÈLE
+    ===================================================== */
+
+    if (templateId) {
+      const stored =
+        window.localStorage.getItem(
+          "griot_templates"
+        );
+
+      if (!stored) {
+        return;
+      }
+
+      try {
+        const templates =
+          JSON.parse(
+            stored
+          ) as StoredTemplate[];
+
+        const template =
+          templates.find(
+            (item) =>
+              String(item.id) ===
+              String(templateId)
+          );
+
+        if (!template) {
+          return;
+        }
+
+        setUsedTemplate(
+          template
+        );
+
+        setPublicationTitle(
+          template.title ||
+            "Nouvelle publication"
+        );
+
+        setIdea(
+          template.content
+        );
+
+        const platformMap: Record<
+          string,
+          string
+        > = {
+          Facebook: "facebook",
+          Instagram: "instagram",
+          LinkedIn: "linkedin",
+          TikTok: "tiktok",
+          X: "x",
+        };
+
+        if (
+          template.platform ===
+          "Tous les réseaux"
+        ) {
+          setSelectedNetworks(
+            activeProject.networks.map(
+              (network) =>
+                network.id
+            )
+          );
+        } else {
+          const networkId =
+            platformMap[
+              template.platform
+            ];
+
+          const networkExists =
+            networkId &&
+            activeProject.networks.some(
+              (network) =>
+                network.id ===
+                networkId
+            );
+
+          if (networkExists) {
+            setSelectedNetworks([
+              networkId,
+            ]);
+          } else {
+            setSelectedNetworks(
+              activeProject.networks.map(
+                (network) =>
+                  network.id
+              )
+            );
+          }
+        }
+
+        setPosts(
+          (current) => {
+            const updated = {
+              ...current,
+            };
+
+            activeProject.networks.forEach(
+              (network) => {
+                updated[
+                  network.id
+                ] = {
+                  text:
+                    template.content,
+                  image:
+                    template.image,
+                };
+              }
+            );
+
+            return updated;
+          }
+        );
+      } catch (error) {
+        console.error(
+          "Erreur lors du chargement du modèle :",
+          error
+        );
+      }
+    }
+  }, [activeProject.networks]);
+
+  /* =======================================================
+     CHANGEMENT PROJET
+  ======================================================= */
+
+  const handleProjectChange = (
+    project: Project
+  ) => {
+    setActiveProjectId(
+      project.id
+    );
+
     setSelectedNetworks(
-      project.networks.map((network) => network.id)
+      project.networks.map(
+        (network) =>
+          network.id
+      )
     );
 
     setShowProjectMenu(false);
+
+    if (!usedTemplate) {
+      return;
+    }
+
+    const platformMap: Record<
+      string,
+      string
+    > = {
+      Facebook: "facebook",
+      Instagram: "instagram",
+      LinkedIn: "linkedin",
+      TikTok: "tiktok",
+      X: "x",
+    };
+
+    if (
+      usedTemplate.platform ===
+      "Tous les réseaux"
+    ) {
+      setSelectedNetworks(
+        project.networks.map(
+          (network) =>
+            network.id
+        )
+      );
+
+      return;
+    }
+
+    const networkId =
+      platformMap[
+        usedTemplate.platform
+      ];
+
+    const exists =
+      networkId &&
+      project.networks.some(
+        (network) =>
+          network.id ===
+          networkId
+      );
+
+    if (exists) {
+      setSelectedNetworks([
+        networkId,
+      ]);
+    } else {
+      setSelectedNetworks(
+        project.networks.map(
+          (network) =>
+            network.id
+        )
+      );
+    }
   };
 
   /* =======================================================
-     CHANGEMENT RÉSEAU
+     TOGGLE RÉSEAU
   ======================================================= */
 
-  const toggleNetwork = (id: string) => {
-    setSelectedNetworks((current) =>
-      current.includes(id)
-        ? current.filter((item) => item !== id)
-        : [...current, id]
+  const toggleNetwork = (
+    id: string
+  ) => {
+    setSelectedNetworks(
+      (current) =>
+        current.includes(id)
+          ? current.filter(
+              (item) =>
+                item !== id
+            )
+          : [
+              ...current,
+              id,
+            ]
     );
   };
 
   /* =======================================================
-     MODIFIER TEXTE
+     TEXTE
   ======================================================= */
 
   const updatePostText = (
     networkId: string,
     text: string
   ) => {
-    setPosts((current) => ({
-      ...current,
+    setPosts(
+      (current) => ({
+        ...current,
 
-      [networkId]: {
-        ...current[networkId],
-        text,
-      },
-    }));
+        [networkId]: {
+          ...(current[
+            networkId
+          ] ?? {
+            text: "",
+            image: null,
+          }),
+          text,
+        },
+      })
+    );
+
+    setIdea(text);
   };
 
   /* =======================================================
-     MODIFIER IMAGE
+     IMAGE
   ======================================================= */
 
   const updatePostImage = (
     networkId: string,
     image: string | null
   ) => {
-    setPosts((current) => ({
-      ...current,
+    setPosts(
+      (current) => ({
+        ...current,
 
-      [networkId]: {
-        ...current[networkId],
-        image,
-      },
-    }));
+        [networkId]: {
+          ...(current[
+            networkId
+          ] ?? {
+            text: idea,
+            image: null,
+          }),
+          image,
+        },
+      })
+    );
   };
+
+  /* =======================================================
+     SAUVEGARDER
+  ======================================================= */
+
+  const handleSavePublication = (
+    forcedMode?: "now" | "schedule" | "draft"
+  ) => {
+    if (saving) {
+      return;
+    }
+
+    if (
+      selectedNetworks.length ===
+      0
+    ) {
+      window.alert(
+        "Sélectionnez au moins un réseau social."
+      );
+
+      return;
+    }
+
+    const effectiveMode =
+      forcedMode ??
+      publishMode;
+
+    const statusMap: Record<
+      "now" | "schedule" | "draft",
+      PublicationStatus
+    > = {
+      now: "Publiée",
+      schedule: "Programmée",
+      draft: "Brouillon",
+    };
+
+    const status =
+      statusMap[effectiveMode];
+
+    const firstNetworkId =
+      selectedNetworks[0];
+
+    const firstPost =
+      posts[firstNetworkId];
+
+    const fallbackContent =
+      idea.trim();
+
+    if (
+      !firstPost?.text?.trim() &&
+      !fallbackContent
+    ) {
+      window.alert(
+        "Le contenu de la publication est vide."
+      );
+
+      return;
+    }
+
+    setSaving(true);
+
+    try {
+      const stored =
+        window.localStorage.getItem(
+          "griot_publications"
+        );
+
+      let publications: StoredPublication[] =
+        [];
+
+      if (stored) {
+        try {
+          const parsed =
+            JSON.parse(stored);
+
+          if (
+            Array.isArray(parsed)
+          ) {
+            publications =
+              parsed;
+          }
+        } catch {
+          publications = [];
+        }
+      }
+
+      /* =============================================
+         MODIFICATION
+      ============================================= */
+
+      if (
+        editingPublicationId !==
+        null
+      ) {
+        const networkId =
+          selectedNetworks[0];
+
+        const networkExists =
+          activeProject.networks.some(
+            (network) =>
+              network.id ===
+              networkId
+          );
+
+        if (!networkExists) {
+          window.alert(
+            "Le réseau sélectionné n'est pas disponible pour ce projet."
+          );
+
+          setSaving(false);
+
+          return;
+        }
+
+        const post =
+          posts[networkId];
+
+        const updated =
+          publications.map(
+            (publication) => {
+              if (
+                publication.id !==
+                editingPublicationId
+              ) {
+                return publication;
+              }
+
+              return {
+                ...publication,
+
+                title:
+                  publicationTitle.trim() ||
+                  "Nouvelle publication",
+
+                content:
+                  post?.text?.trim() ||
+                  fallbackContent,
+
+                network:
+                  getPublicationNetworkName(
+                    networkId
+                  ),
+
+                status,
+
+                date:
+                  scheduledDate,
+
+                time:
+                  scheduledTime,
+
+                image:
+                  post?.image ??
+                  null,
+
+                projectId:
+                  activeProject.id,
+
+                projectName:
+                  activeProject.name,
+
+                createdAt:
+                  publication.createdAt ??
+                  Date.now(),
+              };
+            }
+          );
+
+        window.localStorage.setItem(
+          "griot_publications",
+          JSON.stringify(
+            updated
+          )
+        );
+
+        window.location.href =
+          "/dashboard/publications";
+
+        return;
+      }
+
+      /* =============================================
+         NOUVELLES PUBLICATIONS
+         UNE PAR RÉSEAU
+      ============================================= */
+
+      const now =
+        Date.now();
+
+      const newPublications =
+        selectedNetworks.map(
+          (
+            networkId,
+            index
+          ) => {
+            const post =
+              posts[networkId];
+
+            const content =
+              post?.text?.trim() ||
+              fallbackContent;
+
+            return {
+              id:
+                now + index,
+
+              title:
+                publicationTitle.trim() ||
+                "Nouvelle publication",
+
+              content,
+
+              network:
+                getPublicationNetworkName(
+                  networkId
+                ),
+
+              status,
+
+              date:
+                scheduledDate,
+
+              time:
+                scheduledTime,
+
+              image:
+                post?.image ??
+                null,
+
+              projectId:
+                activeProject.id,
+
+              projectName:
+                activeProject.name,
+
+              createdAt:
+                now + index,
+            };
+          }
+        );
+
+      const updatedPublications = [
+        ...publications,
+        ...newPublications,
+      ];
+
+      window.localStorage.setItem(
+        "griot_publications",
+        JSON.stringify(
+          updatedPublications
+        )
+      );
+
+      window.location.href =
+        "/dashboard/publications";
+    } catch (error) {
+      console.error(
+        "Impossible de sauvegarder la publication :",
+        error
+      );
+
+      window.alert(
+        "Une erreur est survenue lors de l'enregistrement."
+      );
+
+      setSaving(false);
+    }
+  };
+
+  /* =======================================================
+     RENDU
+  ======================================================= */
 
   return (
     <div className="min-h-screen bg-[#f7f8fc] text-slate-900">
@@ -508,10 +1377,6 @@ export default function CreatePublicationPage() {
 
         <div className="mx-auto flex min-h-[72px] w-full max-w-[1800px] items-center px-3 sm:px-5 lg:px-8">
 
-          {/* =================================================
-              GAUCHE
-          ================================================= */}
-
           <div className="min-w-0 flex-1">
 
             <div className="min-w-0 pl-14 md:pl-12 lg:pl-0">
@@ -521,7 +1386,10 @@ export default function CreatePublicationPage() {
               </p>
 
               <h1 className="truncate text-[14px] font-extrabold tracking-tight text-slate-900 sm:text-[16px] lg:text-[19px]">
-                Créer une publication
+                {editingPublicationId !==
+                null
+                  ? "Modifier la publication"
+                  : "Créer une publication"}
               </h1>
 
             </div>
@@ -529,40 +1397,39 @@ export default function CreatePublicationPage() {
           </div>
 
           {/* =================================================
-              SÉLECTEUR DE PROJET
+              PROJET
           ================================================= */}
 
           <div className="flex flex-none items-center justify-center md:flex-1">
 
             <div className="relative">
 
-              {/* =============================================
-                  BOUTON PROJET ACTUEL
-              ============================================= */}
-
               <button
                 onClick={() =>
-                  setShowProjectMenu((current) => !current)
+                  setShowProjectMenu(
+                    (current) =>
+                      !current
+                  )
                 }
-                aria-expanded={showProjectMenu}
+                aria-expanded={
+                  showProjectMenu
+                }
                 className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold shadow-sm transition hover:bg-slate-50"
               >
-
-                {/* ICÔNE PROJET */}
 
                 <div
                   className={`flex h-6 w-6 items-center justify-center rounded-lg text-[9px] font-black text-white ${activeProject.color}`}
                 >
-                  {activeProject.initials}
+                  {
+                    activeProject.initials
+                  }
                 </div>
 
-                {/* NOM */}
-
                 <span className="hidden max-w-[120px] truncate sm:block">
-                  {activeProject.name}
+                  {
+                    activeProject.name
+                  }
                 </span>
-
-                {/* FLÈCHE */}
 
                 <ChevronDown
                   size={14}
@@ -575,17 +1442,9 @@ export default function CreatePublicationPage() {
 
               </button>
 
-              {/* =============================================
-                  MENU DES PROJETS
-              ============================================= */}
-
               {showProjectMenu && (
 
                 <div className="absolute right-0 top-12 z-50 w-[320px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
-
-                  {/* =======================================
-                      HEADER DU MENU
-                  ======================================= */}
 
                   <div className="border-b border-slate-100 px-4 py-3">
 
@@ -599,118 +1458,118 @@ export default function CreatePublicationPage() {
 
                   </div>
 
-                  {/* =======================================
-                      LISTE
-                  ======================================= */}
-
                   <div className="max-h-[360px] overflow-y-auto">
 
-                    {projects.map((project) => {
+                    {projects.map(
+                      (project) => {
 
-                      const isActive =
-                        activeProjectId === project.id;
+                        const isActive =
+                          activeProjectId ===
+                          project.id;
 
-                      return (
-
-                        <button
-                          key={project.id}
-                          onClick={() =>
-                            handleProjectChange(project)
-                          }
-                          className={`group flex w-full items-start gap-3 border-b border-slate-50 px-4 py-3 text-left transition ${
-                            isActive
-                              ? "bg-red-50/70"
-                              : "hover:bg-slate-50"
-                          }`}
-                        >
-
-                          {/* LOGO */}
-
-                          <div
-                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[9px] font-black text-white shadow-sm ${project.color}`}
+                        return (
+                          <button
+                            key={
+                              project.id
+                            }
+                            onClick={() =>
+                              handleProjectChange(
+                                project
+                              )
+                            }
+                            className={`group flex w-full items-start gap-3 border-b border-slate-50 px-4 py-3 text-left transition ${
+                              isActive
+                                ? "bg-red-50/70"
+                                : "hover:bg-slate-50"
+                            }`}
                           >
-                            {project.initials}
-                          </div>
 
-                          {/* INFORMATIONS */}
+                            <div
+                              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[9px] font-black text-white shadow-sm ${project.color}`}
+                            >
+                              {
+                                project.initials
+                              }
+                            </div>
 
-                          <div className="min-w-0 flex-1">
+                            <div className="min-w-0 flex-1">
 
-                            <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-2">
 
-                              <p
-                                className={`truncate text-[11px] font-black ${
-                                  isActive
-                                    ? "text-red-dark"
-                                    : "text-slate-800"
-                                }`}
-                              >
-                                {project.name}
-                              </p>
+                                <p
+                                  className={`truncate text-[11px] font-black ${
+                                    isActive
+                                      ? "text-red-dark"
+                                      : "text-slate-800"
+                                  }`}
+                                >
+                                  {
+                                    project.name
+                                  }
+                                </p>
 
-                              {isActive && (
-                                <span className="rounded-full bg-red-100 px-1.5 py-0.5 text-[7px] font-black uppercase text-red-dark">
-                                  Actif
+                                {isActive && (
+                                  <span className="rounded-full bg-red-100 px-1.5 py-0.5 text-[7px] font-black uppercase text-red-dark">
+                                    Actif
+                                  </span>
+                                )}
+
+                              </div>
+
+                              <div className="mt-2 flex items-center gap-3">
+
+                                <span className="flex items-center gap-1 text-[8px] font-semibold text-slate-400">
+                                  <BriefcaseBusiness size={10} />
+                                  {
+                                    project.sector
+                                  }
                                 </span>
+
+                                <span className="flex items-center gap-1 text-[8px] font-semibold text-slate-400">
+                                  <Globe2 size={10} />
+                                  {
+                                    project.networks
+                                      .length
+                                  }{" "}
+                                  réseaux
+                                </span>
+
+                              </div>
+
+                            </div>
+
+                            <div className="flex h-7 w-7 shrink-0 items-center justify-center">
+
+                              {isActive ? (
+                                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-dark text-white">
+                                  <Check
+                                    size={12}
+                                    strokeWidth={
+                                      3
+                                    }
+                                  />
+                                </span>
+                              ) : (
+                                <span className="h-5 w-5 rounded-full border border-slate-200 opacity-0 transition group-hover:opacity-100" />
                               )}
 
                             </div>
 
-                            <div className="mt-2 flex items-center gap-3">
-
-                              <span className="flex items-center gap-1 text-[8px] font-semibold text-slate-400">
-                                <BriefcaseBusiness size={10} />
-                                {project.sector}
-                              </span>
-
-                              <span className="flex items-center gap-1 text-[8px] font-semibold text-slate-400">
-                                <Globe2 size={10} />
-                                {project.networks.length} réseaux
-                              </span>
-
-                            </div>
-
-                          </div>
-
-                          {/* COCHE */}
-
-                          <div className="flex h-7 w-7 shrink-0 items-center justify-center">
-
-                            {isActive ? (
-
-                              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-dark text-white">
-                                <Check
-                                  size={12}
-                                  strokeWidth={3}
-                                />
-                              </span>
-
-                            ) : (
-
-                              <span className="h-5 w-5 rounded-full border border-slate-200 opacity-0 transition group-hover:opacity-100" />
-
-                            )}
-
-                          </div>
-
-                        </button>
-
-                      );
-
-                    })}
+                          </button>
+                        );
+                      }
+                    )}
 
                   </div>
-
-                  {/* =======================================
-                      PROJET ACTUEL
-                  ======================================= */}
 
                   <div className="border-t border-slate-100 bg-slate-50/70 px-4 py-3">
 
                     <div className="flex items-center gap-2">
 
                       <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-red-dark shadow-sm">
-                        <CheckCircle2 size={15} />
+                        <CheckCircle2
+                          size={15}
+                        />
                       </div>
 
                       <div className="min-w-0">
@@ -720,7 +1579,9 @@ export default function CreatePublicationPage() {
                         </p>
 
                         <p className="truncate text-[10px] font-black text-slate-800">
-                          {activeProject.name}
+                          {
+                            activeProject.name
+                          }
                         </p>
 
                       </div>
@@ -729,20 +1590,14 @@ export default function CreatePublicationPage() {
 
                   </div>
 
-                  {/* =======================================
-                      CRÉER UN PROJET
-                  ======================================= */}
-<a href="/dashboard/projets">
-                  <button
+                  <a
+                    href="/dashboard/projets"
                     className="flex w-full items-center gap-2 border-t border-slate-100 px-4 py-3 text-xs font-bold text-red-600 transition hover:bg-red-50"
                   >
-
                     <Plus size={15} />
-
                     Créer un projet
+                  </a>
 
-                  </button>
-</a>
                 </div>
 
               )}
@@ -794,7 +1649,69 @@ export default function CreatePublicationPage() {
       <main className="mx-auto max-w-[1800px] px-3 py-5 sm:px-5 sm:py-6 lg:px-7 lg:py-7">
 
         {/* ===================================================
-            INFORMATIONS DU PROJET ACTUEL
+            MODÈLE UTILISÉ
+        =================================================== */}
+
+        {usedTemplate && (
+
+          <div className="mb-5 flex flex-col gap-3 rounded-2xl border border-red-100 bg-red-50/60 p-4 sm:flex-row sm:items-center sm:justify-between">
+
+            <div className="flex min-w-0 items-center gap-3">
+
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white text-red-dark shadow-sm">
+
+                {usedTemplate.image ? (
+
+                  <img
+                    src={
+                      usedTemplate.image
+                    }
+                    alt={
+                      usedTemplate.title
+                    }
+                    className="h-full w-full object-cover"
+                  />
+
+                ) : (
+
+                  <FileTemplateIcon />
+
+                )}
+
+              </div>
+
+              <div className="min-w-0">
+
+                <p className="text-[8px] font-black uppercase tracking-wider text-red-dark">
+                  Modèle utilisé
+                </p>
+
+                <p className="truncate text-[11px] font-black text-slate-800">
+                  {
+                    usedTemplate.title
+                  }
+                </p>
+
+                <p className="text-[8px] text-slate-500">
+                  {
+                    usedTemplate.platform
+                  }
+                </p>
+
+              </div>
+
+            </div>
+
+            <span className="text-[8px] font-semibold text-slate-500">
+              Vous pouvez modifier le contenu avant publication.
+            </span>
+
+          </div>
+
+        )}
+
+        {/* ===================================================
+            PROJET
         =================================================== */}
 
         <div className="mb-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_2px_10px_rgba(15,23,42,0.03)] sm:p-5">
@@ -806,7 +1723,9 @@ export default function CreatePublicationPage() {
               <div
                 className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-xs font-black text-white shadow-sm ${activeProject.color}`}
               >
-                {activeProject.initials}
+                {
+                  activeProject.initials
+                }
               </div>
 
               <div className="min-w-0">
@@ -814,11 +1733,15 @@ export default function CreatePublicationPage() {
                 <div className="flex flex-wrap items-center gap-2">
 
                   <h2 className="truncate text-sm font-black text-slate-800">
-                    {activeProject.name}
+                    {
+                      activeProject.name
+                    }
                   </h2>
 
                   <span className="flex items-center gap-1 rounded-full bg-red-50 px-2 py-1 text-[8px] font-black text-red-dark">
-                    <CheckCircle2 size={10} />
+                    <CheckCircle2
+                      size={10}
+                    />
                     Projet actif
                   </span>
 
@@ -838,13 +1761,17 @@ export default function CreatePublicationPage() {
                 />
 
                 <div>
+
                   <p className="text-[8px] text-slate-400">
                     Secteur
                   </p>
 
                   <p className="text-[9px] font-bold text-slate-700">
-                    {activeProject.sector}
+                    {
+                      activeProject.sector
+                    }
                   </p>
+
                 </div>
 
               </div>
@@ -857,13 +1784,19 @@ export default function CreatePublicationPage() {
                 />
 
                 <div>
+
                   <p className="text-[8px] text-slate-400">
                     Réseaux connectés
                   </p>
 
                   <p className="text-[9px] font-bold text-slate-700">
-                    {activeProject.networks.length}
+                    {
+                      activeProject
+                        .networks
+                        .length
+                    }
                   </p>
+
                 </div>
 
               </div>
@@ -883,7 +1816,9 @@ export default function CreatePublicationPage() {
           <p className="text-[11px] font-medium text-slate-400 sm:text-xs">
             Générez, personnalisez et publiez sur les réseaux sociaux de{" "}
             <strong className="font-bold text-slate-600">
-              {activeProject.name}
+              {
+                activeProject.name
+              }
             </strong>
           </p>
 
@@ -901,10 +1836,6 @@ export default function CreatePublicationPage() {
 
           <div className="space-y-5">
 
-            {/* ===============================================
-                CONFIGURATION
-            =============================================== */}
-
             <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_2px_10px_rgba(15,23,42,0.03)] sm:p-5">
 
               <SectionTitle
@@ -912,13 +1843,46 @@ export default function CreatePublicationPage() {
                 title="Configurer votre publication"
               />
 
-              {/* IDÉE */}
+              {/* =================================================
+                  TITRE
+              ================================================= */}
 
               <div className="mt-5">
 
                 <label className="mb-2 block text-[10px] font-extrabold uppercase tracking-[0.08em] text-slate-500">
+                  Titre de la publication
+                </label>
+
+                <input
+                  type="text"
+                  value={
+                    publicationTitle
+                  }
+                  onChange={(event) =>
+                    setPublicationTitle(
+                      event.target
+                        .value
+                    )
+                  }
+                  maxLength={150}
+                  placeholder="Ex : Nouvelle formation Flutter"
+                  className="w-full rounded-xl border border-slate-200 bg-[#fafbfc] px-3.5 py-3 text-[11px] font-medium text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-red-dark focus:bg-white focus:ring-4 focus:ring-red-dark/10"
+                />
+
+              </div>
+
+              {/* =================================================
+                  IDÉE
+              ================================================= */}
+
+              <div className="mt-4">
+
+                <label className="mb-2 block text-[10px] font-extrabold uppercase tracking-[0.08em] text-slate-500">
                   Idée / Sujet de votre publication
-                  <span className="text-red-500"> *</span>
+                  <span className="text-red-500">
+                    {" "}
+                    *
+                  </span>
                 </label>
 
                 <div className="relative">
@@ -926,7 +1890,9 @@ export default function CreatePublicationPage() {
                   <textarea
                     value={idea}
                     onChange={(e) =>
-                      setIdea(e.target.value)
+                      setIdea(
+                        e.target.value
+                      )
                     }
                     maxLength={10000}
                     rows={5}
@@ -934,14 +1900,19 @@ export default function CreatePublicationPage() {
                   />
 
                   <span className="absolute bottom-2.5 right-3 text-[9px] font-medium text-slate-500">
-                    {idea.length}/10000
+                    {
+                      idea.length
+                    }
+                    /10000
                   </span>
 
                 </div>
 
               </div>
 
-              {/* TON */}
+              {/* =================================================
+                  TON
+              ================================================= */}
 
               <div className="mt-4">
 
@@ -984,7 +1955,9 @@ export default function CreatePublicationPage() {
 
               </div>
 
-              {/* LANGUE */}
+              {/* =================================================
+                  LANGUE
+              ================================================= */}
 
               <div className="mt-4">
 
@@ -996,9 +1969,13 @@ export default function CreatePublicationPage() {
 
                   <select className="w-full appearance-none rounded-xl border border-slate-200 bg-[#fafbfc] px-3 py-3 text-[11px] font-semibold text-slate-700 outline-none transition focus:border-red-dark focus:bg-white focus:ring-4 focus:ring-red-light/20">
 
-                    <option>Français</option>
+                    <option>
+                      Français
+                    </option>
 
-                    <option>English</option>
+                    <option>
+                      English
+                    </option>
 
                   </select>
 
@@ -1025,10 +2002,11 @@ export default function CreatePublicationPage() {
               />
 
               <p className="mt-1.5 text-[10px] leading-[1.6] text-slate-400">
-                Sélectionnez les réseaux sur lesquels vous souhaitez publier
-                pour le projet{" "}
+                Sélectionnez les réseaux sur lesquels vous souhaitez publier pour le projet{" "}
                 <strong className="text-slate-600">
-                  {activeProject.name}
+                  {
+                    activeProject.name
+                  }
                 </strong>
                 .
               </p>
@@ -1044,28 +2022,39 @@ export default function CreatePublicationPage() {
                       );
 
                     return (
-
                       <button
-                        key={network.id}
-                        onClick={() =>
-                          toggleNetwork(network.id)
+                        key={
+                          network.id
                         }
-                        aria-pressed={selected}
+                        onClick={() =>
+                          toggleNetwork(
+                            network.id
+                          )
+                        }
+                        aria-pressed={
+                          selected
+                        }
                         className="group flex w-full items-center gap-3 py-2.5 text-left transition"
                       >
 
                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-50 transition group-hover:bg-slate-100">
-                          {network.icon}
+                          {
+                            network.icon
+                          }
                         </div>
 
                         <div className="min-w-0 flex-1">
 
                           <p className="truncate text-[11px] font-bold text-slate-800">
-                            {network.name}
+                            {
+                              network.name
+                            }
                           </p>
 
                           <p className="truncate text-[9px] text-slate-400">
-                            {network.username}
+                            {
+                              network.username
+                            }
                           </p>
 
                         </div>
@@ -1077,28 +2066,67 @@ export default function CreatePublicationPage() {
                               : "border-slate-300 bg-white"
                           }`}
                         >
-
                           {selected && (
                             <Check
                               size={12}
-                              strokeWidth={3}
+                              strokeWidth={
+                                3
+                              }
                             />
                           )}
-
                         </div>
 
                       </button>
-
                     );
-
                   }
                 )}
 
               </div>
 
-              <button className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-red-dark py-3 text-[10px] font-black uppercase tracking-[0.06em] text-white shadow-[0_8px_20px_rgba(0,0,0,0.12)] transition hover:bg-red-dark/90 active:scale-[0.99]">
+              <button
+                type="button"
+                onClick={() => {
+                  if (
+                    !idea.trim()
+                  ) {
+                    window.alert(
+                      "Écrivez d'abord une idée ou un sujet."
+                    );
 
-                <Sparkles size={14} />
+                    return;
+                  }
+
+                  setPosts(
+                    (current) => {
+                      const updated = {
+                        ...current,
+                      };
+
+                      activeProject.networks.forEach(
+                        (network) => {
+                          updated[
+                            network.id
+                          ] = {
+                            text: idea,
+                            image:
+                              current[
+                                network.id
+                              ]?.image ??
+                              null,
+                          };
+                        }
+                      );
+
+                      return updated;
+                    }
+                  );
+                }}
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-red-dark py-3 text-[10px] font-black uppercase tracking-[0.06em] text-white shadow-[0_8px_20px_rgba(0,0,0,0.12)] transition hover:bg-red-dark/90 active:scale-[0.99]"
+              >
+
+                <Sparkles
+                  size={14}
+                />
 
                 Générer le contenu
 
@@ -1114,8 +2142,6 @@ export default function CreatePublicationPage() {
 
           <section className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_2px_10px_rgba(15,23,42,0.03)]">
 
-            {/* HEADER */}
-
             <div className="flex flex-col gap-3 border-b border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-4">
 
               <div className="flex items-center gap-3">
@@ -1123,7 +2149,9 @@ export default function CreatePublicationPage() {
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-red-light/10 text-red-dark">
 
                   <span className="text-[11px] font-black">
-                    {selectedNetworks.length}
+                    {
+                      selectedNetworks.length
+                    }
                   </span>
 
                 </span>
@@ -1142,16 +2170,18 @@ export default function CreatePublicationPage() {
 
               </div>
 
-              <button className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-[10px] font-bold text-slate-600 transition hover:bg-slate-50 sm:w-auto">
-                Voir tous les aperçus
-                <ChevronRight size={13} />
-              </button>
+              <span className="flex items-center gap-1 text-[9px] font-semibold text-slate-400">
+                <Eye size={12} />
+                {editingPublicationId !==
+                null
+                  ? "Mode modification"
+                  : "Nouvelle publication"}
+              </span>
 
             </div>
 
-            {/* TABS */}
-
-            {selectedNetworks.length > 0 && (
+            {selectedNetworks.length >
+              0 && (
 
               <div className="flex overflow-x-auto border-b border-slate-100 scrollbar-none">
 
@@ -1161,43 +2191,48 @@ export default function CreatePublicationPage() {
                     const network =
                       activeProject.networks.find(
                         (item) =>
-                          item.id === networkId
+                          item.id ===
+                          networkId
                       );
 
-                    if (!network) return null;
+                    if (!network)
+                      return null;
 
                     return (
-
-                      <button
-                        key={network.id}
+                      <div
+                        key={
+                          network.id
+                        }
                         className="flex shrink-0 items-center gap-2 border-b-2 border-red-dark px-4 py-3 text-[10px] font-bold text-red-dark sm:px-5"
                       >
+                        {
+                          network.icon
+                        }
 
-                        {network.icon}
-
-                        {network.name.split(" ")[0]}
-
-                      </button>
-
+                        {
+                          network.name.split(
+                            " "
+                          )[0]
+                        }
+                      </div>
                     );
-
                   }
                 )}
 
               </div>
-
             )}
-
-            {/* POSTS */}
 
             <div className="bg-[#fafbfc] p-3 sm:p-4 lg:p-5">
 
-              {selectedNetworks.length === 0 ? (
+              {selectedNetworks.length ===
+              0 ? (
 
                 <div className="flex min-h-[350px] flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white px-5 text-center">
 
                   <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
-                    <Share2 size={22} />
+                    <Share2
+                      size={22}
+                    />
                   </div>
 
                   <h3 className="mt-4 text-sm font-black text-slate-700">
@@ -1205,8 +2240,7 @@ export default function CreatePublicationPage() {
                   </h3>
 
                   <p className="mt-1 max-w-sm text-[10px] leading-relaxed text-slate-400">
-                    Sélectionnez au moins un réseau social pour afficher
-                    l'aperçu de votre publication.
+                    Sélectionnez au moins un réseau social pour afficher l'aperçu de votre publication.
                   </p>
 
                 </div>
@@ -1221,37 +2255,51 @@ export default function CreatePublicationPage() {
                       const network =
                         activeProject.networks.find(
                           (item) =>
-                            item.id === networkId
+                            item.id ===
+                            networkId
                         );
 
                       if (!network)
                         return null;
 
                       const post =
-                        posts[networkId];
+                        posts[
+                          networkId
+                        ] ?? {
+                          text:
+                            idea ||
+                            defaultPostText,
+                          image:
+                            null,
+                        };
 
                       return (
-
                         <NetworkPreview
-                          key={networkId}
-                          network={network}
+                          key={
+                            networkId
+                          }
+                          network={
+                            network
+                          }
                           post={post}
-                          onTextChange={(text) =>
+                          onTextChange={(
+                            text
+                          ) =>
                             updatePostText(
                               networkId,
                               text
                             )
                           }
-                          onImageChange={(image) =>
+                          onImageChange={(
+                            image
+                          ) =>
                             updatePostImage(
                               networkId,
                               image
                             )
                           }
                         />
-
                       );
-
                     }
                   )}
 
@@ -1281,29 +2329,40 @@ export default function CreatePublicationPage() {
             <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
 
               <PublishOption
-                active={publishMode === "now"}
+                active={
+                  publishMode ===
+                  "now"
+                }
                 onClick={() =>
-                  setPublishMode("now")
+                  setPublishMode(
+                    "now"
+                  )
                 }
                 label="Publier maintenant"
               />
 
               <PublishOption
                 active={
-                  publishMode === "schedule"
+                  publishMode ===
+                  "schedule"
                 }
                 onClick={() =>
-                  setPublishMode("schedule")
+                  setPublishMode(
+                    "schedule"
+                  )
                 }
                 label="Programmer pour plus tard"
               />
 
               <PublishOption
                 active={
-                  publishMode === "draft"
+                  publishMode ===
+                  "draft"
                 }
                 onClick={() =>
-                  setPublishMode("draft")
+                  setPublishMode(
+                    "draft"
+                  )
                 }
                 label="Enregistrer comme brouillon"
               />
@@ -1312,19 +2371,61 @@ export default function CreatePublicationPage() {
 
             <div className="flex flex-wrap gap-2">
 
-              <button className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-[10px] font-bold text-slate-600 transition hover:bg-slate-50">
-                <CalendarDays size={14} />
-                17/07/2026
-              </button>
+              <label className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-[10px] font-bold text-slate-600 transition hover:bg-slate-50">
 
-              <button className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-[10px] font-bold text-slate-600 transition hover:bg-slate-50">
-                <Clock3 size={14} />
-                18:00
-              </button>
+                <CalendarDays
+                  size={14}
+                />
 
-              <button className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-[10px] font-bold text-slate-600 transition hover:bg-slate-50">
+                <input
+                  type="date"
+                  value={formatDateForInput(
+                    scheduledDate
+                  )}
+                  onChange={(
+                    event
+                  ) =>
+                    setScheduledDate(
+                      formatDateForDisplay(
+                        event
+                          .target
+                          .value
+                      )
+                    )
+                  }
+                  className="bg-transparent outline-none"
+                />
+
+              </label>
+
+              <label className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-[10px] font-bold text-slate-600 transition hover:bg-slate-50">
+
+                <Clock3
+                  size={14}
+                />
+
+                <input
+                  type="time"
+                  value={
+                    scheduledTime
+                  }
+                  onChange={(
+                    event
+                  ) =>
+                    setScheduledTime(
+                      event
+                        .target
+                        .value
+                    )
+                  }
+                  className="bg-transparent outline-none"
+                />
+
+              </label>
+
+              <span className="flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-[10px] font-bold text-slate-600">
                 GMT +1
-              </button>
+              </span>
 
             </div>
 
@@ -1334,29 +2435,67 @@ export default function CreatePublicationPage() {
 
             <div className="flex flex-wrap gap-2">
 
-              <button className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-[10px] font-bold text-slate-600 transition hover:bg-slate-50">
-                <Settings2 size={14} />
+              <button
+                type="button"
+                className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-[10px] font-bold text-slate-600 transition hover:bg-slate-50"
+              >
+                <Settings2
+                  size={14}
+                />
                 Personnaliser par réseau
               </button>
 
-              <button className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-[10px] font-bold text-slate-600 transition hover:bg-slate-50">
+              <button
+                type="button"
+                onClick={() =>
+                  handleSavePublication(
+                    "draft"
+                  )
+                }
+                disabled={saving}
+                className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-[10px] font-bold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+              >
                 <Save size={14} />
-                Brouillon
+                {saving
+                  ? "Enregistrement..."
+                  : "Brouillon"}
               </button>
 
             </div>
 
-            <button className="flex items-center justify-center gap-2 rounded-xl bg-red-dark px-6 py-3 text-[10px] font-black uppercase tracking-[0.05em] text-white shadow-[0_8px_20px_rgba(0,0,0,0.12)] transition hover:bg-red-dark/90">
+            <button
+              type="button"
+              onClick={() =>
+                handleSavePublication()
+              }
+              disabled={saving}
+              className="flex items-center justify-center gap-2 rounded-xl bg-red-dark px-6 py-3 text-[10px] font-black uppercase tracking-[0.05em] text-white shadow-[0_8px_20px_rgba(0,0,0,0.12)] transition hover:bg-red-dark/90 disabled:cursor-not-allowed disabled:opacity-60"
+            >
 
-              <Send size={14} />
+              {saving ? (
+                <Save size={14} />
+              ) : (
+                <Send size={14} />
+              )}
 
-              {publishMode === "schedule"
+              {saving
+                ? "Enregistrement..."
+                : publishMode ===
+                  "schedule"
                 ? "Programmer"
-                : publishMode === "draft"
+                : publishMode ===
+                  "draft"
                 ? "Enregistrer"
+                : editingPublicationId !==
+                    null
+                ? "Mettre à jour"
                 : "Publier maintenant"}
 
-              <ChevronDown size={13} />
+              {!saving && (
+                <ChevronDown
+                  size={13}
+                />
+              )}
 
             </button>
 
@@ -1372,7 +2511,9 @@ export default function CreatePublicationPage() {
 
           <span>
             <strong className="text-slate-700">
-              {selectedNetworks.length}
+              {
+                selectedNetworks.length
+              }
             </strong>{" "}
             réseaux sélectionnés
           </span>
@@ -1380,7 +2521,9 @@ export default function CreatePublicationPage() {
           <span className="hidden h-3 w-px bg-slate-200 sm:block" />
 
           <span className="flex items-center gap-1">
-            <ImageIcon size={12} />
+            <ImageIcon
+              size={12}
+            />
             Images personnalisables
           </span>
 
@@ -1389,7 +2532,9 @@ export default function CreatePublicationPage() {
           <span>
             Projet :{" "}
             <strong className="text-slate-600">
-              {activeProject.name}
+              {
+                activeProject.name
+              }
             </strong>
           </span>
 
@@ -1414,7 +2559,7 @@ export default function CreatePublicationPage() {
         </div>
 
         {/* ===================================================
-            ASTUCE IA
+            ASTUCE
         =================================================== */}
 
         <div className="mt-3 flex items-start gap-3 rounded-xl border border-[#eee7c8] bg-[#fffdf3] px-4 py-3">
@@ -1430,13 +2575,13 @@ export default function CreatePublicationPage() {
             </p>
 
             <p className="mt-0.5 text-[9px] leading-relaxed text-slate-500">
-              Les publications avec image génèrent généralement davantage
-              d'engagement sur les réseaux sociaux.
+              Les publications avec image génèrent généralement davantage d'engagement sur les réseaux sociaux.
             </p>
 
           </div>
 
           <button
+            type="button"
             aria-label="Fermer"
             className="text-slate-400 transition hover:text-slate-600"
           >
@@ -1447,6 +2592,18 @@ export default function CreatePublicationPage() {
 
       </main>
 
+    </div>
+  );
+}
+
+/* =========================================================
+   PETITE ICÔNE MODÈLE
+========================================================= */
+
+function FileTemplateIcon() {
+  return (
+    <div className="flex h-full w-full items-center justify-center">
+      <Sparkles size={17} />
     </div>
   );
 }
@@ -1489,18 +2646,25 @@ function NetworkPreview({
 }: {
   network: SocialNetwork;
   post: PostContent;
-  onTextChange: (text: string) => void;
-  onImageChange: (image: string | null) => void;
+  onTextChange: (
+    text: string
+  ) => void;
+  onImageChange: (
+    image: string | null
+  ) => void;
 }) {
   switch (network.id) {
-
     case "facebook":
       return (
         <FacebookPreview
           network={network}
           post={post}
-          onTextChange={onTextChange}
-          onImageChange={onImageChange}
+          onTextChange={
+            onTextChange
+          }
+          onImageChange={
+            onImageChange
+          }
         />
       );
 
@@ -1509,8 +2673,12 @@ function NetworkPreview({
         <InstagramPreview
           network={network}
           post={post}
-          onTextChange={onTextChange}
-          onImageChange={onImageChange}
+          onTextChange={
+            onTextChange
+          }
+          onImageChange={
+            onImageChange
+          }
         />
       );
 
@@ -1519,8 +2687,12 @@ function NetworkPreview({
         <LinkedinPreview
           network={network}
           post={post}
-          onTextChange={onTextChange}
-          onImageChange={onImageChange}
+          onTextChange={
+            onTextChange
+          }
+          onImageChange={
+            onImageChange
+          }
         />
       );
 
@@ -1529,8 +2701,12 @@ function NetworkPreview({
         <TikTokPreview
           network={network}
           post={post}
-          onTextChange={onTextChange}
-          onImageChange={onImageChange}
+          onTextChange={
+            onTextChange
+          }
+          onImageChange={
+            onImageChange
+          }
         />
       );
 
@@ -1539,8 +2715,12 @@ function NetworkPreview({
         <GooglePreview
           network={network}
           post={post}
-          onTextChange={onTextChange}
-          onImageChange={onImageChange}
+          onTextChange={
+            onTextChange
+          }
+          onImageChange={
+            onImageChange
+          }
         />
       );
 
@@ -1550,7 +2730,7 @@ function NetworkPreview({
 }
 
 /* =========================================================
-   TOOLBAR D'ÉDITION
+   TOOLBAR
 ========================================================= */
 
 function PostEditorToolbar({
@@ -1563,8 +2743,12 @@ function PostEditorToolbar({
   networkId: string;
   text: string;
   image: string | null;
-  onTextChange: (text: string) => void;
-  onImageChange: (image: string | null) => void;
+  onTextChange: (
+    text: string
+  ) => void;
+  onImageChange: (
+    image: string | null
+  ) => void;
 }) {
   const [menuOpen, setMenuOpen] =
     useState(false);
@@ -1573,25 +2757,47 @@ function PostEditorToolbar({
     useState(false);
 
   const fileInputRef =
-    useRef<HTMLInputElement | null>(null);
+    useRef<HTMLInputElement | null>(
+      null
+    );
 
   const handleImageUpload = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-
     const file =
       event.target.files?.[0];
 
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
+    if (!file) {
       return;
     }
 
-    const imageUrl =
-      URL.createObjectURL(file);
+    if (
+      !file.type.startsWith(
+        "image/"
+      )
+    ) {
+      window.alert(
+        "Veuillez sélectionner une image."
+      );
 
-    onImageChange(imageUrl);
+      return;
+    }
+
+    const reader =
+      new FileReader();
+
+    reader.onload = () => {
+      if (
+        typeof reader.result ===
+        "string"
+      ) {
+        onImageChange(
+          reader.result
+        );
+      }
+    };
+
+    reader.readAsDataURL(file);
 
     setMenuOpen(false);
 
@@ -1608,15 +2814,19 @@ function PostEditorToolbar({
       <div className="absolute right-3 top-3 z-30">
 
         <button
+          type="button"
           onClick={() =>
             setMenuOpen(
-              (current) => !current
+              (current) =>
+                !current
             )
           }
           className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white/95 text-slate-500 shadow-sm backdrop-blur transition hover:bg-slate-50 hover:text-slate-800"
           aria-label="Modifier la publication"
         >
-          <MoreHorizontal size={16} />
+          <MoreHorizontal
+            size={16}
+          />
         </button>
 
         {menuOpen && (
@@ -1624,6 +2834,7 @@ function PostEditorToolbar({
           <div className="absolute right-0 top-10 z-50 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white py-1.5 shadow-2xl">
 
             <button
+              type="button"
               onClick={() => {
                 setEditing(true);
                 setMenuOpen(false);
@@ -1635,6 +2846,7 @@ function PostEditorToolbar({
             </button>
 
             <button
+              type="button"
               onClick={() => {
                 fileInputRef.current?.click();
                 setMenuOpen(false);
@@ -1648,10 +2860,15 @@ function PostEditorToolbar({
             {image && (
 
               <button
-                onClick={removeImage}
+                type="button"
+                onClick={
+                  removeImage
+                }
                 className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-[10px] font-semibold text-red-600 transition hover:bg-red-50"
               >
-                <Trash2 size={14} />
+                <Trash2
+                  size={14}
+                />
                 Supprimer l'image
               </button>
 
@@ -1668,7 +2885,9 @@ function PostEditorToolbar({
         type="file"
         accept="image/*"
         className="hidden"
-        onChange={handleImageUpload}
+        onChange={
+          handleImageUpload
+        }
       />
 
       {editing && (
@@ -1682,6 +2901,7 @@ function PostEditorToolbar({
             </p>
 
             <button
+              type="button"
               onClick={() =>
                 setEditing(false)
               }
@@ -1695,7 +2915,9 @@ function PostEditorToolbar({
           <textarea
             value={text}
             onChange={(e) =>
-              onTextChange(e.target.value)
+              onTextChange(
+                e.target.value
+              )
             }
             rows={7}
             className="w-full resize-none rounded-lg border border-slate-200 bg-slate-50 p-2.5 text-[10px] leading-relaxed text-slate-700 outline-none focus:border-red-dark focus:bg-white focus:ring-4 focus:ring-red-light/20"
@@ -1704,6 +2926,7 @@ function PostEditorToolbar({
           <div className="mt-2 flex justify-end">
 
             <button
+              type="button"
               onClick={() =>
                 setEditing(false)
               }
@@ -1734,8 +2957,12 @@ function FacebookPreview({
 }: {
   network: SocialNetwork;
   post: PostContent;
-  onTextChange: (text: string) => void;
-  onImageChange: (image: string | null) => void;
+  onTextChange: (
+    text: string
+  ) => void;
+  onImageChange: (
+    image: string | null
+  ) => void;
 }) {
   return (
     <article className="relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_2px_8px_rgba(15,23,42,0.035)]">
@@ -1744,8 +2971,12 @@ function FacebookPreview({
         networkId={network.id}
         text={post.text}
         image={post.image}
-        onTextChange={onTextChange}
-        onImageChange={onImageChange}
+        onTextChange={
+          onTextChange
+        }
+        onImageChange={
+          onImageChange
+        }
       />
 
       <PreviewHeader
@@ -1756,13 +2987,19 @@ function FacebookPreview({
       <div className="flex items-center gap-2 px-3.5 py-3">
 
         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200 text-[9px] font-black">
-          {network.username.charAt(0)}
+          {
+            network.username.charAt(
+              0
+            )
+          }
         </div>
 
         <div className="min-w-0">
 
           <p className="text-[9px] font-black text-slate-800">
-            {network.username}
+            {
+              network.username
+            }
           </p>
 
           <p className="text-[8px] text-slate-400">
@@ -1785,7 +3022,9 @@ function FacebookPreview({
         image={post.image}
         alt="Publication Facebook"
         aspect="aspect-[1.91/1]"
-        onChange={onImageChange}
+        onChange={
+          onImageChange
+        }
       />
 
       <div className="px-3.5 py-2.5">
@@ -1816,7 +3055,9 @@ function FacebookPreview({
           </span>
 
           <span className="flex items-center justify-center gap-1">
-            <MessageCircle size={11} />
+            <MessageCircle
+              size={11}
+            />
             Commenter
           </span>
 
@@ -1845,8 +3086,12 @@ function InstagramPreview({
 }: {
   network: SocialNetwork;
   post: PostContent;
-  onTextChange: (text: string) => void;
-  onImageChange: (image: string | null) => void;
+  onTextChange: (
+    text: string
+  ) => void;
+  onImageChange: (
+    image: string | null
+  ) => void;
 }) {
   return (
     <article className="relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_2px_8px_rgba(15,23,42,0.035)]">
@@ -1855,8 +3100,12 @@ function InstagramPreview({
         networkId={network.id}
         text={post.text}
         image={post.image}
-        onTextChange={onTextChange}
-        onImageChange={onImageChange}
+        onTextChange={
+          onTextChange
+        }
+        onImageChange={
+          onImageChange
+        }
       />
 
       <PreviewHeader
@@ -1869,7 +3118,11 @@ function InstagramPreview({
         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-yellow-300 via-pink-500 to-purple-600 p-[2px]">
 
           <div className="flex h-full w-full items-center justify-center rounded-full bg-white text-[8px] font-black">
-            {network.username.charAt(1)}
+            {
+              network.username.charAt(
+                1
+              )
+            }
           </div>
 
         </div>
@@ -1877,7 +3130,9 @@ function InstagramPreview({
         <div className="min-w-0 flex-1">
 
           <p className="text-[9px] font-black text-slate-800">
-            {network.username}
+            {
+              network.username
+            }
           </p>
 
         </div>
@@ -1893,7 +3148,9 @@ function InstagramPreview({
         image={post.image}
         alt="Publication Instagram"
         aspect="aspect-square"
-        onChange={onImageChange}
+        onChange={
+          onImageChange
+        }
       />
 
       <div className="px-3.5 pt-3">
@@ -1904,7 +3161,9 @@ function InstagramPreview({
 
             <Heart size={16} />
 
-            <MessageCircle size={16} />
+            <MessageCircle
+              size={16}
+            />
 
             <Share2 size={16} />
 
@@ -1925,7 +3184,9 @@ function InstagramPreview({
         <p className="line-clamp-7 whitespace-pre-line text-[9px] leading-[1.6] text-slate-600">
 
           <strong className="font-black text-slate-800">
-            {network.username}
+            {
+              network.username
+            }
           </strong>{" "}
 
           {post.text}
@@ -1954,8 +3215,12 @@ function LinkedinPreview({
 }: {
   network: SocialNetwork;
   post: PostContent;
-  onTextChange: (text: string) => void;
-  onImageChange: (image: string | null) => void;
+  onTextChange: (
+    text: string
+  ) => void;
+  onImageChange: (
+    image: string | null
+  ) => void;
 }) {
   return (
     <article className="relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_2px_8px_rgba(15,23,42,0.035)]">
@@ -1964,8 +3229,12 @@ function LinkedinPreview({
         networkId={network.id}
         text={post.text}
         image={post.image}
-        onTextChange={onTextChange}
-        onImageChange={onImageChange}
+        onTextChange={
+          onTextChange
+        }
+        onImageChange={
+          onImageChange
+        }
       />
 
       <PreviewHeader
@@ -1976,13 +3245,19 @@ function LinkedinPreview({
       <div className="flex items-start gap-2 px-3.5 py-3">
 
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-200 text-[9px] font-black">
-          {network.username.charAt(0)}
+          {
+            network.username.charAt(
+              0
+            )
+          }
         </div>
 
         <div className="min-w-0 flex-1">
 
           <p className="text-[9px] font-black text-slate-800">
-            {network.username}
+            {
+              network.username
+            }
           </p>
 
           <p className="text-[8px] text-slate-400">
@@ -1991,7 +3266,10 @@ function LinkedinPreview({
 
         </div>
 
-        <button className="text-[9px] font-bold text-blue-600">
+        <button
+          type="button"
+          className="text-[9px] font-bold text-blue-600"
+        >
           + Suivre
         </button>
 
@@ -2009,7 +3287,9 @@ function LinkedinPreview({
         image={post.image}
         alt="Publication LinkedIn"
         aspect="aspect-[1.91/1]"
-        onChange={onImageChange}
+        onChange={
+          onImageChange
+        }
       />
 
       <div className="px-3.5 py-3">
@@ -2035,7 +3315,9 @@ function LinkedinPreview({
           </span>
 
           <span className="flex items-center justify-center gap-1">
-            <MessageCircle size={11} />
+            <MessageCircle
+              size={11}
+            />
             Commenter
           </span>
 
@@ -2064,8 +3346,12 @@ function TikTokPreview({
 }: {
   network: SocialNetwork;
   post: PostContent;
-  onTextChange: (text: string) => void;
-  onImageChange: (image: string | null) => void;
+  onTextChange: (
+    text: string
+  ) => void;
+  onImageChange: (
+    image: string | null
+  ) => void;
 }) {
   return (
     <article className="relative overflow-hidden rounded-xl border border-slate-200 bg-black shadow-[0_2px_8px_rgba(15,23,42,0.08)]">
@@ -2074,20 +3360,30 @@ function TikTokPreview({
         networkId={network.id}
         text={post.text}
         image={post.image}
-        onTextChange={onTextChange}
-        onImageChange={onImageChange}
+        onTextChange={
+          onTextChange
+        }
+        onImageChange={
+          onImageChange
+        }
       />
 
       <div className="absolute left-3 right-12 top-3 z-20 flex items-center gap-2">
 
         <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-[8px] font-black">
-          {network.username.charAt(1)}
+          {
+            network.username.charAt(
+              1
+            )
+          }
         </div>
 
         <div className="min-w-0">
 
           <p className="text-[9px] font-black text-white">
-            {network.username}
+            {
+              network.username
+            }
           </p>
 
           <p className="text-[7px] text-white/70">
@@ -2129,7 +3425,10 @@ function TikTokPreview({
           <div className="flex flex-col items-center gap-1">
 
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 backdrop-blur">
-              <Heart size={19} fill="white" />
+              <Heart
+                size={19}
+                fill="white"
+              />
             </div>
 
             <span className="text-[8px] font-bold">
@@ -2139,24 +3438,35 @@ function TikTokPreview({
           </div>
 
           <div className="flex flex-col items-center gap-1">
-            <MessageCircle size={20} />
+
+            <MessageCircle
+              size={20}
+            />
+
             <span className="text-[8px] font-bold">
               12
             </span>
+
           </div>
 
           <div className="flex flex-col items-center gap-1">
+
             <Bookmark size={19} />
+
             <span className="text-[8px] font-bold">
               24
             </span>
+
           </div>
 
           <div className="flex flex-col items-center gap-1">
+
             <Share2 size={19} />
+
             <span className="text-[8px] font-bold">
               Partager
             </span>
+
           </div>
 
         </div>
@@ -2187,8 +3497,12 @@ function GooglePreview({
 }: {
   network: SocialNetwork;
   post: PostContent;
-  onTextChange: (text: string) => void;
-  onImageChange: (image: string | null) => void;
+  onTextChange: (
+    text: string
+  ) => void;
+  onImageChange: (
+    image: string | null
+  ) => void;
 }) {
   return (
     <article className="relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_2px_8px_rgba(15,23,42,0.035)]">
@@ -2197,12 +3511,18 @@ function GooglePreview({
         networkId={network.id}
         text={post.text}
         image={post.image}
-        onTextChange={onTextChange}
-        onImageChange={onImageChange}
+        onTextChange={
+          onTextChange
+        }
+        onImageChange={
+          onImageChange
+        }
       />
 
       <PreviewHeader
-        icon={<GoogleBusinessIcon />}
+        icon={
+          <GoogleBusinessIcon />
+        }
         platform="Google Business"
       />
 
@@ -2211,19 +3531,33 @@ function GooglePreview({
         <div className="flex items-center gap-2">
 
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-[9px] font-black">
-            {network.username.charAt(0)}
+            {
+              network.username.charAt(
+                0
+              )
+            }
           </div>
 
           <div className="min-w-0">
 
             <p className="text-[9px] font-black text-slate-800">
-              {network.username}
+              {
+                network.username
+              }
             </p>
 
             <div className="flex items-center gap-1 text-[8px] text-slate-400">
-              <span>Google</span>
+
+              <span>
+                Google
+              </span>
+
               <span>·</span>
-              <span>Il y a 1 h</span>
+
+              <span>
+                Il y a 1 h
+              </span>
+
             </div>
 
           </div>
@@ -2244,7 +3578,9 @@ function GooglePreview({
         image={post.image}
         alt="Publication Google Business"
         aspect="aspect-[1.91/1]"
-        onChange={onImageChange}
+        onChange={
+          onImageChange
+        }
       />
 
       <div className="p-3.5">
@@ -2261,12 +3597,18 @@ function GooglePreview({
 
         <div className="mt-3 flex gap-2">
 
-          <button className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-slate-200 py-2 text-[8px] font-bold text-slate-600">
+          <button
+            type="button"
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-slate-200 py-2 text-[8px] font-bold text-slate-600"
+          >
             <Eye size={11} />
             Voir
           </button>
 
-          <button className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-blue-600 py-2 text-[8px] font-bold text-white">
+          <button
+            type="button"
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-blue-600 py-2 text-[8px] font-bold text-white"
+          >
             En savoir plus
           </button>
 
@@ -2317,7 +3659,7 @@ function PreviewHeader({
 }
 
 /* =========================================================
-   IMAGE AVEC MODIFICATION / SUPPRESSION
+   IMAGE
 ========================================================= */
 
 function PreviewImage({
@@ -2329,35 +3671,58 @@ function PreviewImage({
   image: string | null;
   alt: string;
   aspect: string;
-  onChange: (image: string | null) => void;
+  onChange: (
+    image: string | null
+  ) => void;
 }) {
   const inputRef =
-    useRef<HTMLInputElement | null>(null);
+    useRef<HTMLInputElement | null>(
+      null
+    );
 
   const handleFile = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-
     const file =
       event.target.files?.[0];
 
-    if (!file) return;
-
-    if (!file.type.startsWith("image/"))
+    if (!file) {
       return;
+    }
 
-    const imageUrl =
-      URL.createObjectURL(file);
+    if (
+      !file.type.startsWith(
+        "image/"
+      )
+    ) {
+      window.alert(
+        "Veuillez sélectionner une image."
+      );
 
-    onChange(imageUrl);
+      return;
+    }
+
+    const reader =
+      new FileReader();
+
+    reader.onload = () => {
+      if (
+        typeof reader.result ===
+        "string"
+      ) {
+        onChange(
+          reader.result
+        );
+      }
+    };
+
+    reader.readAsDataURL(file);
 
     event.target.value = "";
   };
 
   if (!image) {
-
     return (
-
       <div className="relative mx-3.5 overflow-hidden rounded-xl border border-dashed border-slate-300 bg-slate-50">
 
         <div className="flex aspect-[1.5/1] flex-col items-center justify-center px-5 text-center">
@@ -2371,6 +3736,7 @@ function PreviewImage({
           </p>
 
           <button
+            type="button"
             onClick={() =>
               inputRef.current?.click()
             }
@@ -2391,12 +3757,10 @@ function PreviewImage({
         />
 
       </div>
-
     );
   }
 
   return (
-
     <div className="group/image relative mx-3.5 overflow-hidden rounded-xl bg-slate-100">
 
       <img
@@ -2410,6 +3774,7 @@ function PreviewImage({
         <div className="flex items-center gap-2">
 
           <button
+            type="button"
             onClick={() =>
               inputRef.current?.click()
             }
@@ -2420,6 +3785,7 @@ function PreviewImage({
           </button>
 
           <button
+            type="button"
             onClick={() =>
               onChange(null)
             }
@@ -2442,12 +3808,11 @@ function PreviewImage({
       />
 
     </div>
-
   );
 }
 
 /* =========================================================
-   PUBLISH OPTION
+   OPTION PUBLICATION
 ========================================================= */
 
 function PublishOption({
@@ -2460,8 +3825,8 @@ function PublishOption({
   label: string;
 }) {
   return (
-
     <button
+      type="button"
       onClick={onClick}
       className="flex items-center gap-2 text-[10px] font-semibold text-slate-600 transition hover:text-slate-900"
     >
@@ -2483,6 +3848,5 @@ function PublishOption({
       {label}
 
     </button>
-
   );
 }

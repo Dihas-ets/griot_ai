@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import axios from "@/lib/axios";
 import {
   Plus,
   Search,
@@ -23,6 +24,9 @@ import {
   List,
   ArchiveRestore,
   ExternalLink,
+  X,
+  Save,
+  Loader2,
 } from "lucide-react";
 
 /* =========================================================
@@ -44,50 +48,83 @@ type Project = {
   image: string;
 };
 
+type ProjectForm = {
+  name: string;
+  description: string;
+  status: ProjectStatus;
+  members: number;
+  image: File | null;
+};
+
 /* =========================================================
    PAGE
 ========================================================= */
 
 export default function ProjetsPage() {
   const searchParams = useSearchParams();
+
   const [projects, setProjects] = useState<Project[]>([]);
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("Tous");
   const [view, setView] = useState<"grid" | "list">("grid");
+
   const [sessionMessage, setSessionMessage] = useState("");
 
   const [openMenu, setOpenMenu] = useState<number | null>(null);
 
+  /* =======================================================
+     ÉTATS DES ACTIONS
+  ======================================================= */
+
+  const [loadingAction, setLoadingAction] = useState<{
+    id: number;
+    action: "delete" | "archive" | "restore";
+  } | null>(null);
+
+  /* =======================================================
+     MODALE VOIR
+  ======================================================= */
+
+  const [selectedProject, setSelectedProject] =
+    useState<Project | null>(null);
+
+  const [showViewModal, setShowViewModal] = useState(false);
+
+  /* =======================================================
+     MODALE MODIFICATION
+  ======================================================= */
+
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
+
+  const [showEditModal, setShowEditModal] = useState(false);
+
+  const [editForm, setEditForm] = useState<ProjectForm>({
+    name: "",
+    description: "",
+    status: "Actif",
+    members: 1,
+    image: null,
+  });
+
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  const [editError, setEditError] = useState("");
+
+  /* =======================================================
+     CHARGEMENT DES PROJETS
+  ======================================================= */
+
   useEffect(() => {
     const loadProjects = async () => {
       try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/projects`,
-          {
-            credentials: "include",
-            headers: {
-              Accept: "application/json",
-            },
-          },
-        );
-
-        if (response.status === 401) {
-          setSessionMessage(
-            "Votre session est absente ou invalide. Veuillez vous reconnecter.",
-          );
-          setProjects([]);
-          return;
-        }
-
         setSessionMessage("");
 
-        if (!response.ok) {
-          throw new Error("Impossible de charger les projets");
-        }
+        const response = await axios.get("/api/projects");
 
-        const data = await response.json();
-        const baseProjects = Array.isArray(data.projects)
+        const data = response.data;
+
+        const baseProjects: Project[] = Array.isArray(data.projects)
           ? data.projects.map((project: any) => ({
               id: Number(project.id),
               name: project.name ?? "Projet sans nom",
@@ -117,50 +154,22 @@ export default function ProjetsPage() {
             }))
           : [];
 
-        const pendingProject = localStorage.getItem("lastCreatedProject");
-        if (pendingProject) {
-          try {
-            const parsed = JSON.parse(pendingProject) as any;
-            const pendingMapped = {
-              id: Number(parsed.id ?? Date.now()),
-              name: parsed.name ?? "Projet sans nom",
-              description: parsed.description ?? "",
-              status: ["Actif", "En pause", "Archivé"].includes(parsed.status)
-                ? parsed.status
-                : "Actif",
-              publications: Number(parsed.publications ?? 0),
-              scheduled: Number(parsed.scheduled ?? 0),
-              media: Number(parsed.media ?? 0),
-              members: Number(parsed.members ?? 1),
-              createdAt: "aujourd'hui",
-              image:
-                parsed.image &&
-                (parsed.image.startsWith("http") ||
-                  parsed.image.startsWith("data:"))
-                  ? parsed.image
-                  : parsed.image
-                    ? `${process.env.NEXT_PUBLIC_BACKEND_URL}${parsed.image}`
-                    : "/placeholder-project.png",
-            };
+        setProjects(baseProjects);
+      } catch (error: any) {
+        console.error("Erreur lors du chargement des projets", error);
 
-            const exists = baseProjects.some(
-              (project: { id: number }) => project.id === pendingMapped.id,
-            );
-            if (!exists) {
-              setProjects([pendingMapped, ...baseProjects]);
-            } else {
-              setProjects(baseProjects);
-            }
-            localStorage.removeItem("lastCreatedProject");
-            return;
-          } catch {
-            localStorage.removeItem("lastCreatedProject");
-          }
+        if (error?.response?.status === 401) {
+          setSessionMessage(
+            "Votre session est absente ou invalide. Veuillez vous reconnecter.",
+          );
+        } else if (error?.response?.status === 403) {
+          setSessionMessage(
+            "Vous devez avoir une souscription active pour accéder à vos projets.",
+          );
+        } else {
+          setSessionMessage("Impossible de charger vos projets.");
         }
 
-        setProjects(baseProjects);
-      } catch (error) {
-        console.error("Erreur lors du chargement des projets", error);
         setProjects([]);
       }
     };
@@ -208,42 +217,342 @@ export default function ProjetsPage() {
   );
 
   /* =======================================================
-     SUPPRIMER
+     VOIR UN PROJET
   ======================================================= */
 
-  const deleteProject = (id: number) => {
-    const project = projects.find((item) => item.id === id);
+  const viewProject = async (project: Project) => {
+    try {
+      setOpenMenu(null);
 
-    if (!project) return;
+      const response = await axios.get(`/api/projects/${project.id}`);
 
-    const confirmed = window.confirm(
-      `Voulez-vous vraiment supprimer le projet "${project.name}" ?`,
-    );
+      const backendProject = response.data?.project;
 
-    if (!confirmed) return;
+      if (backendProject) {
+        const mappedProject: Project = {
+          id: Number(backendProject.id),
+          name: backendProject.name ?? project.name,
+          description: backendProject.description ?? "",
+          status: ["Actif", "En pause", "Archivé"].includes(
+            backendProject.status,
+          )
+            ? backendProject.status
+            : "Actif",
+          publications: Number(backendProject.publications ?? 0),
+          scheduled: Number(backendProject.scheduled ?? 0),
+          media: Number(backendProject.media ?? 0),
+          members: Number(backendProject.members ?? 1),
+          createdAt: backendProject.created_at
+            ? new Date(backendProject.created_at).toLocaleDateString("fr-FR", {
+                day: "2-digit",
+                month: "long",
+                year: "numeric",
+              })
+            : project.createdAt,
+          image:
+            backendProject.image &&
+            (backendProject.image.startsWith("http") ||
+              backendProject.image.startsWith("data:"))
+              ? backendProject.image
+              : backendProject.image
+                ? `${process.env.NEXT_PUBLIC_BACKEND_URL}${backendProject.image}`
+                : "/placeholder-project.png",
+        };
 
-    setProjects((current) => current.filter((item) => item.id !== id));
+        setSelectedProject(mappedProject);
+      } else {
+        setSelectedProject(project);
+      }
 
-    setOpenMenu(null);
+      setShowViewModal(true);
+    } catch (error) {
+      console.error("Erreur lors de la récupération du projet", error);
+
+      setSelectedProject(project);
+      setShowViewModal(true);
+    }
   };
 
   /* =======================================================
-     ARCHIVER
+     OUVRIR MODIFICATION
   ======================================================= */
 
-  const toggleArchive = (id: number) => {
-    setProjects((current) =>
-      current.map((project) => {
-        if (project.id !== id) return project;
+  const openEditProject = (project: Project) => {
+    setOpenMenu(null);
+    setEditingProject(project);
 
-        return {
-          ...project,
-          status: project.status === "Archivé" ? "Actif" : "Archivé",
+    setEditForm({
+      name: project.name,
+      description: project.description,
+      status: project.status,
+      members: project.members,
+      image: null,
+    });
+
+    setEditError("");
+    setShowEditModal(true);
+  };
+
+  /* =======================================================
+     MODIFIER UN PROJET
+  ======================================================= */
+
+  const updateProject = async () => {
+    if (!editingProject) return;
+
+    if (!editForm.name.trim()) {
+      setEditError("Le nom du projet est obligatoire.");
+      return;
+    }
+
+    if (editForm.members < 1) {
+      setEditError("Le nombre de membres doit être supérieur ou égal à 1.");
+      return;
+    }
+
+    try {
+      setSavingEdit(true);
+      setEditError("");
+
+      const formData = new FormData();
+
+      formData.append("name", editForm.name.trim());
+      formData.append("description", editForm.description);
+      formData.append("status", editForm.status);
+      formData.append("members", String(editForm.members));
+
+      if (editForm.image) {
+        formData.append("image", editForm.image);
+      }
+
+      /*
+       * Laravel accepte PUT avec les données classiques.
+       * Pour FormData avec Laravel, on utilise POST + _method=PUT.
+       */
+      formData.append("_method", "PUT");
+
+      const response = await axios.post(
+        `/api/projects/${editingProject.id}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        },
+      );
+
+      const updatedBackendProject = response.data?.project;
+
+      if (updatedBackendProject) {
+        const updatedProject: Project = {
+          id: Number(updatedBackendProject.id),
+          name: updatedBackendProject.name ?? editForm.name,
+          description: updatedBackendProject.description ?? "",
+          status: ["Actif", "En pause", "Archivé"].includes(
+            updatedBackendProject.status,
+          )
+            ? updatedBackendProject.status
+            : editForm.status,
+          publications: Number(
+            updatedBackendProject.publications ??
+              editingProject.publications ??
+              0,
+          ),
+          scheduled: Number(
+            updatedBackendProject.scheduled ?? editingProject.scheduled ?? 0,
+          ),
+          media: Number(
+            updatedBackendProject.media ?? editingProject.media ?? 0,
+          ),
+          members: Number(
+            updatedBackendProject.members ?? editForm.members,
+          ),
+          createdAt: updatedBackendProject.created_at
+            ? new Date(
+                updatedBackendProject.created_at,
+              ).toLocaleDateString("fr-FR", {
+                day: "2-digit",
+                month: "long",
+                year: "numeric",
+              })
+            : editingProject.createdAt,
+          image:
+            updatedBackendProject.image &&
+            (updatedBackendProject.image.startsWith("http") ||
+              updatedBackendProject.image.startsWith("data:"))
+              ? updatedBackendProject.image
+              : updatedBackendProject.image
+                ? `${process.env.NEXT_PUBLIC_BACKEND_URL}${updatedBackendProject.image}`
+                : editingProject.image,
         };
-      }),
+
+        setProjects((current) =>
+          current.map((project) =>
+            project.id === updatedProject.id ? updatedProject : project,
+          ),
+        );
+
+        setSelectedProject((current) =>
+          current?.id === updatedProject.id ? updatedProject : current,
+        );
+      } else {
+        /*
+         * Si Laravel ne renvoie pas le projet,
+         * on met quand même à jour les informations connues.
+         */
+        setProjects((current) =>
+          current.map((project) =>
+            project.id === editingProject.id
+              ? {
+                  ...project,
+                  name: editForm.name.trim(),
+                  description: editForm.description,
+                  status: editForm.status,
+                  members: editForm.members,
+                }
+              : project,
+          ),
+        );
+      }
+
+      setShowEditModal(false);
+      setEditingProject(null);
+      setEditError("");
+    } catch (error: any) {
+      console.error("Erreur lors de la modification du projet", error);
+
+      const validationErrors = error?.response?.data?.errors;
+
+      if (validationErrors) {
+        const firstError = Object.values(validationErrors)
+          .flat()
+          .find((message) => typeof message === "string");
+
+        setEditError(
+          typeof firstError === "string"
+            ? firstError
+            : "Veuillez vérifier les informations saisies.",
+        );
+      } else {
+        setEditError(
+          error?.response?.data?.message ||
+            "Impossible de modifier le projet.",
+        );
+      }
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  /* =======================================================
+     SUPPRIMER
+  ======================================================= */
+
+  const deleteProject = async (project: Project) => {
+    const confirmed = window.confirm(
+      `Voulez-vous vraiment supprimer le projet "${project.name}" ?\n\nCette action est définitive.`,
     );
 
-    setOpenMenu(null);
+    if (!confirmed) {
+      setOpenMenu(null);
+      return;
+    }
+
+    try {
+      setLoadingAction({
+        id: project.id,
+        action: "delete",
+      });
+
+      setOpenMenu(null);
+
+      await axios.delete(`/api/projects/${project.id}`);
+
+      setProjects((current) =>
+        current.filter((item) => item.id !== project.id),
+      );
+
+      if (selectedProject?.id === project.id) {
+        setSelectedProject(null);
+        setShowViewModal(false);
+      }
+    } catch (error: any) {
+      console.error("Erreur lors de la suppression du projet", error);
+
+      alert(
+        error?.response?.data?.message ||
+          "Impossible de supprimer le projet.",
+      );
+    } finally {
+      setLoadingAction(null);
+    }
+  };
+
+  /* =======================================================
+     ARCHIVER / RESTAURER
+  ======================================================= */
+
+  const toggleArchive = async (project: Project) => {
+    const isArchived = project.status === "Archivé";
+
+    try {
+      setLoadingAction({
+        id: project.id,
+        action: isArchived ? "restore" : "archive",
+      });
+
+      setOpenMenu(null);
+
+      const endpoint = isArchived
+        ? `/api/projects/${project.id}/restore`
+        : `/api/projects/${project.id}/archive`;
+
+      const response = await axios.put(endpoint);
+
+      const backendProject = response.data?.project;
+
+      const newStatus: ProjectStatus = backendProject?.status
+        ? backendProject.status
+        : isArchived
+          ? "Actif"
+          : "Archivé";
+
+      setProjects((current) =>
+        current.map((item) =>
+          item.id === project.id
+            ? {
+                ...item,
+                status: newStatus,
+              }
+            : item,
+        ),
+      );
+
+      setSelectedProject((current) =>
+        current?.id === project.id
+          ? {
+              ...current,
+              status: newStatus,
+            }
+          : current,
+      );
+    } catch (error: any) {
+      console.error(
+        isArchived
+          ? "Erreur lors de la restauration du projet"
+          : "Erreur lors de l'archivage du projet",
+        error,
+      );
+
+      alert(
+        error?.response?.data?.message ||
+          (isArchived
+            ? "Impossible de restaurer le projet."
+            : "Impossible d'archiver le projet."),
+      );
+    } finally {
+      setLoadingAction(null);
+    }
   };
 
   /* =======================================================
@@ -500,8 +809,11 @@ export default function ProjetsPage() {
                 project={project}
                 openMenu={openMenu}
                 setOpenMenu={setOpenMenu}
+                onView={viewProject}
+                onEdit={openEditProject}
                 onDelete={deleteProject}
                 onArchive={toggleArchive}
+                loadingAction={loadingAction}
               />
             ))}
           </div>
@@ -519,8 +831,11 @@ export default function ProjetsPage() {
                 project={project}
                 openMenu={openMenu}
                 setOpenMenu={setOpenMenu}
+                onView={viewProject}
+                onEdit={openEditProject}
                 onDelete={deleteProject}
                 onArchive={toggleArchive}
+                loadingAction={loadingAction}
               />
             ))}
           </div>
@@ -616,7 +931,7 @@ export default function ProjetsPage() {
           </div>
 
           <Link
-            href="/dashboard/projets/nouveau"
+            href="/dashboard/projets/nouveau_projet"
             className="
               shrink-0 rounded-xl
               bg-red-600 px-4 py-2.5
@@ -630,6 +945,46 @@ export default function ProjetsPage() {
           </Link>
         </div>
       </main>
+
+      {/* =====================================================
+          MODALE VOIR PROJET
+      ===================================================== */}
+
+      {showViewModal && selectedProject && (
+        <ViewProjectModal
+          project={selectedProject}
+          onClose={() => {
+            setShowViewModal(false);
+            setSelectedProject(null);
+          }}
+          onEdit={() => {
+            setShowViewModal(false);
+            openEditProject(selectedProject);
+          }}
+        />
+      )}
+
+      {/* =====================================================
+          MODALE MODIFIER PROJET
+      ===================================================== */}
+
+      {showEditModal && editingProject && (
+        <EditProjectModal
+          project={editingProject}
+          form={editForm}
+          setForm={setEditForm}
+          error={editError}
+          saving={savingEdit}
+          onClose={() => {
+            if (savingEdit) return;
+
+            setShowEditModal(false);
+            setEditingProject(null);
+            setEditError("");
+          }}
+          onSave={updateProject}
+        />
+      )}
     </div>
   );
 }
@@ -693,21 +1048,33 @@ function ProjectCard({
   project,
   openMenu,
   setOpenMenu,
+  onView,
+  onEdit,
   onDelete,
   onArchive,
+  loadingAction,
 }: {
   project: Project;
   openMenu: number | null;
   setOpenMenu: React.Dispatch<React.SetStateAction<number | null>>;
-  onDelete: (id: number) => void;
-  onArchive: (id: number) => void;
+  onView: (project: Project) => void;
+  onEdit: (project: Project) => void;
+  onDelete: (project: Project) => void;
+  onArchive: (project: Project) => void;
+  loadingAction: {
+    id: number;
+    action: "delete" | "archive" | "restore";
+  } | null;
 }) {
   const isMenuOpen = openMenu === project.id;
+
+  const isLoading =
+    loadingAction?.id === project.id;
 
   return (
     <article
       className="
-        overflow-hidden
+          overflow-hidden
         rounded-2xl
         border border-slate-200
         bg-white
@@ -727,7 +1094,6 @@ function ProjectCard({
           relative
           h-40
           w-full
-          overflow-hidden
           bg-slate-100
         "
       >
@@ -766,7 +1132,11 @@ function ProjectCard({
           <button
             type="button"
             aria-label={`Actions du projet ${project.name}`}
-            onClick={() => setOpenMenu(isMenuOpen ? null : project.id)}
+            disabled={isLoading}
+            onClick={(e) => {
+              e.stopPropagation();
+              setOpenMenu(isMenuOpen ? null : project.id);
+            }}
             className="
               flex h-9 w-9
               items-center justify-center
@@ -776,15 +1146,22 @@ function ProjectCard({
               shadow-md
               transition
               hover:bg-slate-50
+              disabled:cursor-not-allowed
+              disabled:opacity-60
             "
           >
-            <MoreHorizontal size={18} />
+            {isLoading ? (
+              <Loader2 size={17} className="animate-spin" />
+            ) : (
+              <MoreHorizontal size={18} />
+            )}
           </button>
 
           {/* MENU */}
 
-          {isMenuOpen && (
+          {isMenuOpen && !isLoading && (
             <div
+              onClick={(e) => e.stopPropagation()}
               className="
                 absolute right-0 top-11
                 z-50 w-44
@@ -796,27 +1173,9 @@ function ProjectCard({
                 shadow-xl
               "
             >
-              <Link
-                href="/dashboard/publications"
-                onClick={() => setOpenMenu(null)}
-                className="
-                  flex items-center gap-2
-                  rounded-lg px-3 py-2.5
-                  text-[10px] font-bold
-                  text-slate-600
-                  hover:bg-slate-50
-                "
-              >
-                <Eye size={14} />
-                Voir le projet
-              </Link>
-
               <button
                 type="button"
-                onClick={() => {
-                  setOpenMenu(null);
-                  alert(`Modification du projet "${project.name}"`);
-                }}
+                onClick={() => onEdit(project)}
                 className="
                   flex w-full items-center gap-2
                   rounded-lg px-3 py-2.5
@@ -831,7 +1190,7 @@ function ProjectCard({
 
               <button
                 type="button"
-                onClick={() => onArchive(project.id)}
+                onClick={() => onArchive(project)}
                 className="
                   flex w-full items-center gap-2
                   rounded-lg px-3 py-2.5
@@ -857,7 +1216,7 @@ function ProjectCard({
 
               <button
                 type="button"
-                onClick={() => onDelete(project.id)}
+                onClick={() => onDelete(project)}
                 className="
                   flex w-full items-center gap-2
                   rounded-lg px-3 py-2.5
@@ -875,8 +1234,8 @@ function ProjectCard({
 
         {/* NOM */}
 
-        <div className="absolute bottom-4 left-4 right-4">
-          <h3 className="truncate text-base font-black text-white">
+        <div className="absolute bottom-4 left-4">
+          <h3 className="max-w-[220px] truncate text-base font-black text-white">
             {project.name}
           </h3>
         </div>
@@ -902,7 +1261,7 @@ function ProjectCard({
             text-slate-400
           "
         >
-          {project.description}
+          {project.description || "Aucune description pour ce projet."}
         </p>
 
         {/* STATS */}
@@ -945,109 +1304,68 @@ function ProjectCard({
           </span>
         </div>
 
-{/* ACTIONS BAS */}
+        {/* ===================================================
+            ACTIONS PRINCIPALES
+            Une seule zone d'actions.
+            Les actions Modifier/Supprimer/Archiver sont
+            uniquement dans le menu "..."
+        =================================================== */}
 
-<div
-  className="
-    mt-4
-    flex gap-2
-    border-t border-slate-100
-    pt-4
-  "
->
-  <Link
-    href="/dashboard/publications"
-    className="
-      flex flex-1
-      items-center
-      justify-center
-      gap-2
-      rounded-xl
-      bg-slate-50
-      py-2.5
-      text-[10px]
-      font-bold
-      text-slate-600
-      transition
-      hover:bg-slate-100
-    "
-  >
-    <Eye size={13} />
-    Voir
-  </Link>
+        <div
+          className="
+            mt-4
+            flex gap-2
+            border-t border-slate-100
+            pt-4
+          "
+        >
+          <button
+            type="button"
+            onClick={() => onView(project)}
+            className="
+              flex flex-1
+              items-center
+              justify-center
+              gap-2
+              rounded-xl
+              bg-slate-50
+              py-2.5
+              text-[10px]
+              font-bold
+              text-slate-600
+              transition
+              hover:bg-slate-100
+            "
+          >
+            <Eye size={13} />
+            Voir le projet
+          </button>
 
-  {/* CONNECTER LES RÉSEAUX */}
-
-  <Link
-    href={`/dashboard/reseaux_sociaux?project=${project.id}`}
-    aria-label={`Connecter les réseaux de ${project.name}`}
-    className="
-      flex h-9
-      flex-1
-      items-center
-      justify-center
-      gap-2
-      rounded-xl
-      border border-red-200
-      bg-red-50
-      px-3
-      text-[10px]
-      font-bold
-      text-red-600
-      transition
-      hover:bg-red-100
-      hover:border-red-300
-    "
-  >
-    <ExternalLink size={13} />
-    Réseaux
-  </Link>
-
-  {/* MODIFIER */}
-
-  <button
-    type="button"
-    aria-label={`Modifier ${project.name}`}
-    onClick={() => alert(`Modification du projet "${project.name}"`)}
-    className="
-      flex h-9 w-9
-      shrink-0
-      items-center justify-center
-      rounded-xl
-      border border-slate-200
-      text-slate-400
-      transition
-      hover:border-red-200
-      hover:bg-red-50
-      hover:text-red-600
-    "
-  >
-    <Edit3 size={14} />
-  </button>
-
-  {/* SUPPRIMER */}
-
-  <button
-    type="button"
-    aria-label={`Supprimer ${project.name}`}
-    onClick={() => onDelete(project.id)}
-    className="
-      flex h-9 w-9
-      shrink-0
-      items-center justify-center
-      rounded-xl
-      border border-slate-200
-      text-slate-400
-      transition
-      hover:border-red-200
-      hover:bg-red-50
-      hover:text-red-600
-    "
-  >
-    <Trash2 size={14} />
-  </button>
-</div>
-
+          <Link
+            href={`/dashboard/reseaux_sociaux?project=${project.id}`}
+            aria-label={`Connecter les réseaux de ${project.name}`}
+            className="
+              flex flex-1
+              items-center
+              justify-center
+              gap-2
+              rounded-xl
+              border border-red-200
+              bg-red-50
+              px-3
+              py-2.5
+              text-[10px]
+              font-bold
+              text-red-600
+              transition
+              hover:bg-red-100
+              hover:border-red-300
+            "
+          >
+            <ExternalLink size={13} />
+            Réseaux
+          </Link>
+        </div>
       </div>
     </article>
   );
@@ -1061,16 +1379,28 @@ function ProjectListItem({
   project,
   openMenu,
   setOpenMenu,
+  onView,
+  onEdit,
   onDelete,
   onArchive,
+  loadingAction,
 }: {
   project: Project;
   openMenu: number | null;
   setOpenMenu: React.Dispatch<React.SetStateAction<number | null>>;
-  onDelete: (id: number) => void;
-  onArchive: (id: number) => void;
+  onView: (project: Project) => void;
+  onEdit: (project: Project) => void;
+  onDelete: (project: Project) => void;
+  onArchive: (project: Project) => void;
+  loadingAction: {
+    id: number;
+    action: "delete" | "archive" | "restore";
+  } | null;
 }) {
   const isMenuOpen = openMenu === project.id;
+
+  const isLoading =
+    loadingAction?.id === project.id;
 
   return (
     <div
@@ -1107,7 +1437,9 @@ function ProjectListItem({
 
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="truncate text-sm font-black">{project.name}</h3>
+            <h3 className="truncate text-sm font-black">
+              {project.name}
+            </h3>
 
             <StatusBadge status={project.status} />
           </div>
@@ -1124,7 +1456,9 @@ function ProjectListItem({
         <FileText size={14} />
 
         <span>
-          <strong className="text-slate-700">{project.publications}</strong>{" "}
+          <strong className="text-slate-700">
+            {project.publications}
+          </strong>{" "}
           publications
         </span>
       </div>
@@ -1135,7 +1469,10 @@ function ProjectListItem({
         <ImageIcon size={14} />
 
         <span>
-          <strong className="text-slate-700">{project.media}</strong> médias
+          <strong className="text-slate-700">
+            {project.media}
+          </strong>{" "}
+          médias
         </span>
       </div>
 
@@ -1150,26 +1487,80 @@ function ProjectListItem({
         </span>
       </div>
 
+      {/* VOIR */}
+
+      <button
+        type="button"
+        onClick={() => onView(project)}
+        className="
+          flex items-center justify-center
+          gap-2
+          rounded-xl
+          bg-slate-50
+          px-3 py-2.5
+          text-[10px]
+          font-bold
+          text-slate-600
+          transition
+          hover:bg-slate-100
+        "
+      >
+        <Eye size={13} />
+        Voir
+      </button>
+
+      {/* RÉSEAUX */}
+
+      <Link
+        href={`/dashboard/reseaux_sociaux?project=${project.id}`}
+        className="
+          flex items-center justify-center
+          gap-2
+          rounded-xl
+          border border-red-200
+          bg-red-50
+          px-3 py-2.5
+          text-[10px]
+          font-bold
+          text-red-600
+          transition
+          hover:bg-red-100
+        "
+      >
+        <ExternalLink size={13} />
+        Réseaux
+      </Link>
+
       {/* ACTIONS */}
 
-      <div className="relative flex gap-1">
+      <div className="relative">
         <button
           type="button"
-          onClick={() => setOpenMenu(isMenuOpen ? null : project.id)}
+          disabled={isLoading}
+          onClick={() =>
+            setOpenMenu(isMenuOpen ? null : project.id)
+          }
           className="
-            flex h-8 w-8
+            flex h-9 w-9
             items-center justify-center
             rounded-lg
             text-slate-400
             hover:bg-slate-50
             hover:text-slate-800
+            disabled:cursor-not-allowed
+            disabled:opacity-60
           "
         >
-          <MoreHorizontal size={17} />
+          {isLoading ? (
+            <Loader2 size={17} className="animate-spin" />
+          ) : (
+            <MoreHorizontal size={17} />
+          )}
         </button>
 
-        {isMenuOpen && (
+        {isMenuOpen && !isLoading && (
           <div
+            onClick={(e) => e.stopPropagation()}
             className="
               absolute right-0 top-10
               z-50 w-40
@@ -1180,27 +1571,9 @@ function ProjectListItem({
               shadow-xl
             "
           >
-            <Link
-              href="/dashboard/publications"
-              onClick={() => setOpenMenu(null)}
-              className="
-                flex items-center gap-2
-                rounded-lg px-3 py-2
-                text-[10px] font-bold
-                text-slate-600
-                hover:bg-slate-50
-              "
-            >
-              <Eye size={13} />
-              Voir
-            </Link>
-
             <button
               type="button"
-              onClick={() => {
-                setOpenMenu(null);
-                alert(`Modification du projet "${project.name}"`);
-              }}
+              onClick={() => onEdit(project)}
               className="
                 flex w-full items-center gap-2
                 rounded-lg px-3 py-2
@@ -1215,7 +1588,7 @@ function ProjectListItem({
 
             <button
               type="button"
-              onClick={() => onArchive(project.id)}
+              onClick={() => onArchive(project)}
               className="
                 flex w-full items-center gap-2
                 rounded-lg px-3 py-2
@@ -1224,13 +1597,22 @@ function ProjectListItem({
                 hover:bg-slate-50
               "
             >
-              <Archive size={13} />
-              Archiver
+              {project.status === "Archivé" ? (
+                <>
+                  <ArchiveRestore size={13} />
+                  Restaurer
+                </>
+              ) : (
+                <>
+                  <Archive size={13} />
+                  Archiver
+                </>
+              )}
             </button>
 
             <button
               type="button"
-              onClick={() => onDelete(project.id)}
+              onClick={() => onDelete(project)}
               className="
                 flex w-full items-center gap-2
                 rounded-lg px-3 py-2
@@ -1250,15 +1632,538 @@ function ProjectListItem({
 }
 
 /* =========================================================
+   MODALE VOIR PROJET
+========================================================= */
+
+function ViewProjectModal({
+  project,
+  onClose,
+  onEdit,
+}: {
+  project: Project;
+  onClose: () => void;
+  onEdit: () => void;
+}) {
+  return (
+    <div
+      className="
+        fixed inset-0 z-[100]
+        flex items-center justify-center
+        bg-slate-950/50
+        p-4
+        backdrop-blur-sm
+      "
+      onClick={onClose}
+    >
+      <div
+        className="
+          w-full max-w-xl
+          overflow-hidden
+          rounded-2xl
+          bg-white
+          shadow-2xl
+        "
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* HEADER */}
+
+        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+          <div className="min-w-0">
+            <p className="text-[9px] font-black uppercase tracking-wider text-slate-400">
+              Projet
+            </p>
+
+            <h2 className="mt-1 truncate text-lg font-black text-slate-900">
+              {project.name}
+            </h2>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="
+              flex h-9 w-9
+              shrink-0
+              items-center justify-center
+              rounded-xl
+              text-slate-400
+              hover:bg-slate-50
+              hover:text-slate-700
+            "
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* CONTENU */}
+
+        <div className="max-h-[75vh] overflow-y-auto p-5">
+          <div
+            className="
+              overflow-hidden
+              rounded-2xl
+              bg-slate-100
+            "
+          >
+            <img
+              src={project.image}
+              alt={`Image du projet ${project.name}`}
+              className="
+                h-56
+                w-full
+                object-contain
+              "
+            />
+          </div>
+
+          <div className="mt-5 flex items-center justify-between">
+            <StatusBadge status={project.status} />
+
+            <span className="text-[10px] text-slate-400">
+              Créé le {project.createdAt}
+            </span>
+          </div>
+
+          <div className="mt-5">
+            <h3 className="text-xs font-black text-slate-800">
+              Description
+            </h3>
+
+            <p className="mt-2 text-xs leading-relaxed text-slate-500">
+              {project.description || "Aucune description pour ce projet."}
+            </p>
+          </div>
+
+          <div className="mt-5 grid grid-cols-3 divide-x divide-slate-100 rounded-xl bg-slate-50 py-4">
+            <ProjectStat
+              value={project.publications}
+              label="Publications"
+            />
+
+            <ProjectStat
+              value={project.scheduled}
+              label="Programmés"
+            />
+
+            <ProjectStat
+              value={project.media}
+              label="Médias"
+            />
+          </div>
+
+          <div className="mt-4 rounded-xl border border-slate-100 bg-white p-4">
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              <Users size={15} className="text-slate-400" />
+
+              <span>
+                <strong className="text-slate-800">
+                  {project.members}
+                </strong>{" "}
+                membre
+                {project.members > 1 ? "s" : ""}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* FOOTER */}
+
+        <div className="flex gap-2 border-t border-slate-100 p-4">
+          <button
+            type="button"
+            onClick={onEdit}
+            className="
+              flex flex-1
+              items-center justify-center
+              gap-2
+              rounded-xl
+              bg-red-600
+              px-4 py-2.5
+              text-[10px]
+              font-black
+              text-white
+              transition
+              hover:bg-red-700
+            "
+          >
+            <Edit3 size={14} />
+            Modifier
+          </button>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="
+              rounded-xl
+              border border-slate-200
+              px-4 py-2.5
+              text-[10px]
+              font-bold
+              text-slate-600
+              hover:bg-slate-50
+            "
+          >
+            Fermer
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================
+   MODALE MODIFIER PROJET
+========================================================= */
+
+function EditProjectModal({
+  project,
+  form,
+  setForm,
+  error,
+  saving,
+  onClose,
+  onSave,
+}: {
+  project: Project;
+  form: ProjectForm;
+  setForm: React.Dispatch<React.SetStateAction<ProjectForm>>;
+  error: string;
+  saving: boolean;
+  onClose: () => void;
+  onSave: () => void;
+}) {
+  return (
+    <div
+      className="
+        fixed inset-0 z-[100]
+        flex items-center justify-center
+        bg-slate-950/50
+        p-4
+        backdrop-blur-sm
+      "
+      onClick={onClose}
+    >
+      <div
+        className="
+          w-full max-w-lg
+          overflow-hidden
+          rounded-2xl
+          bg-white
+          shadow-2xl
+        "
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* HEADER */}
+
+        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+          <div>
+            <p className="text-[9px] font-black uppercase tracking-wider text-slate-400">
+              Gestion du projet
+            </p>
+
+            <h2 className="mt-1 text-lg font-black text-slate-900">
+              Modifier le projet
+            </h2>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={saving}
+            className="
+              flex h-9 w-9
+              items-center justify-center
+              rounded-xl
+              text-slate-400
+              hover:bg-slate-50
+              hover:text-slate-700
+              disabled:cursor-not-allowed
+              disabled:opacity-50
+            "
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* FORMULAIRE */}
+
+        <div className="max-h-[75vh] overflow-y-auto p-5">
+          {error && (
+            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-[10px] font-medium text-red-600">
+              {error}
+            </div>
+          )}
+
+          {/* NOM */}
+
+          <div>
+            <label className="mb-1.5 block text-[10px] font-black uppercase tracking-wide text-slate-500">
+              Nom du projet
+            </label>
+
+            <input
+              type="text"
+              value={form.name}
+              onChange={(e) =>
+                setForm((current) => ({
+                  ...current,
+                  name: e.target.value,
+                }))
+              }
+              disabled={saving}
+              className="
+                w-full
+                rounded-xl
+                border border-slate-200
+                bg-white
+                px-3 py-2.5
+                text-xs
+                outline-none
+                transition
+                focus:border-red-400
+                focus:ring-4
+                focus:ring-red-500/5
+                disabled:bg-slate-50
+              "
+              placeholder="Nom du projet"
+            />
+          </div>
+
+          {/* DESCRIPTION */}
+
+          <div className="mt-4">
+            <label className="mb-1.5 block text-[10px] font-black uppercase tracking-wide text-slate-500">
+              Description
+            </label>
+
+            <textarea
+              value={form.description}
+              onChange={(e) =>
+                setForm((current) => ({
+                  ...current,
+                  description: e.target.value,
+                }))
+              }
+              disabled={saving}
+              rows={4}
+              className="
+                w-full
+                resize-none
+                rounded-xl
+                border border-slate-200
+                bg-white
+                px-3 py-2.5
+                text-xs
+                outline-none
+                transition
+                focus:border-red-400
+                focus:ring-4
+                focus:ring-red-500/5
+                disabled:bg-slate-50
+              "
+              placeholder="Description du projet"
+            />
+          </div>
+
+          {/* STATUT + MEMBRES */}
+
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-1.5 block text-[10px] font-black uppercase tracking-wide text-slate-500">
+                Statut
+              </label>
+
+              <select
+                value={form.status}
+                onChange={(e) =>
+                  setForm((current) => ({
+                    ...current,
+                    status: e.target.value as ProjectStatus,
+                  }))
+                }
+                disabled={saving}
+                className="
+                  w-full
+                  rounded-xl
+                  border border-slate-200
+                  bg-white
+                  px-3 py-2.5
+                  text-xs
+                  outline-none
+                  focus:border-red-400
+                  disabled:bg-slate-50
+                "
+              >
+                <option value="Actif">Actif</option>
+                <option value="En pause">En pause</option>
+                <option value="Archivé">Archivé</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-[10px] font-black uppercase tracking-wide text-slate-500">
+                Membres
+              </label>
+
+              <input
+                type="number"
+                min={1}
+                value={form.members}
+                onChange={(e) =>
+                  setForm((current) => ({
+                    ...current,
+                    members: Number(e.target.value),
+                  }))
+                }
+                disabled={saving}
+                className="
+                  w-full
+                  rounded-xl
+                  border border-slate-200
+                  bg-white
+                  px-3 py-2.5
+                  text-xs
+                  outline-none
+                  focus:border-red-400
+                  disabled:bg-slate-50
+                "
+              />
+            </div>
+          </div>
+
+          {/* IMAGE */}
+
+          <div className="mt-4">
+            <label className="mb-1.5 block text-[10px] font-black uppercase tracking-wide text-slate-500">
+              Nouvelle image
+            </label>
+
+            <input
+              type="file"
+              accept="image/*"
+              disabled={saving}
+              onChange={(e) =>
+                setForm((current) => ({
+                  ...current,
+                  image: e.target.files?.[0] ?? null,
+                }))
+              }
+              className="
+                w-full
+                rounded-xl
+                border border-slate-200
+                bg-slate-50
+                px-3 py-2
+                text-[10px]
+                text-slate-500
+                file:mr-3
+                file:rounded-lg
+                file:border-0
+                file:bg-white
+                file:px-3
+                file:py-1.5
+                file:text-[10px]
+                file:font-bold
+                file:text-slate-600
+              "
+            />
+
+            <p className="mt-1.5 text-[9px] text-slate-400">
+              Laissez vide pour conserver l'image actuelle.
+            </p>
+          </div>
+
+          {/* APERÇU IMAGE ACTUELLE */}
+
+          <div className="mt-4 overflow-hidden rounded-xl border border-slate-100 bg-slate-50">
+            <img
+              src={project.image}
+              alt={`Image actuelle de ${project.name}`}
+              className="h-32 w-full object-contain"
+            />
+          </div>
+        </div>
+
+        {/* FOOTER */}
+
+        <div className="flex gap-2 border-t border-slate-100 p-4">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={saving}
+            className="
+              flex-1
+              rounded-xl
+              border border-slate-200
+              px-4 py-2.5
+              text-[10px]
+              font-bold
+              text-slate-600
+              hover:bg-slate-50
+              disabled:cursor-not-allowed
+              disabled:opacity-50
+            "
+          >
+            Annuler
+          </button>
+
+          <button
+            type="button"
+            onClick={onSave}
+            disabled={saving}
+            className="
+              flex-1
+              flex items-center
+              justify-center
+              gap-2
+              rounded-xl
+              bg-red-600
+              px-4 py-2.5
+              text-[10px]
+              font-black
+              text-white
+              transition
+              hover:bg-red-700
+              disabled:cursor-not-allowed
+              disabled:opacity-60
+            "
+          >
+            {saving ? (
+              <>
+                <Loader2 size={14} className="animate-spin" />
+                Enregistrement...
+              </>
+            ) : (
+              <>
+                <Save size={14} />
+                Enregistrer
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================
    PROJECT STAT
 ========================================================= */
 
-function ProjectStat({ value, label }: { value: number; label: string }) {
+function ProjectStat({
+  value,
+  label,
+}: {
+  value: number;
+  label: string;
+}) {
   return (
     <div className="text-center">
       <p className="text-sm font-black text-slate-800">{value}</p>
 
-      <p className="mt-0.5 text-[8px] font-medium text-slate-400">{label}</p>
+      <p className="mt-0.5 text-[8px] font-medium text-slate-400">
+        {label}
+      </p>
     </div>
   );
 }

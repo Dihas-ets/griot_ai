@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Plus,
   Search,
@@ -11,7 +12,6 @@ import {
   Clock3,
   Edit3,
   Trash2,
-  Send,
   Eye,
   ChevronDown,
   CheckCircle2,
@@ -20,6 +20,7 @@ import {
   XCircle,
   LayoutGrid,
   List,
+  X,
 } from "lucide-react";
 
 /* =========================================================
@@ -32,7 +33,13 @@ type PublicationStatus =
   | "Brouillon"
   | "Échec";
 
-type Network = "Facebook" | "Instagram" | "LinkedIn" | "X";
+type Network =
+  | "Facebook"
+  | "Instagram"
+  | "LinkedIn"
+  | "TikTok"
+  | "Google Business"
+  | "X";
 
 type Publication = {
   id: number;
@@ -42,7 +49,10 @@ type Publication = {
   status: PublicationStatus;
   date: string;
   time: string;
-  image?: string;
+  image?: string | null;
+  projectId?: string;
+  projectName?: string;
+  createdAt?: number;
 };
 
 /* =========================================================
@@ -145,6 +155,40 @@ const LinkedinIcon = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
+const TikTokIcon = ({ size = 16 }: { size?: number }) => (
+  <svg
+    viewBox="0 0 24 24"
+    width={size}
+    height={size}
+    fill="none"
+  >
+    <rect width="24" height="24" rx="5" fill="#000" />
+    <path
+      d="M14.5 5h2.3c.2 1.3 1 2.3 2.2 2.8v2.3c-1-.1-1.9-.4-2.7-.9v5.3c0 3-2.2 5-5.1 5-2.6 0-4.7-1.8-4.7-4.4 0-2.7 2.2-4.5 5-4.5.3 0 .6 0 .9.1V13c-.3-.1-.6-.2-.9-.2-1.2 0-2.2.7-2.2 1.9 0 1 .8 1.7 1.8 1.7 1.1 0 1.8-.7 1.8-2V5h1.6Z"
+      fill="white"
+    />
+  </svg>
+);
+
+const GoogleBusinessIcon = ({ size = 16 }: { size?: number }) => (
+  <svg
+    viewBox="0 0 24 24"
+    width={size}
+    height={size}
+    fill="none"
+  >
+    <circle cx="12" cy="12" r="11" fill="white" />
+    <path
+      d="M12 5.5a6.5 6.5 0 1 0 6.1 8.7h-6.1v-2.4h8.5c.1.5.1 1 .1 1.5A8.6 8.6 0 1 1 12 3.5c2.4 0 4.4 1 5.9 2.5l-1.8 1.8A5.7 5.7 0 0 0 12 5.5Z"
+      fill="#4285F4"
+    />
+    <path
+      d="M18.1 8.2h-6.1v2.4h6.9c-.2-.9-.4-1.7-.8-2.4Z"
+      fill="#34A853"
+    />
+  </svg>
+);
+
 const XIcon = ({ size = 16 }: { size?: number }) => (
   <svg
     viewBox="0 0 24 24"
@@ -160,97 +204,68 @@ const XIcon = ({ size = 16 }: { size?: number }) => (
 );
 
 /* =========================================================
-   DONNÉES
-========================================================= */
-
-const publications: Publication[] = [
-  {
-    id: 1,
-    title: "Nouvelle formation Flutter",
-    content:
-      "🚀 Nouvelle formation Flutter ! Vous êtes débutant et vous souhaitez créer des applications mobiles modernes ? Rejoignez notre formation 100% pratique avec des projets concrets.",
-    network: "Facebook",
-    status: "Publiée",
-    date: "15 juillet 2026",
-    time: "10:30",
-    image: "/flutter.png",
-  },
-  {
-    id: 2,
-    title: "Formation Flutter pour débutants",
-    content:
-      "Apprenez à développer des applications mobiles modernes avec Flutter grâce à une formation pratique et accessible aux débutants.",
-    network: "Instagram",
-    status: "Publiée",
-    date: "15 juillet 2026",
-    time: "11:00",
-    image: "/flutter.png",
-  },
-  {
-    id: 3,
-    title: "Conseils pour réussir son projet",
-    content:
-      "💡 Quelques conseils essentiels pour bien démarrer un projet de développement mobile et construire une application performante.",
-    network: "LinkedIn",
-    status: "Programmée",
-    date: "17 juillet 2026",
-    time: "18:00",
-    image: "/flutter.png",
-  },
-  {
-    id: 4,
-    title: "Les avantages de Flutter",
-    content:
-      "Pourquoi choisir Flutter pour développer vos applications mobiles ? Découvrez les principaux avantages de cette technologie.",
-    network: "X",
-    status: "Brouillon",
-    date: "—",
-    time: "—",
-    image: "/flutter.png",
-  },
-  {
-    id: 5,
-    title: "Découvrez nos services",
-    content:
-      "🚀 Découvrez nos services et nos solutions pour accompagner votre entreprise dans sa transformation digitale.",
-    network: "Facebook",
-    status: "Programmée",
-    date: "20 juillet 2026",
-    time: "09:00",
-    image: "/flutter.png",
-  },
-  {
-    id: 6,
-    title: "Développement mobile moderne",
-    content:
-      "Le développement mobile évolue rapidement. Découvrez les outils et technologies à suivre cette année.",
-    network: "LinkedIn",
-    status: "Échec",
-    date: "12 juillet 2026",
-    time: "14:30",
-    image: "/flutter.png",
-  },
-];
-
-/* =========================================================
    PAGE
 ========================================================= */
 
 export default function MesPublicationsPage() {
+  const router = useRouter();
+
+  const [publications, setPublications] = useState<Publication[]>([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("Toutes");
   const [networkFilter, setNetworkFilter] = useState("Tous");
   const [view, setView] = useState<"grid" | "list">("grid");
 
+  const [selectedPublication, setSelectedPublication] =
+    useState<Publication | null>(null);
+
+  /* =========================================================
+     RÉCUPÉRER LES PUBLICATIONS
+  ========================================================= */
+
+  useEffect(() => {
+    try {
+      const savedPublications = localStorage.getItem(
+        "griot_publications"
+      );
+
+      if (!savedPublications) {
+        setPublications([]);
+        return;
+      }
+
+      const parsed = JSON.parse(savedPublications);
+
+      if (Array.isArray(parsed)) {
+        setPublications(parsed);
+      } else {
+        setPublications([]);
+      }
+    } catch (error) {
+      console.error(
+        "Erreur lors de la récupération des publications :",
+        error
+      );
+
+      setPublications([]);
+    }
+  }, []);
+
+  /* =========================================================
+     FILTRAGE
+  ========================================================= */
+
   const filteredPublications = useMemo(() => {
     return publications.filter((publication) => {
+      const searchValue = search.toLowerCase();
+
       const matchesSearch =
         publication.title
           .toLowerCase()
-          .includes(search.toLowerCase()) ||
+          .includes(searchValue) ||
         publication.content
           .toLowerCase()
-          .includes(search.toLowerCase());
+          .includes(searchValue);
 
       const matchesStatus =
         statusFilter === "Toutes" ||
@@ -266,7 +281,92 @@ export default function MesPublicationsPage() {
         matchesNetwork
       );
     });
-  }, [search, statusFilter, networkFilter]);
+  }, [
+    publications,
+    search,
+    statusFilter,
+    networkFilter,
+  ]);
+
+  /* =========================================================
+     STATISTIQUES
+  ========================================================= */
+
+  const totalPublications = publications.length;
+
+  const publishedCount = publications.filter(
+    (publication) => publication.status === "Publiée"
+  ).length;
+
+  const scheduledCount = publications.filter(
+    (publication) => publication.status === "Programmée"
+  ).length;
+
+  const draftCount = publications.filter(
+    (publication) => publication.status === "Brouillon"
+  ).length;
+
+  /* =========================================================
+     PROJET
+  ========================================================= */
+
+  const projectNames = Array.from(
+    new Set(
+      publications
+        .map((publication) => publication.projectName)
+        .filter(Boolean)
+    )
+  );
+
+  const projectLabel =
+    projectNames.length === 1
+      ? projectNames[0]
+      : projectNames.length > 1
+      ? "Tous les projets"
+      : "Aucun projet";
+
+  /* =========================================================
+     SUPPRIMER
+  ========================================================= */
+
+  const handleDelete = (id: number) => {
+    const confirmed = window.confirm(
+      "Voulez-vous vraiment supprimer cette publication ?"
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    const updatedPublications = publications.filter(
+      (publication) => publication.id !== id
+    );
+
+    setPublications(updatedPublications);
+
+    localStorage.setItem(
+      "griot_publications",
+      JSON.stringify(updatedPublications)
+    );
+
+    if (selectedPublication?.id === id) {
+      setSelectedPublication(null);
+    }
+  };
+
+  /* =========================================================
+     MODIFIER
+  ========================================================= */
+
+  const handleEdit = (id: number) => {
+    router.push(
+      `/dashboard/publication?publication=${id}`
+    );
+  };
+
+  /* =========================================================
+     RENDU
+  ========================================================= */
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900">
@@ -278,8 +378,6 @@ export default function MesPublicationsPage() {
       <header className="sticky top-0 z-30 border-b border-slate-200 bg-white">
 
         <div className="flex min-h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-
-          {/* GAUCHE */}
 
           <div className="min-w-0 pl-12 md:pl-12 lg:pl-0 xl:pl-0">
 
@@ -293,16 +391,16 @@ export default function MesPublicationsPage() {
 
           </div>
 
-          {/* DROITE */}
-
           <Link
             href="/dashboard/publication"
             className="flex shrink-0 items-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-[10px] font-black uppercase tracking-wide text-white shadow-lg shadow-red-600/20 transition hover:bg-red-700"
           >
             <Plus size={15} />
+
             <span className="hidden sm:inline">
               Créer une publication
             </span>
+
             <span className="sm:hidden">
               Créer
             </span>
@@ -342,25 +440,25 @@ export default function MesPublicationsPage() {
           <StatCard
             icon={<FileText size={17} />}
             label="Total"
-            value="24"
+            value={String(totalPublications)}
           />
 
           <StatCard
             icon={<CheckCircle2 size={17} />}
             label="Publiées"
-            value="15"
+            value={String(publishedCount)}
           />
 
           <StatCard
             icon={<Clock size={17} />}
             label="Programmées"
-            value="6"
+            value={String(scheduledCount)}
           />
 
           <StatCard
             icon={<FileText size={17} />}
             label="Brouillons"
-            value="3"
+            value={String(draftCount)}
           />
 
         </div>
@@ -396,6 +494,8 @@ export default function MesPublicationsPage() {
 
             <div className="flex flex-wrap gap-2">
 
+              {/* STATUT */}
+
               <div className="relative">
 
                 <select
@@ -424,6 +524,8 @@ export default function MesPublicationsPage() {
 
               </div>
 
+              {/* RÉSEAU */}
+
               <div className="relative">
 
                 <select
@@ -437,6 +539,8 @@ export default function MesPublicationsPage() {
                   <option>Facebook</option>
                   <option>Instagram</option>
                   <option>LinkedIn</option>
+                  <option>TikTok</option>
+                  <option>Google Business</option>
                   <option>X</option>
                 </select>
 
@@ -446,6 +550,8 @@ export default function MesPublicationsPage() {
                 />
 
               </div>
+
+              {/* VUE */}
 
               <div className="flex rounded-xl border border-slate-200 bg-white p-1">
 
@@ -491,7 +597,10 @@ export default function MesPublicationsPage() {
           </p>
 
           <p className="text-[10px] text-slate-400">
-            Projet : <strong className="text-slate-600">Presta</strong>
+            Projet :{" "}
+            <strong className="text-slate-600">
+              {projectLabel}
+            </strong>
           </p>
 
         </div>
@@ -507,6 +616,15 @@ export default function MesPublicationsPage() {
               <PublicationCard
                 key={publication.id}
                 publication={publication}
+                onView={() =>
+                  setSelectedPublication(publication)
+                }
+                onEdit={() =>
+                  handleEdit(publication.id)
+                }
+                onDelete={() =>
+                  handleDelete(publication.id)
+                }
               />
             ))}
 
@@ -524,6 +642,15 @@ export default function MesPublicationsPage() {
               <PublicationListItem
                 key={publication.id}
                 publication={publication}
+                onView={() =>
+                  setSelectedPublication(publication)
+                }
+                onEdit={() =>
+                  handleEdit(publication.id)
+                }
+                onDelete={() =>
+                  handleDelete(publication.id)
+                }
               />
             ))}
 
@@ -547,13 +674,169 @@ export default function MesPublicationsPage() {
             </h3>
 
             <p className="mt-1 text-xs text-slate-400">
-              Essayez de modifier votre recherche ou vos filtres.
+              {publications.length === 0
+                ? "Créez votre première publication pour la retrouver ici."
+                : "Essayez de modifier votre recherche ou vos filtres."}
             </p>
+
+            {publications.length === 0 && (
+              <Link
+                href="/dashboard/publication"
+                className="mt-5 inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-[10px] font-black uppercase tracking-wide text-white transition hover:bg-red-700"
+              >
+                <Plus size={14} />
+                Créer une publication
+              </Link>
+            )}
 
           </div>
         )}
 
       </main>
+
+      {/* =====================================================
+          MODAL VOIR
+      ===================================================== */}
+
+      {selectedPublication && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+
+          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
+
+            {/* HEADER MODAL */}
+
+            <div className="flex items-center justify-between border-b border-slate-200 p-5">
+
+              <div>
+
+                <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-400">
+                  Publication
+                </p>
+
+                <h3 className="mt-1 text-lg font-black">
+                  {selectedPublication.title}
+                </h3>
+
+              </div>
+
+              <button
+                onClick={() => setSelectedPublication(null)}
+                className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+              >
+                <X size={18} />
+              </button>
+
+            </div>
+
+            {/* CONTENU MODAL */}
+
+            <div className="p-5">
+
+              <div className="mb-4 flex flex-wrap items-center gap-2">
+
+                <NetworkBadge
+                  network={selectedPublication.network}
+                />
+
+                <StatusBadge
+                  status={selectedPublication.status}
+                />
+
+              </div>
+
+              {selectedPublication.image && (
+                <div className="mb-5 overflow-hidden rounded-xl bg-slate-100">
+
+                  <img
+                    src={selectedPublication.image}
+                    alt={selectedPublication.title}
+                    className="max-h-[400px] w-full object-contain"
+                  />
+
+                </div>
+              )}
+
+              <div className="rounded-xl bg-slate-50 p-4">
+
+                <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
+                  {selectedPublication.content}
+                </p>
+
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 gap-3">
+
+                <div className="rounded-xl border border-slate-200 p-3">
+
+                  <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
+                    Date
+                  </p>
+
+                  <p className="mt-1 text-xs font-bold text-slate-700">
+                    {selectedPublication.date}
+                  </p>
+
+                </div>
+
+                <div className="rounded-xl border border-slate-200 p-3">
+
+                  <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
+                    Heure
+                  </p>
+
+                  <p className="mt-1 text-xs font-bold text-slate-700">
+                    {selectedPublication.time}
+                  </p>
+
+                </div>
+
+              </div>
+
+              {selectedPublication.projectName && (
+                <div className="mt-3 rounded-xl border border-slate-200 p-3">
+
+                  <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
+                    Projet
+                  </p>
+
+                  <p className="mt-1 text-xs font-bold text-slate-700">
+                    {selectedPublication.projectName}
+                  </p>
+
+                </div>
+              )}
+
+            </div>
+
+            {/* FOOTER */}
+
+            <div className="flex justify-end gap-2 border-t border-slate-200 p-5">
+
+              <button
+                onClick={() => setSelectedPublication(null)}
+                className="rounded-xl border border-slate-200 px-4 py-2.5 text-[10px] font-black uppercase tracking-wide text-slate-600 hover:bg-slate-50"
+              >
+                Fermer
+              </button>
+
+              <button
+                onClick={() => {
+                  const id = selectedPublication.id;
+                  setSelectedPublication(null);
+                  handleEdit(id);
+                }}
+                className="flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-[10px] font-black uppercase tracking-wide text-white hover:bg-red-700"
+              >
+                <Edit3 size={14} />
+                Modifier
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+      )}
 
     </div>
   );
@@ -601,8 +884,14 @@ function StatCard({
 
 function PublicationCard({
   publication,
+  onView,
+  onEdit,
+  onDelete,
 }: {
   publication: Publication;
+  onView: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
 }) {
   return (
     <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
@@ -646,13 +935,16 @@ function PublicationCard({
 
           </div>
 
-          <button className="shrink-0 rounded-lg p-1.5 text-slate-400 hover:bg-slate-50 hover:text-slate-700">
+          <button
+            className="shrink-0 rounded-lg p-1.5 text-slate-400 hover:bg-slate-50 hover:text-slate-700"
+            onClick={onView}
+          >
             <MoreHorizontal size={17} />
           </button>
 
         </div>
 
-        <p className="mt-2 line-clamp-3 text-[11px] leading-relaxed text-slate-500">
+        <p className="mt-2 line-clamp-3 whitespace-pre-line text-[11px] leading-relaxed text-slate-500">
           {publication.content}
         </p>
 
@@ -688,6 +980,7 @@ function PublicationCard({
 
             <button
               title="Voir"
+              onClick={onView}
               className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-800"
             >
               <Eye size={14} />
@@ -695,6 +988,7 @@ function PublicationCard({
 
             <button
               title="Modifier"
+              onClick={onEdit}
               className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600"
             >
               <Edit3 size={14} />
@@ -702,6 +996,7 @@ function PublicationCard({
 
             <button
               title="Supprimer"
+              onClick={onDelete}
               className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600"
             >
               <Trash2 size={14} />
@@ -723,8 +1018,14 @@ function PublicationCard({
 
 function PublicationListItem({
   publication,
+  onView,
+  onEdit,
+  onDelete,
 }: {
   publication: Publication;
+  onView: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
 }) {
   return (
     <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:flex-row lg:items-center">
@@ -760,7 +1061,7 @@ function PublicationListItem({
           {publication.title}
         </h3>
 
-        <p className="mt-1 line-clamp-2 text-[10px] text-slate-400">
+        <p className="mt-1 line-clamp-2 whitespace-pre-line text-[10px] text-slate-400">
           {publication.content}
         </p>
 
@@ -790,15 +1091,24 @@ function PublicationListItem({
 
       <div className="flex shrink-0 gap-1">
 
-        <button className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-800">
+        <button
+          onClick={onView}
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-800"
+        >
           <Eye size={14} />
         </button>
 
-        <button className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600">
+        <button
+          onClick={onEdit}
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600"
+        >
           <Edit3 size={14} />
         </button>
 
-        <button className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600">
+        <button
+          onClick={onDelete}
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600"
+        >
           <Trash2 size={14} />
         </button>
 
@@ -817,7 +1127,13 @@ function NetworkBadge({
 }: {
   network: Network;
 }) {
-  const data = {
+  const data: Record<
+    Network,
+    {
+      icon: React.ReactNode;
+      style: string;
+    }
+  > = {
     Facebook: {
       icon: <FacebookIcon size={15} />,
       style: "bg-[#1877F2]/10 text-[#1877F2]",
@@ -831,6 +1147,16 @@ function NetworkBadge({
     LinkedIn: {
       icon: <LinkedinIcon size={15} />,
       style: "bg-[#0A66C2]/10 text-[#0A66C2]",
+    },
+
+    TikTok: {
+      icon: <TikTokIcon size={15} />,
+      style: "bg-slate-100 text-black",
+    },
+
+    "Google Business": {
+      icon: <GoogleBusinessIcon size={15} />,
+      style: "bg-blue-50 text-blue-600",
     },
 
     X: {
@@ -860,19 +1186,28 @@ function StatusBadge({
 }: {
   status: PublicationStatus;
 }) {
-  const data = {
+  const data: Record<
+    PublicationStatus,
+    {
+      icon: React.ReactNode;
+      style: string;
+    }
+  > = {
     Publiée: {
       icon: <CheckCircle2 size={12} />,
       style: "bg-emerald-50 text-emerald-600",
     },
+
     Programmée: {
       icon: <Clock size={12} />,
       style: "bg-orange-50 text-orange-600",
     },
+
     Brouillon: {
       icon: <FileText size={12} />,
       style: "bg-slate-100 text-slate-500",
     },
+
     Échec: {
       icon: <XCircle size={12} />,
       style: "bg-red-50 text-red-600",
