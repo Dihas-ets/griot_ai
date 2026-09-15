@@ -1161,8 +1161,10 @@ function PricingCard({ plan, featured = false }: { plan: Plan; featured?: boolea
 
       <div className="flex items-baseline gap-1 mb-2">
         <span className="text-4xl sm:text-5xl font-black text-slate-900">
-          {plan.est_gratuit ? "0" : plan.prix}€
-        </span>
+  {plan.est_gratuit
+    ? "Gratuit"
+    : `${plan.prix.toLocaleString("fr-FR")} ${plan.devise}`}
+</span>
         <span className="text-slate-500 font-medium text-xs sm:text-sm">
           /{plan.duree > 1 ? `${plan.duree} ` : ""}{dureeLabel(plan.duree_unite)}
           {plan.duree > 1 ? "s" : ""}
@@ -1212,7 +1214,7 @@ export default function DeepLandingPage() {
   useEffect(() => {
     const loadPlans = async () => {
       try {
-        const response = await axios.get("/api/plans?devise=EUR");
+       const response = await axios.get("/api/plans");
         setPlans(response.data.plans ?? []);
       } catch (error) {
         console.error("Erreur chargement des plans :", error);
