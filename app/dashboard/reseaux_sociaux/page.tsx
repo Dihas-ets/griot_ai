@@ -696,14 +696,23 @@ export default function ReseauxSociauxPage() {
                         return;
                       }
 
-                      if (network.id === "tiktok") {
-                        setShowAddNetwork(false);
+                    if (network.id === "tiktok") {
+  setShowAddNetwork(false);
 
-                        window.location.href =
-                          `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/tiktok/redirect/${projectId}`;
+  window.location.href =
+    `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/tiktok/redirect/${projectId}`;
 
-                        return;
-                      }
+  return;
+}
+
+if (network.id === "facebook") {
+  setShowAddNetwork(false);
+
+  window.location.href =
+    `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/facebook/redirect/${projectId}`;
+
+  return;
+}
 
                       alert(
                         `La connexion ${network.name} sera bientôt disponible.`
