@@ -27,6 +27,9 @@ import {
   Download,
   Loader2,
   RefreshCw,
+  Eye,
+  Trash2,
+  AlertTriangle,
 } from "lucide-react";
 
 /* =========================================================
@@ -41,7 +44,10 @@ const BACKEND_URL =
    TYPES
 ========================================================= */
 
-type MediaType = "image" | "video" | "document";
+type MediaType =
+  | "image"
+  | "video"
+  | "document";
 
 type BackendFolder = {
   id: number;
@@ -79,6 +85,7 @@ type Media = {
   folderId: number | null;
   src?: string;
   downloadUrl: string;
+  mimeType?: string;
 };
 
 type SortOption =
@@ -91,7 +98,9 @@ type SortOption =
    OUTILS
 ========================================================= */
 
-function formatFileSize(bytes: number): string {
+function formatFileSize(
+  bytes: number
+): string {
   if (bytes < 1024) {
     return `${bytes} o`;
   }
@@ -113,15 +122,22 @@ function formatFileSize(bytes: number): string {
     .replace(".", ",")} Go`;
 }
 
-function formatDate(date: string): string {
-  return new Intl.DateTimeFormat("fr-FR", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  }).format(new Date(date));
+function formatDate(
+  date: string
+): string {
+  return new Intl.DateTimeFormat(
+    "fr-FR",
+    {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }
+  ).format(new Date(date));
 }
 
-function getMediaUrl(path: string): string {
+function getMediaUrl(
+  path: string
+): string {
   return `${BACKEND_URL}/storage/${path}`;
 }
 
@@ -133,8 +149,11 @@ function normalizeMediaType(
   type: string | undefined,
   mimeType: string | undefined
 ): MediaType {
-  const mime = (mimeType || "").toLowerCase();
-  const backendType = (type || "").toLowerCase();
+  const mime =
+    (mimeType || "").toLowerCase();
+
+  const backendType =
+    (type || "").toLowerCase();
 
   if (
     backendType === "image" ||
@@ -158,13 +177,14 @@ function normalizeMediaType(
 ========================================================= */
 
 async function ensureCsrfToken() {
-  const response = await fetch(
-    `${BACKEND_URL}/sanctum/csrf-cookie`,
-    {
-      method: "GET",
-      credentials: "include",
-    }
-  );
+  const response =
+    await fetch(
+      `${BACKEND_URL}/sanctum/csrf-cookie`,
+      {
+        method: "GET",
+        credentials: "include",
+      }
+    );
 
   if (!response.ok) {
     throw new Error(
@@ -174,42 +194,58 @@ async function ensureCsrfToken() {
 }
 
 function getXsrfToken(): string | null {
-  if (typeof document === "undefined") {
+  if (
+    typeof document ===
+    "undefined"
+  ) {
     return null;
   }
 
-  const cookies = document.cookie.split("; ");
+  const cookies =
+    document.cookie.split("; ");
 
-  const xsrfCookie = cookies.find((cookie) =>
-    cookie.startsWith("XSRF-TOKEN=")
-  );
+  const xsrfCookie =
+    cookies.find((cookie) =>
+      cookie.startsWith(
+        "XSRF-TOKEN="
+      )
+    );
 
   if (!xsrfCookie) {
     return null;
   }
 
   return decodeURIComponent(
-    xsrfCookie.substring("XSRF-TOKEN=".length)
+    xsrfCookie.substring(
+      "XSRF-TOKEN=".length
+    )
   );
 }
 
 /* =========================================================
-   LIRE UNE RÉPONSE API SANS CASSER SUR DU HTML
+   LIRE UNE RÉPONSE API
 ========================================================= */
 
 async function readApiResponse(
   response: Response
 ): Promise<any> {
   const contentType =
-    response.headers.get("content-type") || "";
+    response.headers.get(
+      "content-type"
+    ) || "";
 
-  const text = await response.text();
+  const text =
+    await response.text();
 
   if (
-    contentType.includes("application/json")
+    contentType.includes(
+      "application/json"
+    )
   ) {
     try {
-      return text ? JSON.parse(text) : {};
+      return text
+        ? JSON.parse(text)
+        : {};
     } catch {
       throw new Error(
         "Le serveur a envoyé une réponse JSON invalide."
@@ -229,6 +265,12 @@ async function readApiResponse(
     );
   }
 
+  if (response.status === 403) {
+    throw new Error(
+      "Vous n'êtes pas autorisé à effectuer cette action."
+    );
+  }
+
   if (response.status === 419) {
     throw new Error(
       "La session CSRF a expiré. Rechargez la page puis réessayez."
@@ -241,13 +283,22 @@ async function readApiResponse(
     );
   }
 
+  if (response.status === 404) {
+    throw new Error(
+      "Le média demandé est introuvable."
+    );
+  }
+
   if (response.status >= 500) {
     throw new Error(
       "Une erreur est survenue sur le serveur."
     );
   }
 
-  if (text.includes("<html") || text.includes("<br")) {
+  if (
+    text.includes("<html") ||
+    text.includes("<br")
+  ) {
     throw new Error(
       `Le serveur a renvoyé une erreur HTTP ${response.status}.`
     );
@@ -263,34 +314,73 @@ async function readApiResponse(
 function transformMedia(
   media: BackendMedia
 ): Media {
-  const downloadUrl = getMediaUrl(media.path);
+  /*
+   * URL permettant d'afficher le fichier.
+   *
+   * IMPORTANT :
+   * cette URL est différente de l'URL de téléchargement.
+   */
+  const srcUrl =
+    getMediaUrl(media.path);
 
-  const type = normalizeMediaType(
-    media.type,
-    media.mime_type
-  );
+  /*
+   * Cette URL passe par Laravel.
+   * Laravel utilise Storage::download()
+   * pour forcer le téléchargement.
+   */
+  const downloadUrl =
+    `${BACKEND_URL}/api/medias/${media.id}/download`;
+
+  const type =
+    normalizeMediaType(
+      media.type,
+      media.mime_type
+    );
 
   return {
     id: media.id,
+
     name:
       media.original_name ||
       media.name,
+
     type,
-    size: formatFileSize(media.size),
+
+    size: formatFileSize(
+      media.size
+    ),
+
     sizeBytes: media.size,
-    date: formatDate(media.created_at),
+
+    date: formatDate(
+      media.created_at
+    ),
+
     dateValue: new Date(
       media.created_at
     ).getTime(),
+
     folder:
       media.folder?.name ||
       "Sans dossier",
-    folderId: media.folder_id,
+
+    folderId:
+      media.folder_id,
+
+    /*
+     * Les images ET les vidéos ont
+     * une URL d'affichage.
+     */
     src:
-      type === "image"
-        ? downloadUrl
+      type === "image" ||
+      type === "video"
+        ? srcUrl
         : undefined,
+
     downloadUrl,
+
+    mimeType:
+      media.mime_type,
   };
 }
 
@@ -304,7 +394,9 @@ export default function MediasPage() {
   ======================================================= */
 
   const [view, setView] =
-    useState<"grid" | "list">("grid");
+    useState<
+      "grid" | "list"
+    >("grid");
 
   /* =======================================================
      FILTRES
@@ -315,20 +407,33 @@ export default function MediasPage() {
 
   const [filter, setFilter] =
     useState<
-      "all" | "image" | "video" | "document"
+      | "all"
+      | "image"
+      | "video"
+      | "document"
     >("all");
 
-  const [selectedFolder, setSelectedFolder] =
-    useState<number | null>(null);
+  const [
+    selectedFolder,
+    setSelectedFolder,
+  ] = useState<number | null>(
+    null
+  );
 
   const [sort, setSort] =
-    useState<SortOption>("recent");
+    useState<SortOption>(
+      "recent"
+    );
 
-  const [showFilter, setShowFilter] =
-    useState(false);
+  const [
+    showFilter,
+    setShowFilter,
+  ] = useState(false);
 
-  const [showSort, setShowSort] =
-    useState(false);
+  const [
+    showSort,
+    setShowSort,
+  ] = useState(false);
 
   /* =======================================================
      DONNÉES
@@ -338,7 +443,9 @@ export default function MediasPage() {
     useState<Media[]>([]);
 
   const [folders, setFolders] =
-    useState<BackendFolder[]>([]);
+    useState<BackendFolder[]>(
+      []
+    );
 
   /* =======================================================
      CHARGEMENT
@@ -350,60 +457,121 @@ export default function MediasPage() {
   const [error, setError] =
     useState("");
 
-  const [refreshing, setRefreshing] =
-    useState(false);
+  const [
+    refreshing,
+    setRefreshing,
+  ] = useState(false);
 
   /* =======================================================
      SÉLECTION
   ======================================================= */
 
-  const [selectedMedia, setSelectedMedia] =
-    useState<number | null>(null);
+  const [
+    selectedMedia,
+    setSelectedMedia,
+  ] = useState<number | null>(
+    null
+  );
 
-  const [openMediaMenu, setOpenMediaMenu] =
-    useState<number | null>(null);
+  const [
+    openMediaMenu,
+    setOpenMediaMenu,
+  ] = useState<number | null>(
+    null
+  );
+
+  /* =======================================================
+     APERÇU
+  ======================================================= */
+
+  const [
+    previewMedia,
+    setPreviewMedia,
+  ] = useState<Media | null>(
+    null
+  );
+
+  /* =======================================================
+     SUPPRESSION
+  ======================================================= */
+
+  const [
+    deletingMedia,
+    setDeletingMedia,
+  ] = useState<number | null>(
+    null
+  );
+
+  const [
+    deleteConfirmMedia,
+    setDeleteConfirmMedia,
+  ] = useState<Media | null>(
+    null
+  );
 
   /* =======================================================
      IMPORT
   ======================================================= */
 
-  const [showUpload, setShowUpload] =
-    useState(false);
+  const [
+    showUpload,
+    setShowUpload,
+  ] = useState(false);
 
-  const [uploading, setUploading] =
-    useState(false);
+  const [
+    uploading,
+    setUploading,
+  ] = useState(false);
 
-  const [uploadFiles, setUploadFiles] =
-    useState<File[]>([]);
+  const [
+    uploadFiles,
+    setUploadFiles,
+  ] = useState<File[]>([]);
 
-  const [uploadFolderId, setUploadFolderId] =
-    useState<number | null>(null);
+  const [
+    uploadFolderId,
+    setUploadFolderId,
+  ] = useState<number | null>(
+    null
+  );
 
   const fileInputRef =
-    useRef<HTMLInputElement | null>(null);
+    useRef<HTMLInputElement | null>(
+      null
+    );
 
   const folderInputRef =
-    useRef<HTMLInputElement | null>(null);
+    useRef<HTMLInputElement | null>(
+      null
+    );
 
   /* =======================================================
      DOSSIER
   ======================================================= */
 
-  const [showNewFolder, setShowNewFolder] =
-    useState(false);
+  const [
+    showNewFolder,
+    setShowNewFolder,
+  ] = useState(false);
 
-  const [newFolderName, setNewFolderName] =
-    useState("");
+  const [
+    newFolderName,
+    setNewFolderName,
+  ] = useState("");
 
-  const [creatingFolder, setCreatingFolder] =
-    useState(false);
+  const [
+    creatingFolder,
+    setCreatingFolder,
+  ] = useState(false);
 
   /* =======================================================
      MESSAGES
   ======================================================= */
 
-  const [successMessage, setSuccessMessage] =
-    useState("");
+  const [
+    successMessage,
+    setSuccessMessage,
+  ] = useState("");
 
   /* =======================================================
      CHARGER DONNÉES
@@ -451,8 +619,10 @@ export default function MediasPage() {
       ]);
 
       if (
-        mediasResponse.status === 401 ||
-        foldersResponse.status === 401
+        mediasResponse.status ===
+          401 ||
+        foldersResponse.status ===
+          401
       ) {
         throw new Error(
           "Votre session a expiré. Veuillez vous reconnecter."
@@ -523,9 +693,10 @@ export default function MediasPage() {
       return;
     }
 
-    const timer = setTimeout(() => {
-      setSuccessMessage("");
-    }, 3500);
+    const timer =
+      setTimeout(() => {
+        setSuccessMessage("");
+      }, 3500);
 
     return () =>
       clearTimeout(timer);
@@ -535,26 +706,29 @@ export default function MediasPage() {
      STATISTIQUES
   ======================================================= */
 
-  const imageCount = useMemo(() => {
-    return medias.filter(
-      (media) =>
-        media.type === "image"
-    ).length;
-  }, [medias]);
+  const imageCount =
+    useMemo(() => {
+      return medias.filter(
+        (media) =>
+          media.type === "image"
+      ).length;
+    }, [medias]);
 
-  const videoCount = useMemo(() => {
-    return medias.filter(
-      (media) =>
-        media.type === "video"
-    ).length;
-  }, [medias]);
+  const videoCount =
+    useMemo(() => {
+      return medias.filter(
+        (media) =>
+          media.type === "video"
+      ).length;
+    }, [medias]);
 
-  const documentCount = useMemo(() => {
-    return medias.filter(
-      (media) =>
-        media.type === "document"
-    ).length;
-  }, [medias]);
+  const documentCount =
+    useMemo(() => {
+      return medias.filter(
+        (media) =>
+          media.type === "document"
+      ).length;
+    }, [medias]);
 
   /* =======================================================
      FILTRAGE
@@ -573,14 +747,17 @@ export default function MediasPage() {
             !searchValue ||
             media.name
               .toLowerCase()
-              .includes(searchValue);
+              .includes(
+                searchValue
+              );
 
           const matchesType =
             filter === "all" ||
             media.type === filter;
 
           const matchesFolder =
-            selectedFolder === null ||
+            selectedFolder ===
+              null ||
             media.folderId ===
               selectedFolder;
 
@@ -667,11 +844,6 @@ export default function MediasPage() {
   const openUploadModal = () => {
     setUploadFiles([]);
 
-    /*
-     * Si l'utilisateur est déjà dans un dossier,
-     * ce dossier devient automatiquement le dossier
-     * de destination.
-     */
     setUploadFolderId(
       selectedFolder
     );
@@ -694,7 +866,7 @@ export default function MediasPage() {
   };
 
   /* =======================================================
-     CHOISIR UN DOSSIER DE L'ORDINATEUR
+     CHOISIR UN DOSSIER
   ======================================================= */
 
   const handleFolderChange = (
@@ -712,11 +884,13 @@ export default function MediasPage() {
   };
 
   /* =======================================================
-     IMPORTER UN SEUL / PLUSIEURS FICHIERS
+     IMPORTER
   ======================================================= */
 
   const handleUpload = async () => {
-    if (uploadFiles.length === 0) {
+    if (
+      uploadFiles.length === 0
+    ) {
       setError(
         "Veuillez sélectionner au moins un fichier."
       );
@@ -762,6 +936,7 @@ export default function MediasPage() {
               headers: {
                 Accept:
                   "application/json",
+
                 ...(xsrfToken
                   ? {
                       "X-XSRF-TOKEN":
@@ -812,12 +987,16 @@ export default function MediasPage() {
       setShowUpload(false);
       setUploadFiles([]);
 
-      if (fileInputRef.current) {
+      if (
+        fileInputRef.current
+      ) {
         fileInputRef.current.value =
           "";
       }
 
-      if (folderInputRef.current) {
+      if (
+        folderInputRef.current
+      ) {
         folderInputRef.current.value =
           "";
       }
@@ -873,8 +1052,10 @@ export default function MediasPage() {
               headers: {
                 Accept:
                   "application/json",
+
                 "Content-Type":
                   "application/json",
+
                 ...(xsrfToken
                   ? {
                       "X-XSRF-TOKEN":
@@ -882,6 +1063,7 @@ export default function MediasPage() {
                     }
                   : {}),
               },
+
               body: JSON.stringify({
                 name,
               }),
@@ -928,11 +1110,6 @@ export default function MediasPage() {
         setNewFolderName("");
         setShowNewFolder(false);
 
-        /*
-         * IMPORTANT :
-         * le nouveau dossier devient immédiatement
-         * le dossier sélectionné.
-         */
         if (createdFolder?.id) {
           setSelectedFolder(
             createdFolder.id
@@ -971,13 +1148,17 @@ export default function MediasPage() {
     const value =
       event.target.value;
 
-    if (value === "__create__") {
+    if (
+      value === "__create__"
+    ) {
       setShowNewFolder(true);
       return;
     }
 
     setUploadFolderId(
-      value ? Number(value) : null
+      value
+        ? Number(value)
+        : null
     );
   };
 
@@ -988,6 +1169,14 @@ export default function MediasPage() {
   const handleDownload = (
     media: Media
   ) => {
+    /*
+     * IMPORTANT :
+     * on utilise l'URL Laravel /download
+     * et non /storage/...
+     *
+     * Laravel répond avec Content-Disposition: attachment
+     * grâce à Storage::download().
+     */
     const link =
       document.createElement(
         "a"
@@ -999,11 +1188,6 @@ export default function MediasPage() {
     link.download =
       media.name;
 
-    link.target = "_blank";
-
-    link.rel =
-      "noopener noreferrer";
-
     document.body.appendChild(
       link
     );
@@ -1013,6 +1197,104 @@ export default function MediasPage() {
     link.remove();
 
     setOpenMediaMenu(null);
+  };
+
+  /* =======================================================
+     SUPPRIMER
+  ======================================================= */
+
+  const handleDelete = async (
+    media: Media
+  ) => {
+    try {
+      setDeletingMedia(
+        media.id
+      );
+
+      setError("");
+
+      await ensureCsrfToken();
+
+      const xsrfToken =
+        getXsrfToken();
+
+      const response =
+        await fetch(
+          `${BACKEND_URL}/api/medias/${media.id}`,
+          {
+            method: "DELETE",
+            credentials: "include",
+            headers: {
+              Accept:
+                "application/json",
+
+              ...(xsrfToken
+                ? {
+                    "X-XSRF-TOKEN":
+                      xsrfToken,
+                  }
+                : {}),
+            },
+          }
+        );
+
+      const data =
+        await readApiResponse(
+          response
+        );
+
+      if (!response.ok) {
+        throw new Error(
+          data.message ||
+            "Impossible de supprimer le média."
+        );
+      }
+
+      /*
+       * On retire immédiatement le média
+       * de l'affichage.
+       */
+      setMedias((current) =>
+        current.filter(
+          (item) =>
+            item.id !== media.id
+        )
+      );
+
+      setDeleteConfirmMedia(
+        null
+      );
+
+      setSelectedMedia(
+        (current) =>
+          current === media.id
+            ? null
+            : current
+      );
+
+      setPreviewMedia(
+        (current) =>
+          current?.id === media.id
+            ? null
+            : current
+      );
+
+      setOpenMediaMenu(null);
+
+      setSuccessMessage(
+        `Le média "${media.name}" a été supprimé.`
+      );
+    } catch (err) {
+      console.error(err);
+
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Impossible de supprimer le média."
+      );
+    } finally {
+      setDeletingMedia(null);
+    }
   };
 
   /* =======================================================
@@ -1038,7 +1320,9 @@ export default function MediasPage() {
         setShowSort(false);
       }}
     >
-      {/* HEADER */}
+      {/* ===================================================
+          HEADER
+      =================================================== */}
 
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white">
         <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -1079,14 +1363,16 @@ export default function MediasPage() {
       </header>
 
       <main className="mx-auto max-w-[1700px] p-4 sm:p-6 lg:p-8">
-        {/* TITRE */}
+        {/* =================================================
+            TITRE
+        ================================================= */}
 
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-xs font-medium text-slate-400">
-              Gérez et organisez tous vos
-              fichiers utilisés dans vos
-              contenus.
+              Gérez et organisez tous
+              vos fichiers utilisés dans
+              vos contenus.
             </p>
 
             <h2 className="mt-1 text-xl font-black text-slate-900 sm:text-2xl">
@@ -1098,6 +1384,7 @@ export default function MediasPage() {
             <button
               onClick={(event) => {
                 event.stopPropagation();
+
                 loadData(true);
               }}
               disabled={refreshing}
@@ -1117,6 +1404,7 @@ export default function MediasPage() {
             <button
               onClick={(event) => {
                 event.stopPropagation();
+
                 openUploadModal();
               }}
               className="flex items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-3 text-xs font-black text-white shadow-lg shadow-red-600/20 transition hover:bg-red-700"
@@ -1127,7 +1415,9 @@ export default function MediasPage() {
           </div>
         </div>
 
-        {/* MESSAGES */}
+        {/* =================================================
+            MESSAGES
+        ================================================= */}
 
         {error && (
           <div className="mb-5 flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs font-semibold text-red-700">
@@ -1147,11 +1437,14 @@ export default function MediasPage() {
         {successMessage && (
           <div className="mb-5 flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-xs font-semibold text-green-700">
             <Check size={15} />
+
             {successMessage}
           </div>
         )}
 
-        {/* STATISTIQUES */}
+        {/* =================================================
+            STATISTIQUES
+        ================================================= */}
 
         <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
           <MediaStat
@@ -1165,7 +1458,9 @@ export default function MediasPage() {
           />
 
           <MediaStat
-            icon={<Video size={17} />}
+            icon={
+              <Video size={17} />
+            }
             label="Vidéos"
             value={String(
               videoCount
@@ -1194,7 +1489,9 @@ export default function MediasPage() {
         </div>
 
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-[220px_minmax(0,1fr)]">
-          {/* DOSSIERS */}
+          {/* =================================================
+              DOSSIERS
+          ================================================= */}
 
           <aside className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <div className="mb-3 flex items-center justify-between">
@@ -1207,6 +1504,7 @@ export default function MediasPage() {
                   event.stopPropagation();
 
                   setNewFolderName("");
+
                   setShowNewFolder(
                     true
                   );
@@ -1234,7 +1532,9 @@ export default function MediasPage() {
                     : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                 }`}
               >
-                <FolderOpen size={16} />
+                <FolderOpen
+                  size={16}
+                />
 
                 <span className="min-w-0 flex-1 truncate text-[11px] font-bold">
                   Tous les médias
@@ -1313,17 +1613,21 @@ export default function MediasPage() {
               <button
                 onClick={(event) => {
                   event.stopPropagation();
-                  setFilter("image");
+
+                  setFilter(
+                    "image"
+                  );
                 }}
                 className={`flex w-full items-center gap-2 rounded-lg px-2 py-2 text-[10px] font-semibold ${
-                  filter ===
-                  "image"
+                  filter === "image"
                     ? "bg-red-50 text-red-600"
                     : "text-slate-500 hover:bg-slate-50"
                 }`}
               >
                 <ImageIcon size={14} />
+
                 Images
+
                 <span className="ml-auto text-[9px] text-slate-400">
                   {imageCount}
                 </span>
@@ -1332,17 +1636,21 @@ export default function MediasPage() {
               <button
                 onClick={(event) => {
                   event.stopPropagation();
-                  setFilter("video");
+
+                  setFilter(
+                    "video"
+                  );
                 }}
                 className={`flex w-full items-center gap-2 rounded-lg px-2 py-2 text-[10px] font-semibold ${
-                  filter ===
-                  "video"
+                  filter === "video"
                     ? "bg-red-50 text-red-600"
                     : "text-slate-500 hover:bg-slate-50"
                 }`}
               >
                 <Video size={14} />
+
                 Vidéos
+
                 <span className="ml-auto text-[9px] text-slate-400">
                   {videoCount}
                 </span>
@@ -1351,17 +1659,21 @@ export default function MediasPage() {
               <button
                 onClick={(event) => {
                   event.stopPropagation();
-                  setFilter("document");
+
+                  setFilter(
+                    "document"
+                  );
                 }}
                 className={`flex w-full items-center gap-2 rounded-lg px-2 py-2 text-[10px] font-semibold ${
-                  filter ===
-                  "document"
+                  filter === "document"
                     ? "bg-red-50 text-red-600"
                     : "text-slate-500 hover:bg-slate-50"
                 }`}
               >
                 <FileText size={14} />
+
                 Documents
+
                 <span className="ml-auto text-[9px] text-slate-400">
                   {documentCount}
                 </span>
@@ -1370,6 +1682,7 @@ export default function MediasPage() {
               <button
                 onClick={(event) => {
                   event.stopPropagation();
+
                   setFilter("all");
                 }}
                 className="mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-[10px] font-semibold text-red-600 hover:bg-red-50"
@@ -1379,7 +1692,9 @@ export default function MediasPage() {
             </div>
           </aside>
 
-          {/* BIBLIOTHÈQUE */}
+          {/* =================================================
+              BIBLIOTHÈQUE
+          ================================================= */}
 
           <section className="min-w-0">
             {/* TOOLBAR */}
@@ -1404,6 +1719,8 @@ export default function MediasPage() {
               </div>
 
               <div className="flex items-center gap-2">
+                {/* FILTRE */}
+
                 <div className="relative">
                   <button
                     onClick={(event) => {
@@ -1413,7 +1730,9 @@ export default function MediasPage() {
                         !showFilter
                       );
 
-                      setShowSort(false);
+                      setShowSort(
+                        false
+                      );
                     }}
                     className="flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2.5 text-[10px] font-bold text-slate-600 hover:bg-slate-50"
                   >
@@ -1426,14 +1745,17 @@ export default function MediasPage() {
 
                   {showFilter && (
                     <div
-                      onClick={(event) =>
+                      onClick={(
+                        event
+                      ) =>
                         event.stopPropagation()
                       }
                       className="absolute right-0 top-full z-30 mt-2 w-44 overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-xl"
                     >
                       {[
                         {
-                          value: "all",
+                          value:
+                            "all",
                           label:
                             "Tous les fichiers",
                         },
@@ -1496,11 +1818,16 @@ export default function MediasPage() {
                   )}
                 </div>
 
+                {/* VUE */}
+
                 <div className="flex rounded-xl border border-slate-200 p-1">
                   <button
                     onClick={(event) => {
                       event.stopPropagation();
-                      setView("grid");
+
+                      setView(
+                        "grid"
+                      );
                     }}
                     className={`flex h-8 w-8 items-center justify-center rounded-lg ${
                       view === "grid"
@@ -1508,13 +1835,18 @@ export default function MediasPage() {
                         : "text-slate-400"
                     }`}
                   >
-                    <Grid3X3 size={15} />
+                    <Grid3X3
+                      size={15}
+                    />
                   </button>
 
                   <button
                     onClick={(event) => {
                       event.stopPropagation();
-                      setView("list");
+
+                      setView(
+                        "list"
+                      );
                     }}
                     className={`flex h-8 w-8 items-center justify-center rounded-lg ${
                       view === "list"
@@ -1532,7 +1864,8 @@ export default function MediasPage() {
 
             <div className="mb-3 flex items-center justify-between">
               <p className="text-[10px] font-semibold text-slate-400">
-                {filteredMedias.length} média
+                {filteredMedias.length}{" "}
+                média
                 {filteredMedias.length >
                 1
                   ? "s"
@@ -1557,6 +1890,8 @@ export default function MediasPage() {
                 )}
               </p>
 
+              {/* TRI */}
+
               <div className="relative">
                 <button
                   onClick={(event) => {
@@ -1566,17 +1901,24 @@ export default function MediasPage() {
                       !showSort
                     );
 
-                    setShowFilter(false);
+                    setShowFilter(
+                      false
+                    );
                   }}
                   className="flex items-center gap-1 text-[10px] font-bold text-slate-500 hover:text-red-600"
                 >
                   {sortLabel}
-                  <ChevronDown size={12} />
+
+                  <ChevronDown
+                    size={12}
+                  />
                 </button>
 
                 {showSort && (
                   <div
-                    onClick={(event) =>
+                    onClick={(
+                      event
+                    ) =>
                       event.stopPropagation()
                     }
                     className="absolute right-0 top-full z-30 mt-2 w-36 overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-xl"
@@ -1623,7 +1965,9 @@ export default function MediasPage() {
                           }}
                           className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-[10px] font-semibold text-slate-600 hover:bg-slate-50"
                         >
-                          {item.label}
+                          {
+                            item.label
+                          }
 
                           {sort ===
                             item.value && (
@@ -1676,6 +2020,10 @@ export default function MediasPage() {
                           openMediaMenu ===
                           media.id
                         }
+                        deleting={
+                          deletingMedia ===
+                          media.id
+                        }
                         onSelect={() =>
                           setSelectedMedia(
                             selectedMedia ===
@@ -1692,8 +2040,18 @@ export default function MediasPage() {
                               : media.id
                           )
                         }
+                        onPreview={() =>
+                          setPreviewMedia(
+                            media
+                          )
+                        }
                         onDownload={() =>
                           handleDownload(
+                            media
+                          )
+                        }
+                        onDelete={() =>
+                          setDeleteConfirmMedia(
                             media
                           )
                         }
@@ -1712,9 +2070,13 @@ export default function MediasPage() {
                 <div className="overflow-visible rounded-2xl border border-slate-200 bg-white shadow-sm">
                   <div className="hidden grid-cols-[1fr_120px_110px_100px_40px] gap-4 border-b border-slate-100 px-4 py-3 text-[9px] font-black uppercase tracking-wider text-slate-400 sm:grid">
                     <span>Nom</span>
+
                     <span>Type</span>
+
                     <span>Taille</span>
+
                     <span>Date</span>
+
                     <span />
                   </div>
 
@@ -1727,6 +2089,10 @@ export default function MediasPage() {
                           openMediaMenu ===
                           media.id
                         }
+                        deleting={
+                          deletingMedia ===
+                          media.id
+                        }
                         onToggleMenu={() =>
                           setOpenMediaMenu(
                             openMediaMenu ===
@@ -1735,8 +2101,18 @@ export default function MediasPage() {
                               : media.id
                           )
                         }
+                        onPreview={() =>
+                          setPreviewMedia(
+                            media
+                          )
+                        }
                         onDownload={() =>
                           handleDownload(
+                            media
+                          )
+                        }
+                        onDelete={() =>
+                          setDeleteConfirmMedia(
                             media
                           )
                         }
@@ -1787,8 +2163,8 @@ export default function MediasPage() {
                       }
                       className="mt-5 rounded-xl border border-slate-200 px-4 py-2.5 text-[10px] font-black text-slate-600 hover:bg-slate-50"
                     >
-                      Réinitialiser les
-                      filtres
+                      Réinitialiser
+                      les filtres
                     </button>
                   )}
                 </div>
@@ -1823,7 +2199,9 @@ export default function MediasPage() {
                 </h2>
 
                 <p className="mt-1 text-[10px] text-slate-400">
-                  Ajoutez un ou plusieurs fichiers dans votre bibliothèque.
+                  Ajoutez un ou plusieurs
+                  fichiers dans votre
+                  bibliothèque.
                 </p>
               </div>
 
@@ -1831,7 +2209,9 @@ export default function MediasPage() {
                 onClick={() =>
                   setShowUpload(false)
                 }
-                disabled={uploading}
+                disabled={
+                  uploading
+                }
                 className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 disabled:opacity-50"
               >
                 <X size={17} />
@@ -1851,7 +2231,7 @@ export default function MediasPage() {
               }
             />
 
-            {/* INPUT DOSSIER ORDINATEUR */}
+            {/* INPUT DOSSIER */}
 
             <input
               ref={folderInputRef}
@@ -1874,10 +2254,14 @@ export default function MediasPage() {
                 <Upload size={21} />
               </div>
 
-              {uploadFiles.length > 0 ? (
+              {uploadFiles.length >
+              0 ? (
                 <>
                   <h3 className="mt-4 text-sm font-black text-slate-800">
-                    {uploadFiles.length} fichier
+                    {
+                      uploadFiles.length
+                    }{" "}
+                    fichier
                     {uploadFiles.length >
                     1
                       ? "s"
@@ -1891,13 +2275,18 @@ export default function MediasPage() {
 
                   <div className="mt-3 max-h-28 overflow-y-auto text-left">
                     {uploadFiles.map(
-                      (file, index) => (
+                      (
+                        file,
+                        index
+                      ) => (
                         <div
                           key={`${file.name}-${index}`}
                           className="flex items-center justify-between border-b border-slate-200 py-1.5 last:border-0"
                         >
                           <span className="max-w-[75%] truncate text-[10px] font-semibold text-slate-600">
-                            {file.name}
+                            {
+                              file.name
+                            }
                           </span>
 
                           <span className="text-[9px] text-slate-400">
@@ -1913,11 +2302,13 @@ export default function MediasPage() {
               ) : (
                 <>
                   <h3 className="mt-4 text-sm font-black text-slate-800">
-                    Sélectionnez vos fichiers
+                    Sélectionnez vos
+                    fichiers
                   </h3>
 
                   <p className="mt-1 text-[10px] text-slate-400">
-                    Images, vidéos ou documents
+                    Images, vidéos ou
+                    documents
                   </p>
                 </>
               )}
@@ -1927,7 +2318,9 @@ export default function MediasPage() {
                   onClick={() =>
                     fileInputRef.current?.click()
                   }
-                  disabled={uploading}
+                  disabled={
+                    uploading
+                  }
                   className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-[10px] font-black text-slate-700 hover:bg-slate-50 disabled:opacity-50"
                 >
                   {uploadFiles.length
@@ -1939,10 +2332,13 @@ export default function MediasPage() {
                   onClick={() =>
                     folderInputRef.current?.click()
                   }
-                  disabled={uploading}
+                  disabled={
+                    uploading
+                  }
                   className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-[10px] font-black text-red-600 hover:bg-red-100 disabled:opacity-50"
                 >
                   <Folder size={13} />
+
                   Choisir un dossier
                 </button>
               </div>
@@ -1967,7 +2363,9 @@ export default function MediasPage() {
                 onChange={
                   handleUploadFolderChange
                 }
-                disabled={uploading}
+                disabled={
+                  uploading
+                }
                 className="w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-xs font-semibold text-slate-700 outline-none focus:border-red-400"
               >
                 <option value="">
@@ -1984,20 +2382,25 @@ export default function MediasPage() {
                         folder.id
                       )}
                     >
-                      {folder.name}
+                      {
+                        folder.name
+                      }
                     </option>
                   )
                 )}
 
                 <option value="__create__">
-                  ＋ Créer un nouveau dossier…
+                  ＋ Créer un nouveau
+                  dossier…
                 </option>
               </select>
 
               {uploadFolderId !==
                 null && (
                 <p className="mt-2 text-[9px] font-semibold text-green-600">
-                  Les fichiers sélectionnés seront placés dans ce dossier.
+                  Les fichiers sélectionnés
+                  seront placés dans ce
+                  dossier.
                 </p>
               )}
             </div>
@@ -2009,7 +2412,9 @@ export default function MediasPage() {
                 onClick={() =>
                   setShowUpload(false)
                 }
-                disabled={uploading}
+                disabled={
+                  uploading
+                }
                 className="rounded-xl border border-slate-200 px-4 py-2.5 text-[10px] font-black text-slate-600 hover:bg-slate-50 disabled:opacity-50"
               >
                 Annuler
@@ -2059,7 +2464,9 @@ export default function MediasPage() {
           className="fixed inset-0 z-[90] flex items-center justify-center bg-black/50 p-4"
           onClick={() => {
             if (!creatingFolder) {
-              setShowNewFolder(false);
+              setShowNewFolder(
+                false
+              );
             }
           }}
         >
@@ -2076,13 +2483,16 @@ export default function MediasPage() {
                 </h2>
 
                 <p className="mt-1 text-[10px] text-slate-400">
-                  Organisez vos médias dans un dossier.
+                  Organisez vos médias dans
+                  un dossier.
                 </p>
               </div>
 
               <button
                 onClick={() =>
-                  setShowNewFolder(false)
+                  setShowNewFolder(
+                    false
+                  )
                 }
                 disabled={
                   creatingFolder
@@ -2126,7 +2536,9 @@ export default function MediasPage() {
             <div className="mt-5 flex justify-end gap-2">
               <button
                 onClick={() =>
-                  setShowNewFolder(false)
+                  setShowNewFolder(
+                    false
+                  )
                 }
                 disabled={
                   creatingFolder
@@ -2156,6 +2568,228 @@ export default function MediasPage() {
                 {creatingFolder
                   ? "Création..."
                   : "Créer le dossier"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =====================================================
+          MODAL APERÇU
+      ===================================================== */}
+
+      {previewMedia && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4"
+          onClick={() =>
+            setPreviewMedia(null)
+          }
+        >
+          <div
+            className="relative flex max-h-[92vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
+            onClick={(event) =>
+              event.stopPropagation()
+            }
+          >
+            {/* HEADER APERÇU */}
+
+            <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-black text-slate-900">
+                  {
+                    previewMedia.name
+                  }
+                </p>
+
+                <p className="mt-0.5 text-[9px] text-slate-400">
+                  {
+                    previewMedia.folder
+                  }{" "}
+                  ·{" "}
+                  {
+                    previewMedia.size
+                  }
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() =>
+                    handleDownload(
+                      previewMedia
+                    )
+                  }
+                  className="flex h-9 items-center gap-2 rounded-xl border border-slate-200 px-3 text-[10px] font-black text-slate-600 hover:bg-slate-50"
+                >
+                  <Download
+                    size={14}
+                  />
+
+                  <span className="hidden sm:inline">
+                    Télécharger
+                  </span>
+                </button>
+
+                <button
+                  onClick={() =>
+                    setPreviewMedia(
+                      null
+                    )
+                  }
+                  className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-900"
+                  aria-label="Fermer l'aperçu"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+
+            {/* CONTENU */}
+
+            <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto bg-slate-950 p-4 sm:p-8">
+              {previewMedia.type ===
+                "image" &&
+              previewMedia.src ? (
+                <img
+                  src={
+                    previewMedia.src
+                  }
+                  alt={
+                    previewMedia.name
+                  }
+                  className="max-h-[75vh] max-w-full object-contain"
+                />
+              ) : previewMedia.type ===
+                  "video" &&
+                previewMedia.src ? (
+                <video
+                  src={
+                    previewMedia.src
+                  }
+                  controls
+                  autoPlay
+                  playsInline
+                  className="max-h-[75vh] max-w-full rounded-xl object-contain"
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center text-center text-white">
+                  <FileText
+                    size={48}
+                    className="text-red-500"
+                  />
+
+                  <p className="mt-4 text-sm font-black">
+                    Aperçu non disponible
+                  </p>
+
+                  <p className="mt-1 text-xs text-slate-400">
+                    Téléchargez le document
+                    pour l'ouvrir.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =====================================================
+          CONFIRMATION SUPPRESSION
+      ===================================================== */}
+
+      {deleteConfirmMedia && (
+        <div
+          className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 p-4"
+          onClick={() => {
+            if (
+              deletingMedia ===
+              null
+            ) {
+              setDeleteConfirmMedia(
+                null
+              );
+            }
+          }}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"
+            onClick={(event) =>
+              event.stopPropagation()
+            }
+          >
+            <div className="flex items-start gap-4">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-red-50 text-red-600">
+                <AlertTriangle
+                  size={21}
+                />
+              </div>
+
+              <div className="min-w-0">
+                <h2 className="text-base font-black text-slate-900">
+                  Supprimer ce média ?
+                </h2>
+
+                <p className="mt-2 text-xs leading-5 text-slate-500">
+                  Vous êtes sur le point
+                  de supprimer définitivement
+                  <span className="font-black text-slate-800">
+                    {" "}
+                    "
+                    {
+                      deleteConfirmMedia.name
+                    }
+                    "
+                  </span>
+                  .
+                </p>
+
+                <p className="mt-2 text-[10px] font-semibold text-red-500">
+                  Le fichier sera également
+                  supprimé du stockage.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                onClick={() =>
+                  setDeleteConfirmMedia(
+                    null
+                  )
+                }
+                disabled={
+                  deletingMedia !==
+                  null
+                }
+                className="rounded-xl border border-slate-200 px-4 py-2.5 text-[10px] font-black text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+              >
+                Annuler
+              </button>
+
+              <button
+                onClick={() =>
+                  handleDelete(
+                    deleteConfirmMedia
+                  )
+                }
+                disabled={
+                  deletingMedia !==
+                  null
+                }
+                className="flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-[10px] font-black text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {deletingMedia !==
+                  null && (
+                  <Loader2
+                    size={13}
+                    className="animate-spin"
+                  />
+                )}
+
+                {deletingMedia !==
+                null
+                  ? "Suppression..."
+                  : "Supprimer définitivement"}
               </button>
             </div>
           </div>
@@ -2205,16 +2839,22 @@ function MediaCard({
   media,
   selected,
   menuOpen,
+  deleting,
   onSelect,
   onToggleMenu,
+  onPreview,
   onDownload,
+  onDelete,
 }: {
   media: Media;
   selected: boolean;
   menuOpen: boolean;
+  deleting: boolean;
   onSelect: () => void;
   onToggleMenu: () => void;
+  onPreview: () => void;
   onDownload: () => void;
+  onDelete: () => void;
 }) {
   return (
     <div
@@ -2224,6 +2864,8 @@ function MediaCard({
           : "border-slate-200"
       }`}
     >
+      {/* APERÇU MEDIA */}
+
       <div
         onClick={onSelect}
         className="relative aspect-[4/3] cursor-pointer overflow-hidden rounded-t-2xl bg-slate-50"
@@ -2239,19 +2881,36 @@ function MediaCard({
             />
           </div>
         ) : media.type ===
-          "video" ? (
-          <div className="flex h-full items-center justify-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-red-500 shadow-sm">
-              <Video size={25} />
+            "video" &&
+          media.src ? (
+          <div className="relative h-full w-full bg-black">
+            <video
+              src={media.src}
+              className="h-full w-full object-cover"
+              muted
+              playsInline
+              preload="metadata"
+            />
+
+            <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 text-red-600 shadow-lg">
+                <Video
+                  size={22}
+                />
+              </div>
             </div>
           </div>
         ) : (
           <div className="flex h-full items-center justify-center">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-red-500 shadow-sm">
-              <FileText size={25} />
+              <FileText
+                size={25}
+              />
             </div>
           </div>
         )}
+
+        {/* TYPE */}
 
         <div className="absolute left-3 top-3 z-10 rounded-lg bg-black/50 px-2 py-1 text-[8px] font-bold text-white backdrop-blur">
           {media.type ===
@@ -2263,12 +2922,31 @@ function MediaCard({
             : "DOCUMENT"}
         </div>
 
+        {/* SÉLECTION */}
+
         {selected && (
           <div className="absolute right-3 top-3 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-white">
             <Check size={13} />
           </div>
         )}
+
+        {/* BOUTON APERÇU */}
+
+        <button
+          onClick={(event) => {
+            event.stopPropagation();
+
+            onPreview();
+          }}
+          className="absolute bottom-3 left-3 z-20 flex h-8 items-center gap-2 rounded-lg bg-white/95 px-3 text-[9px] font-black text-slate-700 opacity-0 shadow-lg transition group-hover:opacity-100 hover:bg-white"
+        >
+          <Eye size={13} />
+
+          Aperçu
+        </button>
       </div>
+
+      {/* INFORMATIONS */}
 
       <div className="p-3">
         <div className="flex items-start gap-2">
@@ -2283,15 +2961,20 @@ function MediaCard({
             </p>
           </div>
 
+          {/* MENU */}
+
           <div className="relative shrink-0">
             <button
               onClick={(event) => {
                 event.stopPropagation();
+
                 onToggleMenu();
               }}
               className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-900"
             >
-              <MoreHorizontal size={15} />
+              <MoreHorizontal
+                size={15}
+              />
             </button>
 
             {menuOpen && (
@@ -2299,14 +2982,56 @@ function MediaCard({
                 onClick={(event) =>
                   event.stopPropagation()
                 }
-                className="absolute bottom-full right-0 z-[60] mb-2 w-40 overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-xl"
+                className="absolute bottom-full right-0 z-[60] mb-2 w-44 overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-xl"
               >
+                {/* APERÇU */}
+
                 <button
-                  onClick={onDownload}
+                  onClick={() => {
+                    onPreview();
+                    onToggleMenu();
+                  }}
                   className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-[10px] font-semibold text-slate-600 hover:bg-slate-50"
                 >
-                  <Download size={13} />
+                  <Eye size={13} />
+
+                  Aperçu
+                </button>
+
+                {/* TÉLÉCHARGER */}
+
+                <button
+                  onClick={
+                    onDownload
+                  }
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-[10px] font-semibold text-slate-600 hover:bg-slate-50"
+                >
+                  <Download
+                    size={13}
+                  />
+
                   Télécharger
+                </button>
+
+                {/* SUPPRIMER */}
+
+                <button
+                  onClick={onDelete}
+                  disabled={deleting}
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-[10px] font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50"
+                >
+                  {deleting ? (
+                    <Loader2
+                      size={13}
+                      className="animate-spin"
+                    />
+                  ) : (
+                    <Trash2
+                      size={13}
+                    />
+                  )}
+
+                  Supprimer
                 </button>
               </div>
             )}
@@ -2324,18 +3049,29 @@ function MediaCard({
 function MediaListItem({
   media,
   menuOpen,
+  deleting,
   onToggleMenu,
+  onPreview,
   onDownload,
+  onDelete,
 }: {
   media: Media;
   menuOpen: boolean;
+  deleting: boolean;
   onToggleMenu: () => void;
+  onPreview: () => void;
   onDownload: () => void;
+  onDelete: () => void;
 }) {
   return (
     <div className="relative grid grid-cols-1 gap-3 border-b border-slate-100 px-4 py-3 last:border-0 sm:grid-cols-[1fr_120px_110px_100px_40px] sm:items-center sm:gap-4">
+      {/* NOM */}
+
       <div className="flex min-w-0 items-center gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-50 p-1">
+        <button
+          onClick={onPreview}
+          className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-50 p-1"
+        >
           {media.type ===
             "image" &&
           media.src ? (
@@ -2345,10 +3081,14 @@ function MediaListItem({
               className="h-full w-full object-contain object-center"
             />
           ) : media.type ===
-            "video" ? (
-            <Video
-              size={17}
-              className="text-red-500"
+              "video" &&
+            media.src ? (
+            <video
+              src={media.src}
+              muted
+              playsInline
+              preload="metadata"
+              className="h-full w-full object-cover"
             />
           ) : (
             <FileText
@@ -2356,7 +3096,7 @@ function MediaListItem({
               className="text-red-500"
             />
           )}
-        </div>
+        </button>
 
         <div className="min-w-0">
           <p className="truncate text-[11px] font-black text-slate-800">
@@ -2369,6 +3109,8 @@ function MediaListItem({
         </div>
       </div>
 
+      {/* TYPE */}
+
       <span className="text-[10px] font-semibold text-slate-500">
         {media.type ===
         "image"
@@ -2379,23 +3121,32 @@ function MediaListItem({
           : "Document"}
       </span>
 
+      {/* TAILLE */}
+
       <span className="text-[10px] text-slate-500">
         {media.size}
       </span>
+
+      {/* DATE */}
 
       <span className="text-[10px] text-slate-500">
         {media.date}
       </span>
 
+      {/* MENU */}
+
       <div className="relative">
         <button
           onClick={(event) => {
             event.stopPropagation();
+
             onToggleMenu();
           }}
           className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-900"
         >
-          <MoreHorizontal size={15} />
+          <MoreHorizontal
+            size={15}
+          />
         </button>
 
         {menuOpen && (
@@ -2403,14 +3154,52 @@ function MediaListItem({
             onClick={(event) =>
               event.stopPropagation()
             }
-            className="absolute bottom-full right-0 z-[60] mb-2 w-40 overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-xl"
+            className="absolute bottom-full right-0 z-[60] mb-2 w-44 overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-xl"
           >
+            {/* APERÇU */}
+
+            <button
+              onClick={() => {
+                onPreview();
+                onToggleMenu();
+              }}
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-[10px] font-semibold text-slate-600 hover:bg-slate-50"
+            >
+              <Eye size={13} />
+
+              Aperçu
+            </button>
+
+            {/* TÉLÉCHARGER */}
+
             <button
               onClick={onDownload}
               className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-[10px] font-semibold text-slate-600 hover:bg-slate-50"
             >
               <Download size={13} />
+
               Télécharger
+            </button>
+
+            {/* SUPPRIMER */}
+
+            <button
+              onClick={onDelete}
+              disabled={deleting}
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-[10px] font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50"
+            >
+              {deleting ? (
+                <Loader2
+                  size={13}
+                  className="animate-spin"
+                />
+              ) : (
+                <Trash2
+                  size={13}
+                />
+              )}
+
+              Supprimer
             </button>
           </div>
         )}
