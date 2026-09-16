@@ -67,6 +67,21 @@ type PostContent = {
   image: string | null;
 };
 
+type PublicationMedia = {
+  id: number;
+  name: string;
+  original_name?: string;
+  type: "image" | "video" | "document";
+  mime_type?: string;
+  size?: number;
+  path?: string;
+  folder?: {
+    id: number;
+    name: string;
+  } | null;
+  src?: string;
+};
+
 type StoredTemplate = {
   id: number;
   title: string;
@@ -377,6 +392,56 @@ export default function CreatePublicationPage() {
   const [posts, setPosts] = useState<Record<string, PostContent>>({});
 
   /* =======================================================
+     MÉDIAS DE LA PUBLICATION
+  ======================================================= */
+
+  const [selectedMediaIds, setSelectedMediaIds] = useState<number[]>([]);
+  const [selectedMedia, setSelectedMedia] = useState<PublicationMedia[]>([]);
+
+  const BACKEND_URL =
+    process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+
+  const getMediaUrl = (path?: string) => {
+    if (!path) return "";
+
+    if (path.startsWith("http://") || path.startsWith("https://")) {
+      return path;
+    }
+
+    return `${BACKEND_URL}/storage/${path.replace(/^\/+/, "")}`;
+  };
+
+  const openMediaLibrary = () => {
+    const currentSelection = {
+      ids: selectedMediaIds,
+      medias: selectedMedia,
+    };
+
+    sessionStorage.setItem(
+      "griot_publication_media_selection",
+      JSON.stringify(currentSelection)
+    );
+
+    const returnTo =
+      window.location.pathname + window.location.search;
+
+    window.location.href =
+      `/dashboard/medias?select=publication&returnTo=${encodeURIComponent(
+        returnTo
+      )}`;
+  };
+
+  const removeSelectedMedia = (mediaId: number) => {
+    setSelectedMediaIds((current) =>
+      current.filter((id) => id !== mediaId)
+    );
+
+    setSelectedMedia((current) =>
+      current.filter((media) => media.id !== mediaId)
+    );
+  };
+
+  /* =======================================================
      1. CHARGER LES PROJETS DEPUIS LARAVEL
   ======================================================= */
 
@@ -553,6 +618,44 @@ export default function CreatePublicationPage() {
           setSelectedNetworks([networkId]);
           setIdea(item.content || "");
 
+          const returnedFromMedia =
+            params.get("mediaSelection") === "1";
+
+          if (!returnedFromMedia) {
+            const publicationMedias: PublicationMedia[] =
+              Array.isArray(item.medias)
+                ? item.medias.map((media: any) => ({
+                    id: Number(media.id),
+                    name:
+                      media.name ||
+                      media.original_name ||
+                      "Média",
+                    original_name: media.original_name,
+                    type:
+                      media.type === "video"
+                        ? "video"
+                        : media.type === "document"
+                        ? "document"
+                        : "image",
+                    mime_type: media.mime_type,
+                    size: Number(media.size ?? 0),
+                    path: media.path,
+                    folder: media.folder
+                      ? {
+                          id: Number(media.folder.id),
+                          name: media.folder.name,
+                        }
+                      : null,
+                    src: getMediaUrl(media.path),
+                  }))
+                : [];
+
+            setSelectedMediaIds(
+              publicationMedias.map((media) => media.id)
+            );
+            setSelectedMedia(publicationMedias);
+          }
+
           setPosts((current) => ({
             ...current,
             [networkId]: {
@@ -642,6 +745,61 @@ export default function CreatePublicationPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeProject?.networks?.length]);
+
+  /* =======================================================
+     RETOUR DE LA BIBLIOTHÈQUE MÉDIA
+  ======================================================= */
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+
+    if (params.get("mediaSelection") !== "1") {
+      return;
+    }
+
+    const stored = sessionStorage.getItem(
+      "griot_publication_media_selection"
+    );
+
+    if (!stored) return;
+
+    try {
+      const parsed = JSON.parse(stored);
+
+      const ids = Array.isArray(parsed?.ids)
+        ? parsed.ids
+            .map((id: unknown) => Number(id))
+            .filter((id: number) => Number.isFinite(id))
+        : [];
+
+      const medias: PublicationMedia[] = Array.isArray(parsed?.medias)
+        ? parsed.medias
+        : [];
+
+      setSelectedMediaIds(ids);
+      setSelectedMedia(medias);
+
+      sessionStorage.removeItem(
+        "griot_publication_media_selection"
+      );
+
+      const cleanParams = new URLSearchParams(window.location.search);
+      cleanParams.delete("mediaSelection");
+
+      const cleanUrl =
+        window.location.pathname +
+        (cleanParams.toString()
+          ? `?${cleanParams.toString()}`
+          : "");
+
+      window.history.replaceState({}, "", cleanUrl);
+    } catch (error) {
+      console.error(
+        "Impossible de récupérer la sélection de médias :",
+        error
+      );
+    }
+  }, []);
 
   /* =======================================================
      CHANGEMENT DE PROJET
@@ -759,6 +917,7 @@ export default function CreatePublicationPage() {
           date: apiDate,
           time: scheduledTime,
           image: post.image ?? null,
+          media_ids: selectedMediaIds,
         });
 
         window.location.href = "/dashboard/publications";
@@ -783,6 +942,7 @@ export default function CreatePublicationPage() {
           date: apiDate,
           time: scheduledTime,
           image: post.image ?? null,
+          media_ids: selectedMediaIds,
         });
       }
 
@@ -1209,10 +1369,99 @@ export default function CreatePublicationPage() {
               </div>
             </section>
 
+            {/* MÉDIAS */}
+
+            <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_2px_10px_rgba(15,23,42,0.03)] sm:p-5">
+              <SectionTitle number="2" title="Choisir les médias" />
+
+              <p className="mt-1.5 text-[10px] leading-[1.6] text-slate-400">
+                Sélectionnez vos images et vidéos depuis votre bibliothèque média.
+                Vous pouvez réutiliser les mêmes médias dans plusieurs publications.
+              </p>
+
+              {selectedMedia.length > 0 ? (
+                <div className="mt-4 space-y-2">
+                  {selectedMedia.slice(0, 4).map((media) => (
+                    <div
+                      key={media.id}
+                      className="flex items-center gap-2 rounded-xl border border-slate-100 bg-slate-50 p-2"
+                    >
+                      <div className="h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-slate-200">
+                        {media.type === "image" && media.src ? (
+                          <img
+                            src={media.src}
+                            alt={media.name}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : media.type === "video" && media.src ? (
+                          <video
+                            src={media.src}
+                            muted
+                            playsInline
+                            preload="metadata"
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full items-center justify-center text-[8px] font-black text-slate-400">
+                            DOC
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[9px] font-black text-slate-700">
+                          {media.name}
+                        </p>
+                        <p className="mt-0.5 truncate text-[8px] text-slate-400">
+                          {media.folder?.name || "Sans dossier"}
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => removeSelectedMedia(media.id)}
+                        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600"
+                        aria-label={`Retirer ${media.name}`}
+                      >
+                        <X size={13} />
+                      </button>
+                    </div>
+                  ))}
+
+                  {selectedMedia.length > 4 && (
+                    <p className="text-[9px] font-bold text-slate-400">
+                      + {selectedMedia.length - 4} autre(s) média(s)
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-center">
+                  <ImageIcon
+                    size={19}
+                    className="mx-auto text-slate-400"
+                  />
+                  <p className="mt-2 text-[10px] font-bold text-slate-500">
+                    Aucun média sélectionné
+                  </p>
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={openMediaLibrary}
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-red-dark bg-white py-3 text-[10px] font-black uppercase tracking-[0.05em] text-red-dark transition hover:bg-red-50"
+              >
+                <ImageIcon size={14} />
+                {selectedMedia.length > 0
+                  ? "Modifier la sélection"
+                  : "Choisir dans la bibliothèque"}
+              </button>
+            </section>
+
             {/* RÉSEAUX */}
 
             <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_2px_10px_rgba(15,23,42,0.03)] sm:p-5">
-              <SectionTitle number="2" title="Choisir les réseaux" />
+              <SectionTitle number="3" title="Choisir les réseaux" />
 
               <p className="mt-1.5 text-[10px] leading-[1.6] text-slate-400">
                 Sélectionnez les réseaux sur lesquels vous souhaitez publier pour le projet{" "}
@@ -1505,6 +1754,16 @@ export default function CreatePublicationPage() {
               {selectedNetworks.length}
             </strong>{" "}
             réseaux sélectionnés
+          </span>
+
+          <span className="hidden h-3 w-px bg-slate-200 sm:block" />
+
+          <span>
+            <strong className="text-slate-700">
+              {selectedMediaIds.length}
+            </strong>{" "}
+            média{selectedMediaIds.length > 1 ? "s" : ""} sélectionné
+            {selectedMediaIds.length > 1 ? "s" : ""}
           </span>
 
           <span className="hidden h-3 w-px bg-slate-200 sm:block" />
