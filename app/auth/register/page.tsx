@@ -70,27 +70,21 @@ export default function RegisterPage() {
       await axios.get("/sanctum/csrf-cookie");
 
       // 2. Créer le compte
-      const response = await axios.post("/api/register", {
-        name,
-        email,
-        password,
-      });
+     const response = await axios.post("/api/register", {
+  name,
+  email,
+  password,
+});
 
-      console.log("Inscription réussie :", response.data);
+console.log("Inscription réussie :", response.data);
 
-      setSuccessMessage("Compte créé avec succès !");
+setSuccessMessage(
+  "Compte créé avec succès ! Vérifiez votre adresse email pour continuer.",
+);
 
-      const isAdmin = response.data?.user?.role === "admin";
-
-      setTimeout(() => {
-        if (isAdmin) {
-          window.location.href = "/admin/dashboard";
-        } else if (planId) {
-          window.location.href = `/auth/abonnement/valider?plan=${planId}`;
-        } else {
-          window.location.href = "/auth/abonnement";
-        }
-      }, 1000);
+setTimeout(() => {
+  window.location.href = "/auth/verifier-email";
+}, 1500);
     } catch (error: any) {
       console.error("Erreur inscription :", error);
 

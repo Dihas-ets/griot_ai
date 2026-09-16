@@ -60,6 +60,18 @@ type CompteSocial = {
 };
 
 /* =========================================================
+   RÉSEAUX GÉRÉS PAR OAUTH CÔTÉ BACKEND
+   -> ajoute un id ici dès que la route
+      /auth/{id}/redirect/{projectId} existe côté Laravel
+========================================================= */
+
+const oauthNetworks = ["facebook", "tiktok"];
+
+function getOAuthUrl(networkId: string, projectId: string) {
+  return `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/${networkId}/redirect/${projectId}`;
+}
+
+/* =========================================================
    LOGO SIMPLE ICON
 ========================================================= */
 
@@ -91,10 +103,7 @@ function SocialLogo({
 function FacebookIcon() {
   return (
     <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#1877F2]/10">
-      <SocialLogo
-        icon={siFacebook}
-        className="h-6 w-6 text-[#1877F2]"
-      />
+      <SocialLogo icon={siFacebook} className="h-6 w-6 text-[#1877F2]" />
     </div>
   );
 }
@@ -106,11 +115,7 @@ function FacebookIcon() {
 function InstagramIcon() {
   return (
     <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#F58529]/10 via-[#DD2A7B]/10 to-[#8134AF]/10">
-      <svg
-        viewBox="0 0 24 24"
-        className="h-6 w-6"
-        aria-hidden="true"
-      >
+      <svg viewBox="0 0 24 24" className="h-6 w-6" aria-hidden="true">
         <defs>
           <linearGradient
             id="instagramGradient"
@@ -126,10 +131,7 @@ function InstagramIcon() {
           </linearGradient>
         </defs>
 
-        <path
-          fill="url(#instagramGradient)"
-          d={siInstagram.path}
-        />
+        <path fill="url(#instagramGradient)" d={siInstagram.path} />
       </svg>
     </div>
   );
@@ -149,9 +151,7 @@ function LinkedinIcon() {
         aria-hidden="true"
       >
         <path d="M20.45 20.45h-3.56v-5.57c0-1.33-.03-3.04-1.85-3.04-1.85 0-2.13 1.44-2.13 2.94v5.67H9.35V8.99h3.41v1.56h.05c.47-.9 1.63-1.85 3.35-1.85 3.59 0 4.25 2.36 4.25 5.43v6.32z" />
-
         <path d="M5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14z" />
-
         <path d="M3.56 8.99h3.56v11.46H3.56V8.99z" />
       </svg>
     </div>
@@ -165,10 +165,7 @@ function LinkedinIcon() {
 function TikTokIcon() {
   return (
     <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100">
-      <SocialLogo
-        icon={siTiktok}
-        className="h-6 w-6 text-black"
-      />
+      <SocialLogo icon={siTiktok} className="h-6 w-6 text-black" />
     </div>
   );
 }
@@ -180,10 +177,7 @@ function TikTokIcon() {
 function XIcon() {
   return (
     <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100">
-      <SocialLogo
-        icon={siX}
-        className="h-6 w-6 text-black"
-      />
+      <SocialLogo icon={siX} className="h-6 w-6 text-black" />
     </div>
   );
 }
@@ -195,10 +189,7 @@ function XIcon() {
 function GoogleIcon() {
   return (
     <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50">
-      <SocialLogo
-        icon={siGoogle}
-        className="h-6 w-6 text-[#4285F4]"
-      />
+      <SocialLogo icon={siGoogle} className="h-6 w-6 text-[#4285F4]" />
     </div>
   );
 }
@@ -219,7 +210,6 @@ const availableNetworks: SocialNetwork[] = [
     views: "—",
     icon: <FacebookIcon />,
   },
-
   {
     id: "instagram",
     name: "Instagram",
@@ -231,7 +221,6 @@ const availableNetworks: SocialNetwork[] = [
     views: "—",
     icon: <InstagramIcon />,
   },
-
   {
     id: "linkedin",
     name: "LinkedIn",
@@ -243,7 +232,6 @@ const availableNetworks: SocialNetwork[] = [
     views: "—",
     icon: <LinkedinIcon />,
   },
-
   {
     id: "tiktok",
     name: "TikTok",
@@ -255,7 +243,6 @@ const availableNetworks: SocialNetwork[] = [
     views: "—",
     icon: <TikTokIcon />,
   },
-
   {
     id: "google",
     name: "Google Business",
@@ -267,7 +254,6 @@ const availableNetworks: SocialNetwork[] = [
     views: "—",
     icon: <GoogleIcon />,
   },
-
   {
     id: "x",
     name: "X",
@@ -337,9 +323,7 @@ export default function ReseauxSociauxPage() {
   ========================================================= */
 
   const networks: SocialNetwork[] = availableNetworks.map((network) => {
-    const compte = comptesSociaux.find(
-      (item) => item.reseau === network.id
-    );
+    const compte = comptesSociaux.find((item) => item.reseau === network.id);
 
     if (!compte) {
       return network;
@@ -348,14 +332,8 @@ export default function ReseauxSociauxPage() {
     return {
       ...network,
       username:
-        compte.nom_utilisateur ||
-        compte.nom_affichage ||
-        "Compte connecté",
-
-      status:
-        compte.statut === "actif"
-          ? "connected"
-          : "attention",
+        compte.nom_utilisateur || compte.nom_affichage || "Compte connecté",
+      status: compte.statut === "actif" ? "connected" : "attention",
     };
   });
 
@@ -381,19 +359,34 @@ export default function ReseauxSociauxPage() {
 
   const totalFollowers = "—";
 
+  /* =========================================================
+     CONNEXION D'UN RÉSEAU (depuis la modale ou la carte)
+  ========================================================= */
+
+  const handleConnect = (networkId: string) => {
+    if (!projectId) return;
+
+    if (oauthNetworks.includes(networkId)) {
+      window.location.href = getOAuthUrl(networkId, projectId);
+      return;
+    }
+
+    const network = availableNetworks.find((n) => n.id === networkId);
+
+    window.alert(
+      `La connexion ${network?.name ?? networkId} sera bientôt disponible.`
+    );
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
-
       {/* =====================================================
           HEADER
       ===================================================== */}
 
       <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
-
         <div className="flex min-h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-
           <div className="min-w-0 pl-14 md:pl-12 lg:pl-0">
-
             <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-400">
               Gestion des comptes
             </p>
@@ -401,11 +394,9 @@ export default function ReseauxSociauxPage() {
             <h1 className="truncate text-base font-black text-slate-900 sm:text-lg">
               Réseaux sociaux
             </h1>
-
           </div>
 
           <div className="flex items-center gap-2">
-
             <Link
               href="/dashboard/publication"
               className="hidden items-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-[10px] font-black uppercase tracking-wide text-white shadow-lg shadow-red-600/20 transition hover:bg-red-700 sm:flex"
@@ -417,11 +408,8 @@ export default function ReseauxSociauxPage() {
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-red-600 text-xs font-black text-white">
               Y
             </div>
-
           </div>
-
         </div>
-
       </header>
 
       {/* =====================================================
@@ -429,17 +417,13 @@ export default function ReseauxSociauxPage() {
       ===================================================== */}
 
       <main className="mx-auto max-w-[1500px] p-4 sm:p-6 lg:p-8">
-
         {/* =====================================================
             INTRO
         ===================================================== */}
 
         <section className="mb-7">
-
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-
             <div>
-
               <h2 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
                 Vos réseaux sociaux
               </h2>
@@ -449,20 +433,17 @@ export default function ReseauxSociauxPage() {
                 Programmez vos publications et suivez vos performances sans
                 quitter Griot AI.
               </p>
-
             </div>
 
-           <button
-  type="button"
-  onClick={() => setShowAddNetwork(true)}
-  className="flex w-fit items-center gap-2 rounded-xl bg-red-600 px-4 py-3 text-[10px] font-black uppercase tracking-wide text-white shadow-lg shadow-red-600/20 transition hover:bg-red-700"
->
-  <Plus size={15} />
-  Ajouter un réseau
-</button>
-
+            <button
+              type="button"
+              onClick={() => setShowAddNetwork(true)}
+              className="flex w-fit items-center gap-2 rounded-xl bg-red-600 px-4 py-3 text-[10px] font-black uppercase tracking-wide text-white shadow-lg shadow-red-600/20 transition hover:bg-red-700"
+            >
+              <Plus size={15} />
+              Ajouter un réseau
+            </button>
           </div>
-
         </section>
 
         {/* =====================================================
@@ -470,7 +451,6 @@ export default function ReseauxSociauxPage() {
         ===================================================== */}
 
         <section className="mb-7 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-
           <StatCard
             icon={<Link2 size={18} />}
             label="Réseaux connectés"
@@ -483,9 +463,7 @@ export default function ReseauxSociauxPage() {
             label="Audience totale"
             value={totalFollowers}
             description={
-              projectId
-                ? "Données du projet"
-                : "Sélectionnez un projet"
+              projectId ? "Données du projet" : "Sélectionnez un projet"
             }
           />
 
@@ -503,7 +481,6 @@ export default function ReseauxSociauxPage() {
             description="Compte à vérifier"
             warning
           />
-
         </section>
 
         {/* =====================================================
@@ -511,9 +488,7 @@ export default function ReseauxSociauxPage() {
         ===================================================== */}
 
         <section className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-
           <div>
-
             <h3 className="text-sm font-black text-slate-900">
               Comptes connectés
             </h3>
@@ -521,11 +496,9 @@ export default function ReseauxSociauxPage() {
             <p className="mt-1 text-[10px] text-slate-400">
               Gérez les comptes utilisés pour vos publications.
             </p>
-
           </div>
 
           <div className="relative w-full sm:w-64">
-
             <Search
               size={15}
               className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
@@ -538,9 +511,7 @@ export default function ReseauxSociauxPage() {
               onChange={(e) => setSearch(e.target.value)}
               className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-xs font-medium outline-none transition focus:border-red-400 focus:ring-4 focus:ring-red-500/5"
             />
-
           </div>
-
         </section>
 
         {/* =====================================================
@@ -554,19 +525,29 @@ export default function ReseauxSociauxPage() {
         )}
 
         {/* =====================================================
+            PAS DE PROJET SÉLECTIONNÉ
+        ===================================================== */}
+
+        {!projectId && (
+          <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-700">
+            Sélectionnez un projet (depuis la page Projets) pour pouvoir
+            connecter vos réseaux sociaux.
+          </div>
+        )}
+
+        {/* =====================================================
             RÉSEAUX
         ===================================================== */}
 
         <section className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
-
           {filteredNetworks.map((network) => (
             <NetworkCard
               key={network.id}
               network={network}
               projectId={projectId}
+              onConnect={handleConnect}
             />
           ))}
-
         </section>
 
         {/* =====================================================
@@ -574,41 +555,33 @@ export default function ReseauxSociauxPage() {
         ===================================================== */}
 
         <section className="mt-6 overflow-hidden rounded-2xl border border-red-100 bg-gradient-to-br from-red-50 via-white to-white">
-
           <div className="flex flex-col gap-6 p-5 sm:p-7 lg:flex-row lg:items-center lg:justify-between">
-
             <div className="flex items-start gap-4">
-
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-red-600 text-white shadow-lg shadow-red-600/20">
                 <Plus size={22} />
               </div>
 
               <div>
-
                 <h3 className="text-sm font-black text-slate-900 sm:text-base">
                   Connectez un nouveau réseau
                 </h3>
 
                 <p className="mt-1 max-w-xl text-[10px] leading-relaxed text-slate-500 sm:text-xs">
-                  Ajoutez vos comptes sociaux à Griot AI pour centraliser
-                  vos publications, votre calendrier et vos statistiques.
+                  Ajoutez vos comptes sociaux à Griot AI pour centraliser vos
+                  publications, votre calendrier et vos statistiques.
                 </p>
-
               </div>
-
             </div>
 
-          <button
-  type="button"
-  onClick={() => setShowAddNetwork(true)}
-  className="flex items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-3 text-[10px] font-black uppercase tracking-wide text-white shadow-lg shadow-red-600/20 transition hover:bg-red-700"
->
-  <Plus size={15} />
-  Ajouter un réseau
-</button>
-
+            <button
+              type="button"
+              onClick={() => setShowAddNetwork(true)}
+              className="flex items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-3 text-[10px] font-black uppercase tracking-wide text-white shadow-lg shadow-red-600/20 transition hover:bg-red-700"
+            >
+              <Plus size={15} />
+              Ajouter un réseau
+            </button>
           </div>
-
         </section>
 
         {/* =====================================================
@@ -616,15 +589,12 @@ export default function ReseauxSociauxPage() {
         ===================================================== */}
 
         <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
               <ShieldCheck size={21} />
             </div>
 
             <div className="flex-1">
-
               <h3 className="text-sm font-black text-slate-900">
                 Vos comptes sont protégés
               </h3>
@@ -634,12 +604,9 @@ export default function ReseauxSociauxPage() {
                 comptes. Vos identifiants ne sont jamais stockés directement
                 dans l'application.
               </p>
-
             </div>
-
           </div>
-
-            </section>
+        </section>
 
         {/* =====================================================
             MODALE AJOUTER UN RÉSEAU
@@ -654,11 +621,9 @@ export default function ReseauxSociauxPage() {
               className="w-full max-w-lg overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
-
               {/* HEADER */}
 
               <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-
                 <div>
                   <h3 className="text-sm font-black text-slate-900">
                     Ajouter un réseau
@@ -677,54 +642,25 @@ export default function ReseauxSociauxPage() {
                 >
                   ×
                 </button>
-
               </div>
 
               {/* RÉSEAUX */}
 
               <div className="grid grid-cols-1 gap-3 p-5 sm:grid-cols-2">
-
                 {availableNetworks.map((network) => (
-
                   <button
                     key={network.id}
                     type="button"
                     disabled={!projectId}
                     onClick={() => {
-
-                      if (!projectId) {
-                        return;
-                      }
-
-                    if (network.id === "tiktok") {
-  setShowAddNetwork(false);
-
-  window.location.href =
-    `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/tiktok/redirect/${projectId}`;
-
-  return;
-}
-
-if (network.id === "facebook") {
-  setShowAddNetwork(false);
-
-  window.location.href =
-    `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/facebook/redirect/${projectId}`;
-
-  return;
-}
-
-                      alert(
-                        `La connexion ${network.name} sera bientôt disponible.`
-                      );
+                      setShowAddNetwork(false);
+                      handleConnect(network.id);
                     }}
                     className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 text-left transition hover:border-red-200 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-
                     {network.icon}
 
                     <div className="min-w-0 flex-1">
-
                       <p className="text-xs font-black text-slate-900">
                         {network.name}
                       </p>
@@ -732,39 +668,30 @@ if (network.id === "facebook") {
                       <p className="mt-0.5 truncate text-[9px] text-slate-400">
                         {network.description}
                       </p>
-
                     </div>
 
                     <ChevronRight
                       size={15}
                       className="shrink-0 text-slate-400"
                     />
-
                   </button>
-
                 ))}
-
               </div>
 
               {/* PAS DE PROJET */}
 
               {!projectId && (
                 <div className="border-t border-slate-100 bg-amber-50 px-5 py-3">
-
                   <p className="text-[10px] font-semibold text-amber-700">
                     Vous devez d'abord sélectionner un projet avant de
                     connecter un réseau social.
                   </p>
-
                 </div>
               )}
-
             </div>
           </div>
         )}
-
       </main>
-
     </div>
   );
 }
@@ -788,46 +715,31 @@ function StatCard({
 }) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-
       <div className="flex items-start justify-between">
-
         <div
           className={`flex h-9 w-9 items-center justify-center rounded-xl ${
-            warning
-              ? "bg-amber-50 text-amber-600"
-              : "bg-red-50 text-red-600"
+            warning ? "bg-amber-50 text-amber-600" : "bg-red-50 text-red-600"
           }`}
         >
           {icon}
         </div>
 
         {!warning && (
-          <ArrowUpRight
-            size={15}
-            className="text-emerald-500"
-          />
+          <ArrowUpRight size={15} className="text-emerald-500" />
         )}
-
       </div>
 
-      <p className="mt-4 text-[10px] font-bold text-slate-400">
-        {label}
-      </p>
+      <p className="mt-4 text-[10px] font-bold text-slate-400">{label}</p>
 
-      <p className="mt-1 text-xl font-black text-slate-900">
-        {value}
-      </p>
+      <p className="mt-1 text-xl font-black text-slate-900">{value}</p>
 
       <p
         className={`mt-1 text-[9px] font-semibold ${
-          warning
-            ? "text-amber-600"
-            : "text-emerald-600"
+          warning ? "text-amber-600" : "text-emerald-600"
         }`}
       >
         {description}
       </p>
-
     </div>
   );
 }
@@ -839,9 +751,11 @@ function StatCard({
 function NetworkCard({
   network,
   projectId,
+  onConnect,
 }: {
   network: SocialNetwork;
   projectId: string | null;
+  onConnect: (networkId: string) => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -850,17 +764,13 @@ function NetworkCard({
 
   return (
     <article className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-
       {/* HEADER */}
 
       <div className="flex items-start justify-between gap-3">
-
         <div className="flex min-w-0 items-center gap-3">
-
           {network.icon}
 
           <div className="min-w-0">
-
             <h3 className="truncate text-sm font-black text-slate-900">
               {network.name}
             </h3>
@@ -868,13 +778,10 @@ function NetworkCard({
             <p className="mt-0.5 truncate text-[9px] text-slate-400">
               {network.description}
             </p>
-
           </div>
-
         </div>
 
         <div className="relative">
-
           <button
             type="button"
             onClick={() => setMenuOpen(!menuOpen)}
@@ -886,7 +793,6 @@ function NetworkCard({
 
           {menuOpen && (
             <div className="absolute right-0 top-9 z-20 w-40 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-xl">
-
               <button
                 type="button"
                 className="flex w-full items-center gap-2 px-3 py-2 text-left text-[10px] font-semibold text-slate-600 hover:bg-slate-50"
@@ -902,88 +808,55 @@ function NetworkCard({
                 <RefreshCw size={13} />
                 Actualiser
               </button>
-
             </div>
           )}
-
         </div>
-
       </div>
 
       {/* STATUS */}
 
       <div className="mt-5 flex items-center justify-between">
-
         <div className="flex items-center gap-2">
-
           {isConnected ? (
             <>
-              <CheckCircle2
-                size={15}
-                className="text-emerald-500"
-              />
-
+              <CheckCircle2 size={15} className="text-emerald-500" />
               <span className="text-[10px] font-bold text-emerald-600">
                 Connecté
               </span>
             </>
           ) : needsAttention ? (
             <>
-              <AlertCircle
-                size={15}
-                className="text-amber-500"
-              />
-
+              <AlertCircle size={15} className="text-amber-500" />
               <span className="text-[10px] font-bold text-amber-600">
                 Connexion à vérifier
               </span>
             </>
           ) : (
             <>
-              <AlertCircle
-                size={15}
-                className="text-slate-400"
-              />
-
+              <AlertCircle size={15} className="text-slate-400" />
               <span className="text-[10px] font-bold text-slate-500">
                 Non connecté
               </span>
             </>
           )}
-
         </div>
 
         <span className="max-w-[140px] truncate text-[9px] font-semibold text-slate-500">
           {network.username}
         </span>
-
       </div>
 
       {/* STATISTIQUES */}
 
       <div className="mt-5 grid grid-cols-3 divide-x divide-slate-100 rounded-xl bg-slate-50 py-3">
-
-        <MiniStat
-          label="Abonnés"
-          value={network.followers}
-        />
-
-        <MiniStat
-          label="Publications"
-          value={network.posts.toString()}
-        />
-
-        <MiniStat
-          label="Vues"
-          value={network.views}
-        />
-
+        <MiniStat label="Abonnés" value={network.followers} />
+        <MiniStat label="Publications" value={network.posts.toString()} />
+        <MiniStat label="Vues" value={network.views} />
       </div>
 
       {/* ACTION */}
 
       <div className="mt-4 flex gap-2">
-
         {isConnected ? (
           <>
             <button
@@ -1004,69 +877,37 @@ function NetworkCard({
         ) : needsAttention ? (
           <button
             type="button"
+            onClick={() => projectId && onConnect(network.id)}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 py-2.5 text-[10px] font-black text-white transition hover:bg-amber-600"
           >
             <RefreshCw size={14} />
             Reconnecter le compte
           </button>
         ) : (
-          <>
-            {network.id === "tiktok" && projectId ? (
-              <button
-                type="button"
-                onClick={() => {
-                  window.location.href =
-                    `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/tiktok/redirect/${projectId}`;
-                }}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 py-2.5 text-[10px] font-black text-white shadow-md shadow-red-600/15 transition hover:bg-red-700"
-              >
-                <Link2 size={14} />
-                Connecter TikTok
-              </button>
-            ) : (
-              <button
-                type="button"
-                disabled={!projectId}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 py-2.5 text-[10px] font-black text-white shadow-md shadow-red-600/15 transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <Link2 size={14} />
-                {projectId
-                  ? "Connecter ce réseau"
-                  : "Sélectionnez un projet"}
-              </button>
-            )}
-          </>
+          <button
+            type="button"
+            disabled={!projectId}
+            onClick={() => onConnect(network.id)}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 py-2.5 text-[10px] font-black text-white shadow-md shadow-red-600/15 transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Link2 size={14} />
+            {projectId ? `Connecter ${network.name}` : "Sélectionnez un projet"}
+          </button>
         )}
-
       </div>
-
     </article>
   );
 }
-
 
 /* =========================================================
    MINI STAT
 ========================================================= */
 
-function MiniStat({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
+function MiniStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="text-center">
-
-      <p className="text-[8px] font-semibold text-slate-400">
-        {label}
-      </p>
-
-      <p className="mt-1 text-[11px] font-black text-slate-800">
-        {value}
-      </p>
-
+      <p className="text-[8px] font-semibold text-slate-400">{label}</p>
+      <p className="mt-1 text-[11px] font-black text-slate-800">{value}</p>
     </div>
   );
 }
