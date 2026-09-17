@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Menu,
   X,
@@ -87,8 +87,20 @@ type Subscription = {
   daysRemaining: number | null;
 };
 
+type Profile = {
+  name?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  company?: string | null;
+  avatar?: string | null;
+  role?: string | null;
+};
+
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
 
   const [open, setOpen] = useState(false);
 
@@ -97,6 +109,30 @@ export default function Sidebar() {
 
   const [loadingSubscription, setLoadingSubscription] =
     useState(true);
+
+  const [profile, setProfile] =
+    useState<Profile | null>(null);
+
+  const [loadingProfile, setLoadingProfile] =
+    useState(true);
+
+  /*
+   * ==========================================================
+   * ÉTAT AVATAR
+   * ==========================================================
+   */
+
+  const [avatarUrl, setAvatarUrl] =
+    useState<string | null>(null);
+
+  const [avatarError, setAvatarError] =
+    useState(false);
+
+  /*
+   * ==========================================================
+   * FERMER LE MENU
+   * ==========================================================
+   */
 
   const closeMenu = () => {
     setOpen(false);
@@ -107,6 +143,7 @@ export default function Sidebar() {
    * RÉCUPÉRATION DE L'ABONNEMENT
    * ==========================================================
    */
+
   useEffect(() => {
     let mounted = true;
 
@@ -137,7 +174,11 @@ export default function Sidebar() {
         /*
          * Aucun abonnement
          */
-        if (!data || data === null || data === false) {
+        if (
+          !data ||
+          data === null ||
+          data === false
+        ) {
           setSubscription(null);
           return;
         }
@@ -147,6 +188,7 @@ export default function Sidebar() {
          * PLAN
          * ======================================================
          */
+
         const plan =
           data?.plan ??
           data?.subscription_plan ??
@@ -167,6 +209,7 @@ export default function Sidebar() {
          * STATUT
          * ======================================================
          */
+
         const status =
           data?.statut ??
           data?.status ??
@@ -177,7 +220,9 @@ export default function Sidebar() {
          * JOURS RESTANTS
          * ======================================================
          */
-        let daysRemaining: number | null = null;
+
+        let daysRemaining: number | null =
+          null;
 
         const backendDays =
           data?.jours_restants ??
@@ -189,7 +234,8 @@ export default function Sidebar() {
           backendDays !== null &&
           backendDays !== ""
         ) {
-          const parsedDays = Number(backendDays);
+          const parsedDays =
+            Number(backendDays);
 
           if (!Number.isNaN(parsedDays)) {
             daysRemaining = Math.max(
@@ -205,23 +251,33 @@ export default function Sidebar() {
          */
         if (
           daysRemaining === null &&
-          (data?.date_fin || data?.end_date)
+          (data?.date_fin ||
+            data?.end_date)
         ) {
           const endDate = new Date(
-            data?.date_fin ?? data?.end_date,
+            data?.date_fin ??
+              data?.end_date,
           );
 
-          if (!Number.isNaN(endDate.getTime())) {
+          if (
+            !Number.isNaN(
+              endDate.getTime(),
+            )
+          ) {
             const now = new Date();
 
             const difference =
-              endDate.getTime() - now.getTime();
+              endDate.getTime() -
+              now.getTime();
 
             daysRemaining = Math.max(
               0,
               Math.ceil(
                 difference /
-                  (1000 * 60 * 60 * 24),
+                  (1000 *
+                    60 *
+                    60 *
+                    24),
               ),
             );
           }
@@ -257,19 +313,176 @@ export default function Sidebar() {
 
   /*
    * ==========================================================
+   * RÉCUPÉRATION DU PROFIL
+   * ==========================================================
+   */
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadProfile = async () => {
+      try {
+        setLoadingProfile(true);
+        setAvatarError(false);
+
+        const response = await axios.get(
+          "/api/settings/profile",
+        );
+
+        if (!mounted) {
+          return;
+        }
+
+        const responseData = response.data;
+
+        /*
+         * Le backend retourne actuellement :
+         *
+         * {
+         *   user: {
+         *     ...
+         *     avatar: "/storage/avatars/xxxxx.jpg"
+         *   }
+         * }
+         */
+
+        const data =
+          responseData?.profile ??
+          responseData?.user ??
+          responseData?.data ??
+          responseData;
+
+        if (data) {
+          setProfile(data);
+
+          /*
+           * ==================================================
+           * CONSTRUCTION DE L'URL DE LA PHOTO
+           * ==================================================
+           */
+
+          const avatar =
+            data?.avatar
+              ?.toString()
+              .trim();
+
+          if (avatar) {
+            const backendUrl =
+              process.env
+                .NEXT_PUBLIC_BACKEND_URL ||
+              "http://localhost:8000";
+
+            let finalAvatarUrl = "";
+
+            /*
+             * URL complète
+             */
+            if (
+              avatar.startsWith(
+                "http://",
+              ) ||
+              avatar.startsWith(
+                "https://",
+              )
+            ) {
+              finalAvatarUrl = avatar;
+            }
+
+            /*
+             * Chemin Laravel :
+             * /storage/avatars/xxx.jpg
+             */
+            else if (
+              avatar.startsWith("/")
+            ) {
+              finalAvatarUrl =
+                `${backendUrl}${avatar}`;
+            }
+
+            /*
+             * Chemin sans /
+             */
+            else {
+              finalAvatarUrl =
+                `${backendUrl}/${avatar}`;
+            }
+
+            /*
+             * Cache-busting.
+             *
+             * Cela évite que le navigateur conserve
+             * une ancienne version de la photo.
+             */
+            const separator =
+              finalAvatarUrl.includes(
+                "?",
+              )
+                ? "&"
+                : "?";
+
+            finalAvatarUrl =
+              `${finalAvatarUrl}${separator}v=${Date.now()}`;
+
+            setAvatarUrl(
+              finalAvatarUrl,
+            );
+          } else {
+            setAvatarUrl(null);
+          }
+        } else {
+          setProfile(null);
+          setAvatarUrl(null);
+        }
+      } catch (error) {
+        console.error(
+          "Erreur lors du chargement du profil :",
+          error,
+        );
+
+        if (mounted) {
+          setProfile(null);
+          setAvatarUrl(null);
+          setAvatarError(false);
+        }
+      } finally {
+        if (mounted) {
+          setLoadingProfile(false);
+        }
+      }
+    };
+
+    loadProfile();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  /*
+   * ==========================================================
    * DÉTECTION DU PLAN GRATUIT
    * ==========================================================
    */
+
   const isFreePlan = () => {
     if (!subscription) {
       return false;
     }
 
-    return subscription.planName
-      ?.toString()
-      .trim()
-      .toLowerCase()
-      .includes("gratuit");
+    const normalizedPlanName =
+      subscription.planName
+        ?.toString()
+        .trim()
+        .toLowerCase();
+
+    return (
+      normalizedPlanName.includes(
+        "gratuit",
+      ) ||
+      normalizedPlanName.includes(
+        "free",
+      )
+    );
   };
 
   /*
@@ -277,6 +490,7 @@ export default function Sidebar() {
    * TEXTE DU STATUT / JOURS RESTANTS
    * ==========================================================
    */
+
   const getSubscriptionText = () => {
     if (loadingSubscription) {
       return "Chargement...";
@@ -289,8 +503,7 @@ export default function Sidebar() {
     /*
      * PLAN GRATUIT
      *
-     * Aucun jour restant et aucune notion
-     * de date d'expiration.
+     * Aucun jour restant ne doit être affiché.
      */
     if (isFreePlan()) {
       return "Accès gratuit";
@@ -305,10 +518,14 @@ export default function Sidebar() {
      * Abonnement expiré
      */
     if (
-      normalizedStatus === "expiree" ||
-      normalizedStatus === "expirée" ||
-      normalizedStatus === "expire" ||
-      normalizedStatus === "expired"
+      normalizedStatus ===
+        "expiree" ||
+      normalizedStatus ===
+        "expirée" ||
+      normalizedStatus ===
+        "expire" ||
+      normalizedStatus ===
+        "expired"
     ) {
       return "Abonnement expiré";
     }
@@ -317,9 +534,12 @@ export default function Sidebar() {
      * Abonnement en attente
      */
     if (
-      normalizedStatus === "en_attente" ||
-      normalizedStatus === "pending" ||
-      normalizedStatus === "attente"
+      normalizedStatus ===
+        "en_attente" ||
+      normalizedStatus ===
+        "pending" ||
+      normalizedStatus ===
+        "attente"
     ) {
       return "En attente";
     }
@@ -327,12 +547,21 @@ export default function Sidebar() {
     /*
      * Nombre de jours disponibles
      */
-    if (subscription.daysRemaining !== null) {
-      if (subscription.daysRemaining === 0) {
+    if (
+      subscription.daysRemaining !==
+      null
+    ) {
+      if (
+        subscription.daysRemaining ===
+        0
+      ) {
         return "Expire aujourd'hui";
       }
 
-      if (subscription.daysRemaining === 1) {
+      if (
+        subscription.daysRemaining ===
+        1
+      ) {
         return "1 jour restant";
       }
 
@@ -343,13 +572,104 @@ export default function Sidebar() {
      * Si le backend ne fournit pas de date
      */
     if (
-      normalizedStatus === "actif" ||
-      normalizedStatus === "active"
+      normalizedStatus ===
+        "actif" ||
+      normalizedStatus ===
+        "active"
     ) {
       return "Abonnement actif";
     }
 
-    return subscription.status || "Abonnement actif";
+    return (
+      subscription.status ||
+      "Abonnement actif"
+    );
+  };
+
+  /*
+   * ==========================================================
+   * INFORMATIONS DU PROFIL
+   * ==========================================================
+   */
+
+  const firstName =
+    profile?.first_name?.trim() ||
+    "";
+
+  const lastName =
+    profile?.last_name?.trim() ||
+    "";
+
+  const fullName =
+    `${firstName} ${lastName}`.trim() ||
+    profile?.name?.trim() ||
+    "Utilisateur";
+
+  /*
+   * ==========================================================
+   * NOM COURT POUR AVATAR
+   * ==========================================================
+   */
+
+  const avatarName =
+    encodeURIComponent(fullName);
+
+  /*
+   * ==========================================================
+   * AVATAR DE SECOURS
+   * ==========================================================
+   */
+
+  const fallbackAvatar =
+    `https://ui-avatars.com/api/?name=${avatarName}&background=ef4444&color=fff`;
+
+  /*
+   * ==========================================================
+   * SOUS-TITRE PROFIL
+   * ==========================================================
+   */
+
+  const getProfileSubtitle = () => {
+    if (loadingProfile) {
+      return "Chargement...";
+    }
+
+    if (!profile) {
+      return "Mon profil";
+    }
+
+    if (profile.company?.trim()) {
+      return profile.company.trim();
+    }
+
+    if (profile.email?.trim()) {
+      return profile.email.trim();
+    }
+
+    return "Mon profil";
+  };
+
+  /*
+   * ==========================================================
+   * GESTION ERREUR AVATAR
+   * ==========================================================
+   */
+
+  const handleAvatarError = () => {
+    setAvatarError(true);
+  };
+
+  /*
+   * ==========================================================
+   * REDIRECTION VERS LES PARAMÈTRES
+   * ==========================================================
+   */
+
+  const goToSettings = () => {
+    closeMenu();
+    router.push(
+      "/dashboard/parametres",
+    );
   };
 
   return (
@@ -359,10 +679,13 @@ export default function Sidebar() {
           Visible uniquement sur mobile/tablette
           ET uniquement quand le Sidebar est fermé
       ===================================================== */}
+
       {!open && (
         <button
           type="button"
-          onClick={() => setOpen(true)}
+          onClick={() =>
+            setOpen(true)
+          }
           aria-label="Ouvrir le menu"
           aria-expanded={open}
           className="
@@ -391,8 +714,8 @@ export default function Sidebar() {
 
       {/* =====================================================
           OVERLAY
-          Visible uniquement quand le Sidebar est ouvert
       ===================================================== */}
+
       {open && (
         <button
           type="button"
@@ -412,6 +735,7 @@ export default function Sidebar() {
       {/* =====================================================
           SIDEBAR
       ===================================================== */}
+
       <aside
         className={`
           fixed
@@ -439,6 +763,7 @@ export default function Sidebar() {
         {/* ===================================================
             HEADER DU SIDEBAR
         =================================================== */}
+
         <div className="flex shrink-0 items-center justify-between border-b border-slate-800/60 p-5">
           <Link
             href="/dashboard"
@@ -446,6 +771,7 @@ export default function Sidebar() {
             className="flex min-w-0 items-center gap-3"
           >
             {/* LOGO */}
+
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-600">
               <img
                 src="/logo_blanc.png"
@@ -455,6 +781,7 @@ export default function Sidebar() {
             </div>
 
             {/* NOM */}
+
             <div className="min-w-0">
               <h1 className="text-lg font-bold leading-none text-white">
                 Griot AI
@@ -467,6 +794,7 @@ export default function Sidebar() {
           </Link>
 
           {/* BOUTON FERMER */}
+
           <button
             type="button"
             onClick={closeMenu}
@@ -487,69 +815,84 @@ export default function Sidebar() {
         {/* ===================================================
             MENU PRINCIPAL
         =================================================== */}
+
         <nav className="min-h-0 flex-1 overflow-y-auto px-3 py-4">
           <div className="space-y-1">
-            {menuItems.map((item) => {
-              const Icon = item.icon;
+            {menuItems.map(
+              (item) => {
+                const Icon =
+                  item.icon;
 
-              const active =
-                pathname === item.href ||
-                (item.href !== "/dashboard" &&
-                  pathname.startsWith(
-                    item.href + "/",
-                  ));
+                const active =
+                  pathname ===
+                    item.href ||
+                  (item.href !==
+                    "/dashboard" &&
+                    pathname.startsWith(
+                      item.href +
+                        "/",
+                    ));
 
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={closeMenu}
-                  className={`
-                    group
-                    relative
-                    flex
-                    items-center
-                    gap-3
-                    rounded-xl
-                    px-3
-                    py-3
-                    transition-all
-                    duration-200
-
-                    ${
-                      active
-                        ? "bg-red-600/10 text-red-500"
-                        : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={
+                      closeMenu
                     }
-                  `}
-                >
-                  {/* INDICATEUR ACTIF */}
-                  {active && (
-                    <span className="absolute left-0 h-7 w-1 rounded-r-full bg-red-600" />
-                  )}
+                    className={`
+                      group
+                      relative
+                      flex
+                      items-center
+                      gap-3
+                      rounded-xl
+                      px-3
+                      py-3
+                      transition-all
+                      duration-200
 
-                  {/* ICÔNE */}
-                  <Icon
-                    size={22}
-                    strokeWidth={
-                      active ? 2.4 : 2
-                    }
-                    className="shrink-0"
-                  />
+                      ${
+                        active
+                          ? "bg-red-600/10 text-red-500"
+                          : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                      }
+                    `}
+                  >
+                    {/* INDICATEUR ACTIF */}
 
-                  {/* TEXTE */}
-                  <span className="truncate text-base font-medium">
-                    {item.label}
-                  </span>
-                </Link>
-              );
-            })}
+                    {active && (
+                      <span className="absolute left-0 h-7 w-1 rounded-r-full bg-red-600" />
+                    )}
+
+                    {/* ICÔNE */}
+
+                    <Icon
+                      size={22}
+                      strokeWidth={
+                        active
+                          ? 2.4
+                          : 2
+                      }
+                      className="shrink-0"
+                    />
+
+                    {/* TEXTE */}
+
+                    <span className="truncate text-base font-medium">
+                      {item.label}
+                    </span>
+                  </Link>
+                );
+              },
+            )}
           </div>
         </nav>
 
         {/* ===================================================
             ABONNEMENT
         =================================================== */}
+
         <div className="shrink-0 p-4">
           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-red-600 to-red-800 p-4">
             <Crown
@@ -565,6 +908,7 @@ export default function Sidebar() {
             />
 
             {/* NOM DU PLAN */}
+
             <p className="relative z-10 text-sm font-bold text-white">
               {loadingSubscription
                 ? "Chargement..."
@@ -573,11 +917,13 @@ export default function Sidebar() {
             </p>
 
             {/* STATUT / ACCÈS GRATUIT / JOURS */}
+
             <p className="relative z-10 mb-3 text-[10px] text-red-100">
               {getSubscriptionText()}
             </p>
 
             {/* BOUTON */}
+
             <Link
               href="/auth/abonnement/voir_mon_abonnement"
               onClick={closeMenu}
@@ -605,28 +951,69 @@ export default function Sidebar() {
         {/* ===================================================
             PROFIL
         =================================================== */}
+
         <div className="shrink-0 border-t border-slate-800 p-4">
           <button
             type="button"
-            className="flex w-full items-center gap-3 text-left"
+            onClick={
+              goToSettings
+            }
+            aria-label="Ouvrir les paramètres du profil"
+            className="
+              flex
+              w-full
+              items-center
+              gap-3
+              rounded-xl
+              text-left
+              transition
+              hover:bg-slate-800/60
+            "
           >
-            {/* AVATAR */}
-            <img
-              src="https://ui-avatars.com/api/?name=YEKINI+K&background=ef4444&color=fff"
-              alt="Utilisateur"
-              className="h-9 w-9 shrink-0 rounded-full"
-            />
+            {/* =================================================
+                AVATAR
+            ================================================= */}
 
-            {/* INFORMATIONS */}
+            <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-red-600">
+              {!loadingProfile &&
+              avatarUrl &&
+              !avatarError ? (
+                <img
+                  src={avatarUrl}
+                  alt={fullName}
+                  className="h-full w-full rounded-full object-cover"
+                  onError={
+                    handleAvatarError
+                  }
+                />
+              ) : (
+                <img
+                  src={fallbackAvatar}
+                  alt={fullName}
+                  className="h-full w-full rounded-full object-cover"
+                />
+              )}
+            </div>
+
+            {/* =================================================
+                INFORMATIONS
+            ================================================= */}
+
             <div className="min-w-0 flex-1">
               <p className="truncate text-xs font-bold text-white">
-                Yekini k.
+                {loadingProfile
+                  ? "Chargement..."
+                  : fullName}
               </p>
 
               <p className="truncate text-[10px] text-slate-500">
-                Administrateur
+                {getProfileSubtitle()}
               </p>
             </div>
+
+            {/* =================================================
+                CHEVRON
+            ================================================= */}
 
             <ChevronRight
               size={14}

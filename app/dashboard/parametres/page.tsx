@@ -175,6 +175,9 @@ export default function SettingsPage() {
   const [profileImage, setProfileImage] =
     useState<string | null>(null);
 
+    const [profileImageFile, setProfileImageFile] =
+  useState<File | null>(null);
+
   const fileInputRef =
     useRef<HTMLInputElement>(null);
 
@@ -282,11 +285,30 @@ export default function SettingsPage() {
           loadedProfile.company ?? ""
         );
 
-        if (loadedProfile.avatar) {
-          setProfileImage(
-            loadedProfile.avatar
-          );
-        }
+       if (loadedProfile.avatar) {
+  const backendUrl =
+    process.env.NEXT_PUBLIC_BACKEND_URL ||
+    "http://localhost:8000";
+
+  let avatarUrl =
+    loadedProfile.avatar;
+
+  if (
+    !avatarUrl.startsWith("http://") &&
+    !avatarUrl.startsWith("https://")
+  ) {
+    avatarUrl =
+      `${backendUrl}${avatarUrl.startsWith("/") ? "" : "/"}${avatarUrl}`;
+  }
+
+  setProfileImage(
+    avatarUrl
+  );
+} else {
+  setProfileImage(null);
+}
+
+setProfileImageFile(null);
       }
 
       /* =====================================================
@@ -403,38 +425,56 @@ export default function SettingsPage() {
      MODIFIER PHOTO
   ======================================================= */
 
-  const handleImageChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = event.target.files?.[0];
+const handleImageChange = (
+  event: React.ChangeEvent<HTMLInputElement>
+) => {
+  const file = event.target.files?.[0];
 
-    if (!file) return;
+  if (!file) return;
 
-    clearMessages();
+  clearMessages();
 
-    if (!file.type.startsWith("image/")) {
-      setError(
-        "Veuillez sélectionner une image."
-      );
-      return;
-    }
-
-    if (file.size > 2 * 1024 * 1024) {
-      setError(
-        "L'image ne doit pas dépasser 2 Mo."
-      );
-      return;
-    }
-
-    const imageUrl =
-      URL.createObjectURL(file);
-
-    setProfileImage(imageUrl);
-
-    setMessage(
-      "Photo sélectionnée. L'enregistrement permanent de la photo sera ajouté avec l'upload d'avatar."
+  if (!file.type.startsWith("image/")) {
+    setError(
+      "Veuillez sélectionner une image."
     );
-  };
+
+    event.target.value = "";
+    return;
+  }
+
+  if (file.size > 2 * 1024 * 1024) {
+    setError(
+      "L'image ne doit pas dépasser 2 Mo."
+    );
+
+    event.target.value = "";
+    return;
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Conserver réellement le fichier
+  |--------------------------------------------------------------------------
+  */
+
+  setProfileImageFile(file);
+
+  /*
+  |--------------------------------------------------------------------------
+  | Prévisualisation
+  |--------------------------------------------------------------------------
+  */
+
+  const imageUrl =
+    URL.createObjectURL(file);
+
+  setProfileImage(imageUrl);
+
+  setMessage(
+    "Photo sélectionnée. Cliquez sur « Enregistrer les modifications » pour la sauvegarder."
+  );
+};
 
   /* =======================================================
      OUVRIR SÉLECTEUR IMAGE
@@ -448,111 +488,244 @@ export default function SettingsPage() {
      SUPPRIMER PHOTO
   ======================================================= */
 
-  const removeProfileImage = () => {
-    setProfileImage(null);
+ const removeProfileImage = () => {
+  setProfileImage(null);
 
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+  setProfileImageFile(null);
 
-    setMessage("");
-  };
+  if (fileInputRef.current) {
+    fileInputRef.current.value = "";
+  }
+
+  clearMessages();
+
+  setMessage(
+    "La photo sera supprimée lorsque vous enregistrerez les modifications."
+  );
+};
 
   /* =======================================================
      ENREGISTRER PROFIL
   ======================================================= */
 
-  const handleSaveProfile = async () => {
-    clearMessages();
+ const handleSaveProfile = async () => {
+  clearMessages();
 
-    setSavingProfile(true);
+  setSavingProfile(true);
 
-    try {
-      const response = await axios.put(
-        "/api/settings/profile",
-        {
-          first_name:
-            firstName.trim() || null,
+  try {
+    /*
+    |--------------------------------------------------------------------------
+    | FormData
+    |--------------------------------------------------------------------------
+    */
 
-          last_name:
-            lastName.trim() || null,
+    const formData = new FormData();
 
-          email:
-            email.trim(),
+    formData.append(
+      "first_name",
+      firstName.trim()
+    );
 
-          phone:
-            phone.trim() || null,
+    formData.append(
+      "last_name",
+      lastName.trim()
+    );
 
-          company:
-            company.trim() || null,
-        }
+    formData.append(
+      "email",
+      email.trim()
+    );
+
+    formData.append(
+      "phone",
+      phone.trim()
+    );
+
+    formData.append(
+      "company",
+      company.trim()
+    );
+
+    /*
+    |--------------------------------------------------------------------------
+    | Ajouter la nouvelle photo uniquement si elle existe
+    |--------------------------------------------------------------------------
+    */
+
+    if (profileImageFile) {
+      formData.append(
+        "avatar",
+        profileImageFile
+      );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Si l'utilisateur a supprimé la photo
+    |--------------------------------------------------------------------------
+    */
+
+    if (
+      !profileImage &&
+      !profileImageFile &&
+      profile.avatar
+    ) {
+      formData.append(
+        "remove_avatar",
+        "1"
+      );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Laravel + PUT + FormData
+    |--------------------------------------------------------------------------
+    |
+    | On utilise POST avec _method=PUT.
+    | Cela permet à Laravel de recevoir correctement le fichier.
+    |
+    */
+
+    formData.append(
+      "_method",
+      "PUT"
+    );
+
+    const response = await axios.post(
+      "/api/settings/profile",
+      formData
+    );
+
+    /*
+    |--------------------------------------------------------------------------
+    | Utilisateur retourné par Laravel
+    |--------------------------------------------------------------------------
+    */
+
+    const updatedUser =
+      response.data?.user;
+
+    if (updatedUser) {
+
+      setProfile(updatedUser);
+
+      setFirstName(
+        updatedUser.first_name ?? ""
       );
 
-      const updatedUser =
-        response.data?.user;
-
-      if (updatedUser) {
-        setProfile(updatedUser);
-
-        setFirstName(
-          updatedUser.first_name ?? ""
-        );
-
-        setLastName(
-          updatedUser.last_name ?? ""
-        );
-
-        setEmail(
-          updatedUser.email ?? ""
-        );
-
-        setPhone(
-          updatedUser.phone ?? ""
-        );
-
-        setCompany(
-          updatedUser.company ?? ""
-        );
-      }
-
-      setMessage(
-        "Votre profil a été mis à jour avec succès."
-      );
-    } catch (err: any) {
-      console.error(
-        "Erreur mise à jour profil :",
-        err
+      setLastName(
+        updatedUser.last_name ?? ""
       );
 
-      const validationErrors =
-        err?.response?.data?.errors;
+      setEmail(
+        updatedUser.email ?? ""
+      );
 
-      if (validationErrors) {
-        const firstError =
-          Object.values(
-            validationErrors
-          )?.[0];
+      setPhone(
+        updatedUser.phone ?? ""
+      );
+
+      setCompany(
+        updatedUser.company ?? ""
+      );
+
+      /*
+      |--------------------------------------------------------------------------
+      | PHOTO
+      |--------------------------------------------------------------------------
+      */
+
+      if (updatedUser.avatar) {
+
+        const backendUrl =
+          process.env
+            .NEXT_PUBLIC_BACKEND_URL ||
+          "http://localhost:8000";
+
+        let avatarUrl =
+          updatedUser.avatar;
 
         if (
-          Array.isArray(firstError) &&
-          firstError.length > 0
+          !avatarUrl.startsWith("http://") &&
+          !avatarUrl.startsWith("https://")
         ) {
-          setError(firstError[0]);
-        } else {
-          setError(
-            "Les informations saisies sont invalides."
-          );
+          avatarUrl =
+            `${backendUrl}${avatarUrl.startsWith("/") ? "" : "/"}${avatarUrl}`;
         }
+
+        /*
+        | Petit cache-busting pour être certain
+        | que le navigateur affiche la nouvelle image.
+        */
+        setProfileImage(
+          `${avatarUrl}?v=${Date.now()}`
+        );
+
       } else {
+
+        setProfileImage(null);
+      }
+
+      /*
+      |--------------------------------------------------------------------------
+      | Le fichier temporaire n'est plus nécessaire
+      |--------------------------------------------------------------------------
+      */
+
+      setProfileImageFile(null);
+    }
+
+    setMessage(
+      "Votre profil et votre photo ont été mis à jour avec succès."
+    );
+
+  } catch (err: any) {
+
+    console.error(
+      "Erreur mise à jour profil :",
+      err
+    );
+
+    const validationErrors =
+      err?.response?.data?.errors;
+
+    if (validationErrors) {
+
+      const firstError =
+        Object.values(
+          validationErrors
+        )?.[0];
+
+      if (
+        Array.isArray(firstError) &&
+        firstError.length > 0
+      ) {
+
         setError(
-          err?.response?.data?.message ||
-            "Impossible de mettre à jour le profil."
+          firstError[0]
+        );
+
+      } else {
+
+        setError(
+          "Les informations saisies sont invalides."
         );
       }
-    } finally {
-      setSavingProfile(false);
+
+    } else {
+
+      setError(
+        err?.response?.data?.message ||
+        "Impossible de mettre à jour le profil."
+      );
     }
-  };
+
+  } finally {
+
+    setSavingProfile(false);
+  }
+};
 
   /* =======================================================
      ENREGISTRER NOTIFICATIONS

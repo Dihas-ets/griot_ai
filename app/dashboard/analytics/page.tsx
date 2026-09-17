@@ -525,22 +525,6 @@ export default function AnalyticsPage() {
                 </div>
               )}
             </div>
-
-            {/* EXPORT */}
-
-            <button
-              className="
-                hidden items-center gap-2
-                rounded-xl border border-slate-200
-                px-3 py-2
-                text-[10px] font-bold text-slate-600
-                transition hover:bg-slate-50
-                sm:flex
-              "
-            >
-              <Download size={14} />
-              Exporter
-            </button>
           </div>
         </div>
       </header>
