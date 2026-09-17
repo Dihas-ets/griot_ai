@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -20,6 +20,8 @@ import {
   ChevronRight,
   Crown,
 } from "lucide-react";
+
+import axios from "@/lib/axios";
 
 const menuItems = [
   {
@@ -79,12 +81,275 @@ const menuItems = [
   },
 ];
 
+type Subscription = {
+  planName: string;
+  status: string;
+  daysRemaining: number | null;
+};
+
 export default function Sidebar() {
   const pathname = usePathname();
+
   const [open, setOpen] = useState(false);
+
+  const [subscription, setSubscription] =
+    useState<Subscription | null>(null);
+
+  const [loadingSubscription, setLoadingSubscription] =
+    useState(true);
 
   const closeMenu = () => {
     setOpen(false);
+  };
+
+  /*
+   * ==========================================================
+   * RÉCUPÉRATION DE L'ABONNEMENT
+   * ==========================================================
+   */
+  useEffect(() => {
+    let mounted = true;
+
+    const loadSubscription = async () => {
+      try {
+        setLoadingSubscription(true);
+
+        const response = await axios.get(
+          "/api/souscriptions/current",
+        );
+
+        if (!mounted) {
+          return;
+        }
+
+        const responseData = response.data;
+
+        /*
+         * Le backend peut retourner directement la souscription
+         * ou l'encapsuler dans data / souscription / subscription.
+         */
+        const data =
+          responseData?.souscription ??
+          responseData?.subscription ??
+          responseData?.data ??
+          responseData;
+
+        /*
+         * Aucun abonnement
+         */
+        if (!data || data === null || data === false) {
+          setSubscription(null);
+          return;
+        }
+
+        /*
+         * ======================================================
+         * PLAN
+         * ======================================================
+         */
+        const plan =
+          data?.plan ??
+          data?.subscription_plan ??
+          data?.offre ??
+          null;
+
+        const planName =
+          plan?.nom ??
+          plan?.name ??
+          plan?.titre ??
+          data?.plan_nom ??
+          data?.plan_name ??
+          data?.nom_plan ??
+          "Aucun abonnement";
+
+        /*
+         * ======================================================
+         * STATUT
+         * ======================================================
+         */
+        const status =
+          data?.statut ??
+          data?.status ??
+          "inconnu";
+
+        /*
+         * ======================================================
+         * JOURS RESTANTS
+         * ======================================================
+         */
+        let daysRemaining: number | null = null;
+
+        const backendDays =
+          data?.jours_restants ??
+          data?.days_remaining ??
+          data?.remaining_days;
+
+        if (
+          backendDays !== undefined &&
+          backendDays !== null &&
+          backendDays !== ""
+        ) {
+          const parsedDays = Number(backendDays);
+
+          if (!Number.isNaN(parsedDays)) {
+            daysRemaining = Math.max(
+              0,
+              Math.ceil(parsedDays),
+            );
+          }
+        }
+
+        /*
+         * Si le backend ne fournit pas directement
+         * les jours restants, on les calcule avec date_fin.
+         */
+        if (
+          daysRemaining === null &&
+          (data?.date_fin || data?.end_date)
+        ) {
+          const endDate = new Date(
+            data?.date_fin ?? data?.end_date,
+          );
+
+          if (!Number.isNaN(endDate.getTime())) {
+            const now = new Date();
+
+            const difference =
+              endDate.getTime() - now.getTime();
+
+            daysRemaining = Math.max(
+              0,
+              Math.ceil(
+                difference /
+                  (1000 * 60 * 60 * 24),
+              ),
+            );
+          }
+        }
+
+        setSubscription({
+          planName,
+          status,
+          daysRemaining,
+        });
+      } catch (error) {
+        console.error(
+          "Erreur lors du chargement de l'abonnement :",
+          error,
+        );
+
+        if (mounted) {
+          setSubscription(null);
+        }
+      } finally {
+        if (mounted) {
+          setLoadingSubscription(false);
+        }
+      }
+    };
+
+    loadSubscription();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  /*
+   * ==========================================================
+   * DÉTECTION DU PLAN GRATUIT
+   * ==========================================================
+   */
+  const isFreePlan = () => {
+    if (!subscription) {
+      return false;
+    }
+
+    return subscription.planName
+      ?.toString()
+      .trim()
+      .toLowerCase()
+      .includes("gratuit");
+  };
+
+  /*
+   * ==========================================================
+   * TEXTE DU STATUT / JOURS RESTANTS
+   * ==========================================================
+   */
+  const getSubscriptionText = () => {
+    if (loadingSubscription) {
+      return "Chargement...";
+    }
+
+    if (!subscription) {
+      return "Aucun abonnement actif";
+    }
+
+    /*
+     * PLAN GRATUIT
+     *
+     * Aucun jour restant et aucune notion
+     * de date d'expiration.
+     */
+    if (isFreePlan()) {
+      return "Accès gratuit";
+    }
+
+    const normalizedStatus =
+      subscription.status
+        ?.toString()
+        .toLowerCase();
+
+    /*
+     * Abonnement expiré
+     */
+    if (
+      normalizedStatus === "expiree" ||
+      normalizedStatus === "expirée" ||
+      normalizedStatus === "expire" ||
+      normalizedStatus === "expired"
+    ) {
+      return "Abonnement expiré";
+    }
+
+    /*
+     * Abonnement en attente
+     */
+    if (
+      normalizedStatus === "en_attente" ||
+      normalizedStatus === "pending" ||
+      normalizedStatus === "attente"
+    ) {
+      return "En attente";
+    }
+
+    /*
+     * Nombre de jours disponibles
+     */
+    if (subscription.daysRemaining !== null) {
+      if (subscription.daysRemaining === 0) {
+        return "Expire aujourd'hui";
+      }
+
+      if (subscription.daysRemaining === 1) {
+        return "1 jour restant";
+      }
+
+      return `${subscription.daysRemaining} jours restants`;
+    }
+
+    /*
+     * Si le backend ne fournit pas de date
+     */
+    if (
+      normalizedStatus === "actif" ||
+      normalizedStatus === "active"
+    ) {
+      return "Abonnement actif";
+    }
+
+    return subscription.status || "Abonnement actif";
   };
 
   return (
@@ -173,7 +438,6 @@ export default function Sidebar() {
       >
         {/* ===================================================
             HEADER DU SIDEBAR
-            PAS DE BURGER ICI
         =================================================== */}
         <div className="flex shrink-0 items-center justify-between border-b border-slate-800/60 p-5">
           <Link
@@ -231,7 +495,9 @@ export default function Sidebar() {
               const active =
                 pathname === item.href ||
                 (item.href !== "/dashboard" &&
-                  pathname.startsWith(item.href + "/"));
+                  pathname.startsWith(
+                    item.href + "/",
+                  ));
 
               return (
                 <Link
@@ -265,7 +531,9 @@ export default function Sidebar() {
                   {/* ICÔNE */}
                   <Icon
                     size={22}
-                    strokeWidth={active ? 2.4 : 2}
+                    strokeWidth={
+                      active ? 2.4 : 2
+                    }
                     className="shrink-0"
                   />
 
@@ -280,7 +548,7 @@ export default function Sidebar() {
         </nav>
 
         {/* ===================================================
-            PLAN PREMIUM
+            ABONNEMENT
         =================================================== */}
         <div className="shrink-0 p-4">
           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-red-600 to-red-800 p-4">
@@ -296,23 +564,32 @@ export default function Sidebar() {
               "
             />
 
+            {/* NOM DU PLAN */}
             <p className="relative z-10 text-sm font-bold text-white">
-              Plan Premium
+              {loadingSubscription
+                ? "Chargement..."
+                : subscription?.planName ??
+                  "Aucun abonnement"}
             </p>
 
+            {/* STATUT / ACCÈS GRATUIT / JOURS */}
             <p className="relative z-10 mb-3 text-[10px] text-red-100">
-              12 jours restants
+              {getSubscriptionText()}
             </p>
 
-            <button
-              type="button"
+            {/* BOUTON */}
+            <Link
+              href="/auth/abonnement/voir_mon_abonnement"
+              onClick={closeMenu}
               className="
                 relative
                 z-10
+                block
                 w-full
                 rounded-lg
                 bg-white
                 py-2
+                text-center
                 text-[10px]
                 font-bold
                 text-red-600
@@ -321,7 +598,7 @@ export default function Sidebar() {
               "
             >
               Voir mon abonnement
-            </button>
+            </Link>
           </div>
         </div>
 
