@@ -23,6 +23,8 @@ import {
   X,
 } from "lucide-react";
 
+import api from "@/lib/axios";
+
 /* =========================================================
    TYPES
 ========================================================= */
@@ -40,6 +42,28 @@ type Network =
   | "TikTok"
   | "Google Business"
   | "X";
+
+type PublicationApi = {
+  id: number;
+  user_id: number;
+  project_id?: number | null;
+  title: string;
+  content: string;
+  network: Network;
+  status: PublicationStatus;
+  date?: string | null;
+  time?: string | null;
+  image?: string | null;
+  created_at?: string;
+  updated_at?: string;
+
+  project?: {
+    id: number;
+    name: string;
+  } | null;
+
+  medias?: unknown[];
+};
 
 type Publication = {
   id: number;
@@ -163,6 +187,7 @@ const TikTokIcon = ({ size = 16 }: { size?: number }) => (
     fill="none"
   >
     <rect width="24" height="24" rx="5" fill="#000" />
+
     <path
       d="M14.5 5h2.3c.2 1.3 1 2.3 2.2 2.8v2.3c-1-.1-1.9-.4-2.7-.9v5.3c0 3-2.2 5-5.1 5-2.6 0-4.7-1.8-4.7-4.4 0-2.7 2.2-4.5 5-4.5.3 0 .6 0 .9.1V13c-.3-.1-.6-.2-.9-.2-1.2 0-2.2.7-2.2 1.9 0 1 .8 1.7 1.8 1.7 1.1 0 1.8-.7 1.8-2V5h1.6Z"
       fill="white"
@@ -178,10 +203,12 @@ const GoogleBusinessIcon = ({ size = 16 }: { size?: number }) => (
     fill="none"
   >
     <circle cx="12" cy="12" r="11" fill="white" />
+
     <path
       d="M12 5.5a6.5 6.5 0 1 0 6.1 8.7h-6.1v-2.4h8.5c.1.5.1 1 .1 1.5A8.6 8.6 0 1 1 12 3.5c2.4 0 4.4 1 5.9 2.5l-1.8 1.8A5.7 5.7 0 0 0 12 5.5Z"
       fill="#4285F4"
     />
+
     <path
       d="M18.1 8.2h-6.1v2.4h6.9c-.2-.9-.4-1.7-.8-2.4Z"
       fill="#34A853"
@@ -219,28 +246,59 @@ export default function MesPublicationsPage() {
   const [selectedPublication, setSelectedPublication] =
     useState<Publication | null>(null);
 
+  const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+
   /* =========================================================
-     RÉCUPÉRER LES PUBLICATIONS
+     RÉCUPÉRER LES PUBLICATIONS DEPUIS L'API
   ========================================================= */
 
-  useEffect(() => {
+  const fetchPublications = async () => {
     try {
-      const savedPublications = localStorage.getItem(
-        "griot_publications"
+      setLoading(true);
+
+      const response = await api.get("/api/publications");
+
+      const data: PublicationApi[] = Array.isArray(response.data)
+        ? response.data
+        : [];
+
+      const formattedPublications: Publication[] = data.map(
+        (publication) => ({
+          id: publication.id,
+
+          title: publication.title,
+
+          content: publication.content,
+
+          network: publication.network,
+
+          status: publication.status,
+
+          date: publication.date ?? "",
+
+          time: publication.time
+            ? publication.time.substring(0, 5)
+            : "",
+
+          image: publication.image ?? null,
+
+          projectId:
+            publication.project_id !== null &&
+            publication.project_id !== undefined
+              ? String(publication.project_id)
+              : undefined,
+
+          projectName:
+            publication.project?.name ?? undefined,
+
+          createdAt: publication.created_at
+            ? new Date(publication.created_at).getTime()
+            : undefined,
+        })
       );
 
-      if (!savedPublications) {
-        setPublications([]);
-        return;
-      }
-
-      const parsed = JSON.parse(savedPublications);
-
-      if (Array.isArray(parsed)) {
-        setPublications(parsed);
-      } else {
-        setPublications([]);
-      }
+      setPublications(formattedPublications);
     } catch (error) {
       console.error(
         "Erreur lors de la récupération des publications :",
@@ -248,7 +306,13 @@ export default function MesPublicationsPage() {
       );
 
       setPublications([]);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    fetchPublications();
   }, []);
 
   /* =========================================================
@@ -326,10 +390,10 @@ export default function MesPublicationsPage() {
       : "Aucun projet";
 
   /* =========================================================
-     SUPPRIMER
+     SUPPRIMER VIA API
   ========================================================= */
 
-  const handleDelete = (id: number) => {
+  const handleDelete = async (id: number) => {
     const confirmed = window.confirm(
       "Voulez-vous vraiment supprimer cette publication ?"
     );
@@ -338,19 +402,31 @@ export default function MesPublicationsPage() {
       return;
     }
 
-    const updatedPublications = publications.filter(
-      (publication) => publication.id !== id
-    );
+    try {
+      setDeletingId(id);
 
-    setPublications(updatedPublications);
+      await api.delete(`/api/publications/${id}`);
 
-    localStorage.setItem(
-      "griot_publications",
-      JSON.stringify(updatedPublications)
-    );
+      setPublications((currentPublications) =>
+        currentPublications.filter(
+          (publication) => publication.id !== id
+        )
+      );
 
-    if (selectedPublication?.id === id) {
-      setSelectedPublication(null);
+      if (selectedPublication?.id === id) {
+        setSelectedPublication(null);
+      }
+    } catch (error) {
+      console.error(
+        "Erreur lors de la suppression de la publication :",
+        error
+      );
+
+      alert(
+        "Impossible de supprimer cette publication. Veuillez réessayer."
+      );
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -592,8 +668,13 @@ export default function MesPublicationsPage() {
         <div className="mb-4 flex items-center justify-between">
 
           <p className="text-xs font-bold text-slate-500">
-            {filteredPublications.length} publication
-            {filteredPublications.length > 1 ? "s" : ""}
+            {loading
+              ? "Chargement..."
+              : `${filteredPublications.length} publication${
+                  filteredPublications.length > 1
+                    ? "s"
+                    : ""
+                }`}
           </p>
 
           <p className="text-[10px] text-slate-400">
@@ -606,16 +687,46 @@ export default function MesPublicationsPage() {
         </div>
 
         {/* =====================================================
+            CHARGEMENT
+        ===================================================== */}
+
+        {loading && (
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+
+            {Array.from({ length: 3 }).map((_, index) => (
+              <div
+                key={index}
+                className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+              >
+                <div className="h-40 animate-pulse bg-slate-100" />
+
+                <div className="space-y-3 p-4">
+
+                  <div className="h-5 w-24 animate-pulse rounded bg-slate-100" />
+
+                  <div className="h-4 w-3/4 animate-pulse rounded bg-slate-100" />
+
+                  <div className="h-12 w-full animate-pulse rounded bg-slate-100" />
+
+                </div>
+              </div>
+            ))}
+
+          </div>
+        )}
+
+        {/* =====================================================
             GRID
         ===================================================== */}
 
-        {view === "grid" && (
+        {!loading && view === "grid" && (
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
 
             {filteredPublications.map((publication) => (
               <PublicationCard
                 key={publication.id}
                 publication={publication}
+                deleting={deletingId === publication.id}
                 onView={() =>
                   setSelectedPublication(publication)
                 }
@@ -635,13 +746,14 @@ export default function MesPublicationsPage() {
             LISTE
         ===================================================== */}
 
-        {view === "list" && (
+        {!loading && view === "list" && (
           <div className="space-y-3">
 
             {filteredPublications.map((publication) => (
               <PublicationListItem
                 key={publication.id}
                 publication={publication}
+                deleting={deletingId === publication.id}
                 onView={() =>
                   setSelectedPublication(publication)
                 }
@@ -661,7 +773,7 @@ export default function MesPublicationsPage() {
             AUCUN RÉSULTAT
         ===================================================== */}
 
-        {filteredPublications.length === 0 && (
+        {!loading && filteredPublications.length === 0 && (
           <div className="rounded-2xl border border-dashed border-slate-300 bg-white py-16 text-center">
 
             <FileText
@@ -773,7 +885,7 @@ export default function MesPublicationsPage() {
                   </p>
 
                   <p className="mt-1 text-xs font-bold text-slate-700">
-                    {selectedPublication.date}
+                    {selectedPublication.date || "—"}
                   </p>
 
                 </div>
@@ -785,7 +897,7 @@ export default function MesPublicationsPage() {
                   </p>
 
                   <p className="mt-1 text-xs font-bold text-slate-700">
-                    {selectedPublication.time}
+                    {selectedPublication.time || "—"}
                   </p>
 
                 </div>
@@ -822,7 +934,9 @@ export default function MesPublicationsPage() {
               <button
                 onClick={() => {
                   const id = selectedPublication.id;
+
                   setSelectedPublication(null);
+
                   handleEdit(id);
                 }}
                 className="flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-[10px] font-black uppercase tracking-wide text-white hover:bg-red-700"
@@ -884,11 +998,13 @@ function StatCard({
 
 function PublicationCard({
   publication,
+  deleting,
   onView,
   onEdit,
   onDelete,
 }: {
   publication: Publication;
+  deleting: boolean;
   onView: () => void;
   onEdit: () => void;
   onDelete: () => void;
@@ -956,7 +1072,7 @@ function PublicationCard({
 
             <CalendarDays size={13} />
 
-            {publication.date}
+            {publication.date || "—"}
 
           </div>
 
@@ -964,7 +1080,7 @@ function PublicationCard({
 
             <Clock3 size={13} />
 
-            {publication.time}
+            {publication.time || "—"}
 
           </div>
 
@@ -997,9 +1113,14 @@ function PublicationCard({
             <button
               title="Supprimer"
               onClick={onDelete}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600"
+              disabled={deleting}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <Trash2 size={14} />
+              {deleting ? (
+                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-300 border-t-red-600" />
+              ) : (
+                <Trash2 size={14} />
+              )}
             </button>
 
           </div>
@@ -1018,11 +1139,13 @@ function PublicationCard({
 
 function PublicationListItem({
   publication,
+  deleting,
   onView,
   onEdit,
   onDelete,
 }: {
   publication: Publication;
+  deleting: boolean;
   onView: () => void;
   onEdit: () => void;
   onDelete: () => void;
@@ -1042,10 +1165,12 @@ function PublicationListItem({
           />
         ) : (
           <div className="flex h-full items-center justify-center">
+
             <FileText
               size={24}
               className="text-slate-300"
             />
+
           </div>
         )}
 
@@ -1073,12 +1198,12 @@ function PublicationListItem({
 
         <div className="flex items-center gap-1.5">
           <CalendarDays size={13} />
-          {publication.date}
+          {publication.date || "—"}
         </div>
 
         <div className="mt-1 flex items-center gap-1.5">
           <Clock3 size={13} />
-          {publication.time}
+          {publication.time || "—"}
         </div>
 
       </div>
@@ -1107,9 +1232,14 @@ function PublicationListItem({
 
         <button
           onClick={onDelete}
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600"
+          disabled={deleting}
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          <Trash2 size={14} />
+          {deleting ? (
+            <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-300 border-t-red-600" />
+          ) : (
+            <Trash2 size={14} />
+          )}
         </button>
 
       </div>

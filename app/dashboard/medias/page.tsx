@@ -7,6 +7,7 @@ import React, {
   useState,
 } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   Bell,
@@ -389,6 +390,12 @@ function transformMedia(
 ========================================================= */
 
 export default function MediasPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const selectionMode = searchParams.get("select") === "publication";
+  const returnTo = searchParams.get("returnTo") || "/dashboard/publications";
+
   /* =======================================================
      VUE
   ======================================================= */
@@ -472,6 +479,13 @@ export default function MediasPage() {
   ] = useState<number | null>(
     null
   );
+
+  const [selectedMediaIds, setSelectedMediaIds] =
+    useState<number[]>([]);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalMediaCount, setTotalMediaCount] = useState(0);
 
   const [
     openMediaMenu,
@@ -578,7 +592,8 @@ export default function MediasPage() {
   ======================================================= */
 
   const loadData = async (
-    showRefresh = false
+    showRefresh = false,
+    page = currentPage
   ) => {
     try {
       if (showRefresh) {
@@ -589,55 +604,48 @@ export default function MediasPage() {
 
       setError("");
 
-      const [
-        mediasResponse,
-        foldersResponse,
-      ] = await Promise.all([
-        fetch(
-          `${BACKEND_URL}/api/medias`,
-          {
-            method: "GET",
-            credentials: "include",
-            headers: {
-              Accept:
-                "application/json",
-            },
-          }
-        ),
+      const params = new URLSearchParams();
+      params.set("page", String(page));
+      params.set("per_page", "24");
 
-        fetch(
-          `${BACKEND_URL}/api/media-folders`,
-          {
-            method: "GET",
-            credentials: "include",
-            headers: {
-              Accept:
-                "application/json",
-            },
-          }
-        ),
+      if (search.trim()) {
+        params.set("search", search.trim());
+      }
+
+      if (filter !== "all") {
+        params.set("type", filter);
+      }
+
+      if (selectedFolder !== null) {
+        params.set("folder_id", String(selectedFolder));
+      }
+
+      params.set("sort", sort);
+
+      const [mediasResponse, foldersResponse] = await Promise.all([
+        fetch(`${BACKEND_URL}/api/medias?${params.toString()}`, {
+          method: "GET",
+          credentials: "include",
+          headers: { Accept: "application/json" },
+        }),
+        fetch(`${BACKEND_URL}/api/media-folders`, {
+          method: "GET",
+          credentials: "include",
+          headers: { Accept: "application/json" },
+        }),
       ]);
 
       if (
-        mediasResponse.status ===
-          401 ||
-        foldersResponse.status ===
-          401
+        mediasResponse.status === 401 ||
+        foldersResponse.status === 401
       ) {
         throw new Error(
           "Votre session a expiré. Veuillez vous reconnecter."
         );
       }
 
-      const mediasData =
-        await readApiResponse(
-          mediasResponse
-        );
-
-      const foldersData =
-        await readApiResponse(
-          foldersResponse
-        );
+      const mediasData = await readApiResponse(mediasResponse);
+      const foldersData = await readApiResponse(foldersResponse);
 
       if (!mediasResponse.ok) {
         throw new Error(
@@ -653,23 +661,16 @@ export default function MediasPage() {
         );
       }
 
-      const backendMedias:
-        BackendMedia[] =
-        mediasData.medias || [];
+      const backendMedias: BackendMedia[] = mediasData.medias || [];
+      const backendFolders: BackendFolder[] = foldersData.folders || [];
 
-      const backendFolders:
-        BackendFolder[] =
-        foldersData.folders || [];
+      setMedias(backendMedias.map(transformMedia));
+      setFolders(backendFolders);
 
-      setMedias(
-        backendMedias.map(
-          transformMedia
-        )
-      );
-
-      setFolders(
-        backendFolders
-      );
+      const pagination = mediasData.pagination || {};
+      setCurrentPage(Number(pagination.current_page || page));
+      setTotalPages(Math.max(1, Number(pagination.last_page || 1)));
+      setTotalMediaCount(Number(pagination.total || backendMedias.length));
     } catch (err) {
       console.error(err);
 
@@ -684,9 +685,50 @@ export default function MediasPage() {
     }
   };
 
+  /*
+   * Pré-remplissage de la sélection quand on arrive
+   * depuis la page de création de publication : on relit
+   * ce qui a été mis dans sessionStorage juste avant la
+   * redirection vers cette page.
+   */
   useEffect(() => {
-    loadData();
-  }, []);
+    if (!selectionMode) return;
+
+    try {
+      const stored = sessionStorage.getItem(
+        "griot_publication_media_selection"
+      );
+
+      if (!stored) return;
+
+      const parsed = JSON.parse(stored);
+
+      const ids = Array.isArray(parsed?.ids)
+        ? parsed.ids
+            .map((id: unknown) => Number(id))
+            .filter(
+              (id: number) => Number.isInteger(id) && id > 0
+            )
+        : [];
+
+      setSelectedMediaIds(ids);
+    } catch (error) {
+      console.error(
+        "Impossible de lire la présélection de médias :",
+        error
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectionMode]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, filter, selectedFolder, sort]);
+
+  useEffect(() => {
+    loadData(false, currentPage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, search, filter, selectedFolder, sort]);
 
   useEffect(() => {
     if (!successMessage) {
@@ -706,104 +748,27 @@ export default function MediasPage() {
      STATISTIQUES
   ======================================================= */
 
-  const imageCount =
-    useMemo(() => {
-      return medias.filter(
-        (media) =>
-          media.type === "image"
-      ).length;
-    }, [medias]);
+  const imageCount = useMemo(() => {
+    return medias.filter((media) => media.type === "image").length;
+  }, [medias]);
 
-  const videoCount =
-    useMemo(() => {
-      return medias.filter(
-        (media) =>
-          media.type === "video"
-      ).length;
-    }, [medias]);
+  const videoCount = useMemo(() => {
+    return medias.filter((media) => media.type === "video").length;
+  }, [medias]);
 
-  const documentCount =
-    useMemo(() => {
-      return medias.filter(
-        (media) =>
-          media.type === "document"
-      ).length;
-    }, [medias]);
+  const documentCount = useMemo(() => {
+    return medias.filter((media) => media.type === "document").length;
+  }, [medias]);
 
   /* =======================================================
-     FILTRAGE
+     MÉDIAS AFFICHÉS
   ======================================================= */
 
-  const filteredMedias =
-    useMemo(() => {
-      const result =
-        medias.filter((media) => {
-          const searchValue =
-            search
-              .trim()
-              .toLowerCase();
+  const filteredMedias = useMemo(() => {
+    return medias;
+  }, [medias]);
 
-          const matchesSearch =
-            !searchValue ||
-            media.name
-              .toLowerCase()
-              .includes(
-                searchValue
-              );
-
-          const matchesType =
-            filter === "all" ||
-            media.type === filter;
-
-          const matchesFolder =
-            selectedFolder ===
-              null ||
-            media.folderId ===
-              selectedFolder;
-
-          return (
-            matchesSearch &&
-            matchesType &&
-            matchesFolder
-          );
-        });
-
-      result.sort((a, b) => {
-        if (sort === "recent") {
-          return (
-            b.dateValue -
-            a.dateValue
-          );
-        }
-
-        if (sort === "oldest") {
-          return (
-            a.dateValue -
-            b.dateValue
-          );
-        }
-
-        if (sort === "name") {
-          return a.name.localeCompare(
-            b.name,
-            "fr"
-          );
-        }
-
-        return (
-          b.sizeBytes -
-          a.sizeBytes
-        );
-      });
-
-      return result;
-    }, [
-      medias,
-      search,
-      filter,
-      selectedFolder,
-      sort,
-    ]);
+  const selectedMediaCount = selectedMediaIds.length;
 
   /* =======================================================
      DOSSIER ACTUEL
@@ -1272,6 +1237,10 @@ export default function MediasPage() {
             : current
       );
 
+      setSelectedMediaIds((current) =>
+        current.filter((id) => id !== media.id)
+      );
+
       setPreviewMedia(
         (current) =>
           current?.id === media.id
@@ -1305,6 +1274,65 @@ export default function MediasPage() {
     setSearch("");
     setFilter("all");
     setSelectedFolder(null);
+    setSort("recent");
+    setCurrentPage(1);
+  };
+
+  /* =======================================================
+     MODE SÉLECTION
+  ======================================================= */
+
+  const toggleMediaSelection = (mediaId: number) => {
+    setSelectedMediaIds((current) =>
+      current.includes(mediaId)
+        ? current.filter((id) => id !== mediaId)
+        : [...current, mediaId]
+    );
+  };
+
+  const cancelSelection = () => {
+    router.push(returnTo);
+  };
+
+  const useSelectedMedias = () => {
+    /*
+     * On renvoie les médias complets (pas juste les ids) pour que
+     * la page de publication puisse afficher l'aperçu sans avoir
+     * à refaire un appel réseau.
+     */
+    const selectedFullMedias = medias
+      .filter((media) => selectedMediaIds.includes(media.id))
+      .map((media) => ({
+        id: media.id,
+        name: media.name,
+        type: media.type,
+        mime_type: media.mimeType,
+        size: media.sizeBytes,
+        src: media.src,
+        folder:
+          media.folderId !== null
+            ? { id: media.folderId, name: media.folder }
+            : null,
+      }));
+
+    try {
+      sessionStorage.setItem(
+        "griot_publication_media_selection",
+        JSON.stringify({
+          ids: selectedMediaIds,
+          medias: selectedFullMedias,
+        })
+      );
+    } catch (error) {
+      console.error(
+        "Impossible d'enregistrer la sélection de médias :",
+        error
+      );
+    }
+
+    const separator = returnTo.includes("?") ? "&" : "?";
+
+    router.push(`${returnTo}${separator}mediaSelection=1`);
   };
 
   /* =======================================================
@@ -1328,7 +1356,7 @@ export default function MediasPage() {
         <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex min-w-0 items-center gap-3">
             <Link
-              href="/dashboard"
+              href={selectionMode ? returnTo : "/dashboard"}
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-900"
             >
               <ArrowLeft size={17} />
@@ -1340,7 +1368,7 @@ export default function MediasPage() {
               </p>
 
               <h1 className="truncate text-sm font-black sm:text-base">
-                Médias
+                {selectionMode ? "Sélectionner des médias" : "Médias"}
               </h1>
             </div>
           </div>
@@ -1362,7 +1390,7 @@ export default function MediasPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-[1700px] p-4 sm:p-6 lg:p-8">
+      <main className="mx-auto max-w-[1700px] p-4 pb-28 sm:p-6 lg:p-8">
         {/* =================================================
             TITRE
         ================================================= */}
@@ -1376,7 +1404,9 @@ export default function MediasPage() {
             </p>
 
             <h2 className="mt-1 text-xl font-black text-slate-900 sm:text-2xl">
-              Votre bibliothèque média
+              {selectionMode
+                ? "Choisir dans la bibliothèque"
+                : "Votre bibliothèque média"}
             </h2>
           </div>
 
@@ -1410,7 +1440,7 @@ export default function MediasPage() {
               className="flex items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-3 text-xs font-black text-white shadow-lg shadow-red-600/20 transition hover:bg-red-700"
             >
               <Upload size={15} />
-              Importer un média
+              {selectionMode ? "Importer un média" : "Importer un média"}
             </button>
           </div>
         </div>
@@ -1439,6 +1469,14 @@ export default function MediasPage() {
             <Check size={15} />
 
             {successMessage}
+          </div>
+        )}
+
+        {selectionMode && (
+          <div className="mb-5 flex items-center gap-2 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-xs font-semibold text-red-700">
+            <ImageIcon size={15} />
+            Cliquez sur un ou plusieurs médias pour les sélectionner, puis
+            validez en bas de page.
           </div>
         )}
 
@@ -1541,7 +1579,7 @@ export default function MediasPage() {
                 </span>
 
                 <span className="text-[9px] font-bold text-slate-400">
-                  {medias.length}
+                  {totalMediaCount}
                 </span>
               </button>
 
@@ -1551,12 +1589,7 @@ export default function MediasPage() {
                     selectedFolder ===
                     folder.id;
 
-                  const folderMediaCount =
-                    medias.filter(
-                      (media) =>
-                        media.folderId ===
-                        folder.id
-                    ).length;
+                  const folderMediaCount = folder.medias_count ?? 0;
 
                   return (
                     <button
@@ -1864,7 +1897,7 @@ export default function MediasPage() {
 
             <div className="mb-3 flex items-center justify-between">
               <p className="text-[10px] font-semibold text-slate-400">
-                {filteredMedias.length}{" "}
+                {totalMediaCount}{" "}
                 média
                 {filteredMedias.length >
                 1
@@ -2013,9 +2046,11 @@ export default function MediasPage() {
                         key={media.id}
                         media={media}
                         selected={
-                          selectedMedia ===
-                          media.id
+                          selectionMode
+                            ? selectedMediaIds.includes(media.id)
+                            : selectedMedia === media.id
                         }
+                        selectionMode={selectionMode}
                         menuOpen={
                           openMediaMenu ===
                           media.id
@@ -2024,14 +2059,18 @@ export default function MediasPage() {
                           deletingMedia ===
                           media.id
                         }
-                        onSelect={() =>
+                        onSelect={() => {
+                          if (selectionMode) {
+                            toggleMediaSelection(media.id);
+                            return;
+                          }
+
                           setSelectedMedia(
-                            selectedMedia ===
-                              media.id
+                            selectedMedia === media.id
                               ? null
                               : media.id
-                          )
-                        }
+                          );
+                        }}
                         onToggleMenu={() =>
                           setOpenMediaMenu(
                             openMediaMenu ===
@@ -2085,6 +2124,9 @@ export default function MediasPage() {
                       <MediaListItem
                         key={media.id}
                         media={media}
+                        selectionMode={selectionMode}
+                        selected={selectedMediaIds.includes(media.id)}
+                        onSelect={() => toggleMediaSelection(media.id)}
                         menuOpen={
                           openMediaMenu ===
                           media.id
@@ -2172,6 +2214,40 @@ export default function MediasPage() {
           </section>
         </div>
       </main>
+
+      {selectionMode && (
+        <div className="fixed bottom-0 left-0 right-0 z-[70] border-t border-slate-200 bg-white/95 px-4 py-3 shadow-[0_-8px_30px_rgba(15,23,42,0.08)] backdrop-blur sm:px-6">
+          <div className="mx-auto flex max-w-[1700px] flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-black text-slate-800">
+                {selectedMediaCount} média{selectedMediaCount > 1 ? "s" : ""} sélectionné{selectedMediaCount > 1 ? "s" : ""}
+              </p>
+              <p className="text-[9px] text-slate-400">
+                Vous pouvez sélectionner des médias sur plusieurs pages.
+              </p>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={cancelSelection}
+                className="rounded-xl border border-slate-200 px-4 py-2.5 text-[10px] font-black text-slate-600 hover:bg-slate-50"
+              >
+                Annuler
+              </button>
+
+              <button
+                type="button"
+                onClick={useSelectedMedias}
+                disabled={selectedMediaCount === 0}
+                className="rounded-xl bg-red-600 px-4 py-2.5 text-[10px] font-black text-white shadow-lg shadow-red-600/20 hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Utiliser {selectedMediaCount > 0 ? selectedMediaCount : "ces"} média{selectedMediaCount > 1 ? "s" : ""}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* =====================================================
           MODAL IMPORT
@@ -2838,6 +2914,7 @@ function MediaStat({
 function MediaCard({
   media,
   selected,
+  selectionMode,
   menuOpen,
   deleting,
   onSelect,
@@ -2848,6 +2925,7 @@ function MediaCard({
 }: {
   media: Media;
   selected: boolean;
+  selectionMode: boolean;
   menuOpen: boolean;
   deleting: boolean;
   onSelect: () => void;
@@ -2868,6 +2946,8 @@ function MediaCard({
 
       <div
         onClick={onSelect}
+        role="button"
+        aria-pressed={selected}
         className="relative aspect-[4/3] cursor-pointer overflow-hidden rounded-t-2xl bg-slate-50"
       >
         {media.type ===
@@ -2928,6 +3008,10 @@ function MediaCard({
           <div className="absolute right-3 top-3 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-white">
             <Check size={13} />
           </div>
+        )}
+
+        {selectionMode && !selected && (
+          <div className="absolute right-3 top-3 z-10 h-6 w-6 rounded-full border-2 border-white bg-black/20 backdrop-blur" />
         )}
 
         {/* BOUTON APERÇU */}
@@ -3048,6 +3132,9 @@ function MediaCard({
 
 function MediaListItem({
   media,
+  selectionMode,
+  selected,
+  onSelect,
   menuOpen,
   deleting,
   onToggleMenu,
@@ -3056,6 +3143,9 @@ function MediaListItem({
   onDelete,
 }: {
   media: Media;
+  selectionMode: boolean;
+  selected: boolean;
+  onSelect: () => void;
   menuOpen: boolean;
   deleting: boolean;
   onToggleMenu: () => void;
@@ -3064,12 +3154,24 @@ function MediaListItem({
   onDelete: () => void;
 }) {
   return (
-    <div className="relative grid grid-cols-1 gap-3 border-b border-slate-100 px-4 py-3 last:border-0 sm:grid-cols-[1fr_120px_110px_100px_40px] sm:items-center sm:gap-4">
+    <div
+      onClick={selectionMode ? onSelect : undefined}
+      className={`relative grid grid-cols-1 gap-3 border-b border-slate-100 px-4 py-3 last:border-0 sm:grid-cols-[1fr_120px_110px_100px_40px] sm:items-center sm:gap-4 ${selectionMode ? "cursor-pointer hover:bg-slate-50" : ""} ${selected ? "bg-red-50/50" : ""}`}
+    >
       {/* NOM */}
 
       <div className="flex min-w-0 items-center gap-3">
+        {selectionMode && (
+          <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border ${selected ? "border-red-600 bg-red-600 text-white" : "border-slate-300 bg-white text-transparent"}`}>
+            <Check size={12} />
+          </span>
+        )}
+
         <button
-          onClick={onPreview}
+          onClick={(event) => {
+            event.stopPropagation();
+            onPreview();
+          }}
           className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-50 p-1"
         >
           {media.type ===
