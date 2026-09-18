@@ -991,6 +991,26 @@ const handleImageChange = (
     subscription?.statut ??
     "—";
 
+  /*
+   * Un abonnement gratuit ne doit pas afficher les informations
+   * propres à un abonnement payant : statut, jours restants et
+   * date de fin.
+   *
+   * On considère le plan gratuit lorsque son prix est 0.
+   * On accepte également quelques libellés courants pour éviter
+   * les problèmes si le backend retourne un nom explicite.
+   */
+  const subscriptionPrice =
+    Number(subscription?.plan?.prix ?? subscription?.montant ?? 0);
+
+  const subscriptionPlanLower =
+    subscriptionPlan.trim().toLowerCase();
+
+  const isFreeSubscription =
+    subscriptionPrice === 0 ||
+    subscriptionPlanLower.includes("gratuit") ||
+    subscriptionPlanLower.includes("free");
+
   const subscriptionEnd =
     formatDate(
       subscription?.date_fin
@@ -1767,55 +1787,65 @@ const handleImageChange = (
 
                       </div>
 
-                      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+                      {!isFreeSubscription && (
+                        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
 
-                        <SubscriptionStat
-                          label="Statut"
-                          value={
-                            formatSubscriptionStatus(
-                              subscriptionStatus
-                            )
-                          }
-                        />
+                          <SubscriptionStat
+                            label="Statut"
+                            value={
+                              formatSubscriptionStatus(
+                                subscriptionStatus
+                              )
+                            }
+                          />
 
-                        <SubscriptionStat
-                          label="Jours restants"
-                          value={
-                            remainingDays !== null
-                              ? `${remainingDays} jours`
-                              : "—"
-                          }
-                        />
+                          <SubscriptionStat
+                            label="Jours restants"
+                            value={
+                              remainingDays !== null
+                                ? `${remainingDays} jours`
+                                : "—"
+                            }
+                          />
 
-                        <SubscriptionStat
-                          label="Fin de l'abonnement"
-                          value={
-                            subscriptionEnd
-                          }
-                        />
+                          <SubscriptionStat
+                            label="Fin de l'abonnement"
+                            value={
+                              subscriptionEnd
+                            }
+                          />
 
-                      </div>
+                        </div>
+                      )}
+
+                      {isFreeSubscription && (
+                        <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                          <p className="text-xs font-black text-slate-700">
+                            Plan gratuit
+                          </p>
+                          <p className="mt-1 text-[10px] leading-relaxed text-slate-400">
+                            Vous utilisez actuellement la formule gratuite de Griot AI.
+                            Les informations de durée et de fin d'abonnement ne sont pas
+                            affichées pour cette formule.
+                          </p>
+                        </div>
+                      )}
 
                       <div className="mt-6 flex flex-col gap-3 border-t border-slate-100 pt-5 sm:flex-row">
 
                         <Link
-                          href="/auth/abonnement"
+                          href="/auth/abonnement/voir_mon_abonnement"
                           className="rounded-xl bg-red-600 px-5 py-3 text-center text-[10px] font-black uppercase tracking-wider text-white shadow-lg shadow-red-600/20 hover:bg-red-700"
                         >
                           Gérer mon abonnement
                         </Link>
 
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setMessage(
-                              "La gestion des factures sera disponible lorsque le module de facturation sera connecté."
-                            );
-                          }}
-                          className="rounded-xl border border-slate-200 px-5 py-3 text-[10px] font-bold text-slate-600 hover:bg-slate-50"
+                        <Link
+                          href="/auth/abonnement/factures"
+                          className="rounded-xl border border-slate-200 px-5 py-3 text-center text-[10px] font-bold text-slate-600 hover:bg-slate-50"
                         >
                           Voir les factures
-                        </button>
+                        </Link>
 
                       </div>
                     </>
